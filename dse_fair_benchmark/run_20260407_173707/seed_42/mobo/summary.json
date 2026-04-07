@@ -1,7 +1,0 @@
-{
-  "evaluated": 24,
-  "pareto_size": 4,
-  "history_file": "/Users/bytedance/workspace/MNSIM-2.0/dse_fair_benchmark/run_20260407_173707/seed_42/mobo/mobo_history.csv",
-  "pareto_file": "/Users/bytedance/workspace/MNSIM-2.0/dse_fair_benchmark/run_20260407_173707/seed_42/mobo/pareto_front.csv",
-  "method": "MOBO-ParEGO"
-}

@@ -26,7 +26,6 @@ ALGO_TRACK: Dict[str, str] = {
     "bo_gp": "single",
     "nsga2": "multi",
     "mobo": "multi",
-    "random": "multi",  # treated as multi-obj baseline (outputs Pareto)
 }
 
 
@@ -37,7 +36,7 @@ ALGO_TRACK: Dict[str, str] = {
 @dataclass
 class RunConfig:
     """Everything needed to reproduce one algorithm trial."""
-    algo: str                 # "bo_gp" | "nsga2" | "mobo" | "random"
+    algo: str                 # "bo_gp" | "nsga2" | "mobo"
     seed: int
     budget: int               # total real evaluations (init + search)
     init_evals: int           # random initialisation count
@@ -57,7 +56,6 @@ class RunConfig:
     #        accuracy_target, accuracy_penalty
     # NSGA-II: population, evals_per_gen
     # MOBO: (no extras)
-    # Random: (no extras)
 
     @property
     def track(self) -> str:
@@ -87,7 +85,6 @@ class DSERecord:
     #   "bo"        — BO acquisition step (bo_gp)
     #   "gen_N"     — NSGA-II generation N offspring evaluation
     #   "mobo"      — MOBO acquisition step
-    #   "random"    — random search
     #   "stage2"    — BO two-stage accuracy re-evaluation
     phase: str
 
@@ -469,7 +466,7 @@ def _write_report_txt(summary_rows, trial_rows, path: str) -> None:
     # Group by track
     tracks = sorted(set(r["track"] for r in summary_rows))
     for track in tracks:
-        track_label = "Single-Objective Track (BO+GP)" if track == "single" else "Multi-Objective Track (NSGA-II, MOBO, Random)"
+        track_label = "Single-Objective Track (BO+GP)" if track == "single" else "Multi-Objective Track (NSGA-II, MOBO)"
         lines.append(f"\n[{track_label}]")
         lines.append("-" * 60)
 
@@ -501,7 +498,7 @@ def _write_report_txt(summary_rows, trial_rows, path: str) -> None:
     lines.append("\n" + "=" * 80)
     lines.append("Notes:")
     lines.append("  - Single-track (bo_gp): comparison via scalarized objective (lower is better)")
-    lines.append("  - Multi-track (nsga2, mobo, random): comparison via Hypervolume indicator (higher is better)")
+    lines.append("  - Multi-track (nsga2, mobo): comparison via Hypervolume indicator (higher is better)")
     lines.append("  - HV computed with shared global reference point (max*1.1 across all trials)")
     lines.append("  - Do NOT compare single-track best_obj with multi-track HV directly")
     lines.append("  - You CAN compare Pareto fronts across all methods as a supplementary analysis")

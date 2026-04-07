@@ -1,6 +1,0 @@
-{
-  "total_evaluated": 5,
-  "pareto_size": 1,
-  "history_file": "dse_nsga2_smoke/nsga2_history.csv",
-  "pareto_file": "dse_nsga2_smoke/pareto_front.csv"
-}

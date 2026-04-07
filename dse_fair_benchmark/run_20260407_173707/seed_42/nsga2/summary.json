@@ -1,6 +1,0 @@
-{
-  "total_evaluated": 20,
-  "pareto_size": 1,
-  "history_file": "/Users/bytedance/workspace/MNSIM-2.0/dse_fair_benchmark/run_20260407_173707/seed_42/nsga2/nsga2_history.csv",
-  "pareto_file": "/Users/bytedance/workspace/MNSIM-2.0/dse_fair_benchmark/run_20260407_173707/seed_42/nsga2/pareto_front.csv"
-}

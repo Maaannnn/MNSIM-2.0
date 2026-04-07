@@ -1,2 +1,0 @@
-rank,base_objective,stage2_accuracy,accuracy_penalty,final_objective,xbar_size,adc_choice,dac_choice,pe_num,tile_connection,inter_tile_bw,intra_tile_bw
-1,32.42017841733983,0.09978693181818182,0.0,32.42017841733983,"(512, 512)",8,3,"(2, 2)",1,20,2048

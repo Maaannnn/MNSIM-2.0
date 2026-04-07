@@ -1,0 +1,7 @@
+{
+  "evaluated": 3,
+  "pareto_size": 1,
+  "history_file": "dse_mobo_smoke/mobo_history.csv",
+  "pareto_file": "dse_mobo_smoke/pareto_front.csv",
+  "method": "MOBO-ParEGO"
+}

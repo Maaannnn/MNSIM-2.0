@@ -1,0 +1,4 @@
+method,path,mode,evaluated,pareto_size,best_objective,best_latency_ns,best_energy_nj,best_area_um2,best_accuracy
+BO+GP,/Users/bytedance/workspace/MNSIM-2.0/dse_bo_results_two_stage_smoke,two_stage,3,1,32.42017841733983,4577035.194253822,431721.2155879321,832873846.2285514,
+NSGA-II+Surrogate,/Users/bytedance/workspace/MNSIM-2.0/dse_nsga2_smoke,multi_objective,5,1,,3585919.00837331,431721.2155879321,832873846.2285514,
+MOBO-ParEGO,/Users/bytedance/workspace/MNSIM-2.0/dse_mobo_smoke,multi_objective,3,1,,4577035.194253822,431721.2155879321,832873846.2285514,

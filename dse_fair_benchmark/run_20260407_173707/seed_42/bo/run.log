@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/bytedance/workspace/MNSIM-2.0/dse_bo_gp.py", line 464, in <module>
+    main()
+    ~~~~^^
+  File "/Users/bytedance/workspace/MNSIM-2.0/dse_bo_gp.py", line 235, in main
+    raise ValueError("--two-stage 需要配合 --run-accuracy 使用")
+ValueError: --two-stage 需要配合 --run-accuracy 使用

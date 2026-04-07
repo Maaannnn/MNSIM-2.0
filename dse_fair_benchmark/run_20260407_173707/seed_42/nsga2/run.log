@@ -1,0 +1,92 @@
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[init 1/6] lat=4577035.2 en=431721.2 area=832873846.2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[init 2/6] lat=42593489.4 en=16342836.2 area=1642674041.6
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[init 3/6] lat=4191380.5 en=2324432.5 area=1200737393.5
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[init 4/6] lat=42013851.0 en=16326480.4 area=1642521735.9
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[init 5/6] lat=17067631.4 en=3849696.2 area=1077683642.1
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[init 6/6] lat=29575219.2 en=7578538.4 area=2344793379.4
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 1] eval lat=4577262.1 en=431721.2 area=832873846.2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[gen 1] eval lat=5749132.0 en=2324432.5 area=1200737393.5
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[gen 1] eval lat=4940852.0 en=707248.3 area=1118552359.8
+[gen 1] evaluated=9 pareto_size=2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[gen 2] eval lat=4941069.5 en=707248.3 area=1118552359.8
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[gen 2] eval lat=4941069.5 en=707248.3 area=1118552359.8
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 2] eval lat=5195750.4 en=713582.4 area=884993398.2
+[gen 2] evaluated=12 pareto_size=2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 3] eval lat=4577715.9 en=431721.2 area=832873846.2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 3] eval lat=4577715.9 en=431721.2 area=832873846.2
+[gen 3] evaluated=14 pareto_size=2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 4] eval lat=3913656.0 en=431721.2 area=832873846.2
+[gen 4] evaluated=15 pareto_size=1
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 5] eval lat=3585919.0 en=431721.2 area=832873846.2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 5] eval lat=4454164.5 en=431721.2 area=832873846.2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[gen 5] eval lat=4941504.5 en=707248.3 area=1118552359.8
+[gen 5] evaluated=18 pareto_size=1
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 6] eval lat=3914111.3 en=431721.2 area=832873846.2
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[gen 6] eval lat=3586374.3 en=431721.2 area=832873846.2
+[gen 6] evaluated=20 pareto_size=1
+
+=== NSGA-II + Surrogate Done ===
+evaluated   : 20
+pareto size : 1
+history file: /Users/bytedance/workspace/MNSIM-2.0/dse_fair_benchmark/run_20260407_173707/seed_42/nsga2/nsga2_history.csv
+pareto file : /Users/bytedance/workspace/MNSIM-2.0/dse_fair_benchmark/run_20260407_173707/seed_42/nsga2/pareto_front.csv

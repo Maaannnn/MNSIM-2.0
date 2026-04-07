@@ -1,0 +1,40 @@
+{
+  "methods": [
+    {
+      "method": "BO+GP",
+      "path": "/Users/bytedance/workspace/MNSIM-2.0/dse_bo_results_two_stage_smoke",
+      "evaluated": 3,
+      "pareto_size": 1,
+      "best_objective": 32.42017841733983,
+      "mode": "two_stage",
+      "best_latency_ns": 4577035.194253822,
+      "best_energy_nj": 431721.2155879321,
+      "best_area_um2": 832873846.2285514,
+      "best_accuracy": null
+    },
+    {
+      "method": "NSGA-II+Surrogate",
+      "path": "/Users/bytedance/workspace/MNSIM-2.0/dse_nsga2_smoke",
+      "evaluated": 5,
+      "pareto_size": 1,
+      "best_objective": null,
+      "mode": "multi_objective",
+      "best_latency_ns": 3585919.00837331,
+      "best_energy_nj": 431721.2155879321,
+      "best_area_um2": 832873846.2285514,
+      "best_accuracy": null
+    },
+    {
+      "method": "MOBO-ParEGO",
+      "path": "/Users/bytedance/workspace/MNSIM-2.0/dse_mobo_smoke",
+      "evaluated": 3,
+      "pareto_size": 1,
+      "best_objective": null,
+      "mode": "multi_objective",
+      "best_latency_ns": 4577035.194253822,
+      "best_energy_nj": 431721.2155879321,
+      "best_area_um2": 832873846.2285514,
+      "best_accuracy": null
+    }
+  ]
+}

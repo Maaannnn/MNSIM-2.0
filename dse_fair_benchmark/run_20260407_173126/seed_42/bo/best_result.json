@@ -1,0 +1,32 @@
+{
+  "objective": 32.16669899246325,
+  "latency_ns": 3552217.1687249965,
+  "energy_nj": 431721.2155879321,
+  "area_um2": 832873846.2285514,
+  "power_w": 8.600673318782485,
+  "accuracy": null,
+  "config": {
+    "xbar_size": [
+      512,
+      512
+    ],
+    "adc_choice": 8,
+    "dac_choice": 3,
+    "pe_num": [
+      2,
+      2
+    ],
+    "tile_connection": 3,
+    "inter_tile_bw": 80,
+    "intra_tile_bw": 2048
+  },
+  "mode": "two_stage",
+  "stage2": {
+    "topk": 3,
+    "accuracy_target": 0.9,
+    "accuracy_penalty_factor": 120.0,
+    "final_objective": 128.19226717428143,
+    "stage2_accuracy": 0.09978693181818182,
+    "accuracy_penalty": 96.02556818181819
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "objective": 32.42017841733983,
+  "latency_ns": 4577035.194253822,
+  "energy_nj": 431721.2155879321,
+  "area_um2": 832873846.2285514,
+  "power_w": 8.600673318782485,
+  "accuracy": null,
+  "config": {
+    "xbar_size": [
+      512,
+      512
+    ],
+    "adc_choice": 8,
+    "dac_choice": 3,
+    "pe_num": [
+      2,
+      2
+    ],
+    "tile_connection": 1,
+    "inter_tile_bw": 20,
+    "intra_tile_bw": 2048
+  }
+}

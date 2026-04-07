@@ -22,7 +22,7 @@ NSGA_INIT=4
 NSGA_EVALS_PER_GEN=2
 OUT_ROOT="${ROOT_DIR}/dse_fair_benchmark"
 RUN_ACCURACY=0
-BO_TWO_STAGE=1
+BO_TWO_STAGE=0
 BO_TOPK_ACCURACY=3
 ACCURACY_TARGET=0.90
 ACCURACY_PENALTY=120
@@ -76,6 +76,10 @@ fi
 if (( BO_INIT > BUDGET || MOBO_INIT > BUDGET || NSGA_INIT > BUDGET )); then
   echo "init evaluations cannot exceed budget" >&2
   exit 1
+fi
+
+if (( RUN_ACCURACY == 0 )); then
+  BO_TWO_STAGE=0
 fi
 
 NSGA_GENS=$(( (BUDGET - NSGA_INIT + NSGA_EVALS_PER_GEN - 1) / NSGA_EVALS_PER_GEN ))

@@ -36,7 +36,7 @@ load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
 Total crossbar number: 392
 [nsga2|s42] [gen 5] lat=3.482e+06 en=4.317e+05 area=8.329e+08
 [nsga2|s42] [gen 5] total=8 pareto=1
-[nsga2|s42] Done. evaluated=8 pareto=1 wall=24.6s
+[nsga2|s42] Done. evaluated=8 pareto=1 wall=24.4s
 
 ============================================================
 DSE Result: nsga2 (seed=42)
@@ -48,5 +48,5 @@ DSE Result: nsga2 (seed=42)
   Best latency        : 3.4822e+06
   Best energy         : 4.3172e+05
   Best area           : 8.3287e+08
-  Wall time     : 24.6s
+  Wall time     : 24.4s
 ============================================================

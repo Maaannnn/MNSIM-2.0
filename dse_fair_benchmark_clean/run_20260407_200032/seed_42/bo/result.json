@@ -1,0 +1,83 @@
+{
+  "algo": "bo_gp",
+  "track": "single",
+  "seed": 42,
+  "budget": 8,
+  "total_evaluated": 8,
+  "pareto_size": 2,
+  "hypervolume": null,
+  "hv_reference_point": null,
+  "wall_time_s": 22.433023929595947,
+  "started_at": "2026-04-07T12:00:43.990668+00:00",
+  "finished_at": "2026-04-07T12:01:06.423716+00:00",
+  "run_config": {
+    "nn": "vgg8",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+    "run_accuracy": false,
+    "device": "cpu",
+    "algo_kwargs": {
+      "w_latency": 1.0,
+      "w_energy": 1.0,
+      "w_area": 0.2,
+      "two_stage": false,
+      "topk_accuracy": 3,
+      "accuracy_target": null,
+      "accuracy_penalty": 100.0
+    }
+  },
+  "best_by_objective": {
+    "latency_ns": {
+      "value": 3742280.4268778004,
+      "eval_index": 5,
+      "config": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "1",
+        "pe_num": "2x2",
+        "tile_connection": "0",
+        "inter_tile_bw": "80",
+        "intra_tile_bw": "2048"
+      }
+    },
+    "energy_nj": {
+      "value": 431721.2155879321,
+      "eval_index": 1,
+      "config": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "3",
+        "pe_num": "2x2",
+        "tile_connection": "1",
+        "inter_tile_bw": "20",
+        "intra_tile_bw": "2048"
+      }
+    },
+    "area_um2": {
+      "value": 832821831.1245515,
+      "eval_index": 5,
+      "config": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "1",
+        "pe_num": "2x2",
+        "tile_connection": "0",
+        "inter_tile_bw": "80",
+        "intra_tile_bw": "2048"
+      }
+    }
+  },
+  "single_track_best": {
+    "scalarized_obj": 32.22978494405868,
+    "eval_index": 5,
+    "config": {
+      "xbar_size": "512x512",
+      "adc_choice": "8",
+      "dac_choice": "1",
+      "pe_num": "2x2",
+      "tile_connection": "0",
+      "inter_tile_bw": "80",
+      "intra_tile_bw": "2048"
+    }
+  }
+}

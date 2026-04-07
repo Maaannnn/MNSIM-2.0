@@ -1,0 +1,66 @@
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:450: ConvergenceWarning: The optimal value found for dimension 6 of parameter k1__k2__length_scale is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-09. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 1 of parameter k1__k2__length_scale is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:450: ConvergenceWarning: The optimal value found for dimension 6 of parameter k1__k2__length_scale is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-09. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:450: ConvergenceWarning: The optimal value found for dimension 2 of parameter k1__k2__length_scale is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 3 of parameter k1__k2__length_scale is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:450: ConvergenceWarning: The optimal value found for dimension 6 of parameter k1__k2__length_scale is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/Users/bytedance/workspace/MNSIM-2.0/.venv/lib/python3.14/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-09. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+[bo_gp|s42] space=4608 budget=8 init=3 two_stage=False
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[bo_gp|s42] [init 1/8] obj=32.4202 best=32.4202
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[bo_gp|s42] [init 2/8] obj=38.4204 best=32.4202
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[bo_gp|s42] [init 3/8] obj=34.0888 best=32.4202
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[bo_gp|s42] [bo   4/8] obj=32.6675 best=32.4202 lat=5.664e+06
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[bo_gp|s42] [bo   5/8] obj=32.2298 best=32.2298 lat=3.742e+06
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[bo_gp|s42] [bo   6/8] obj=35.4807 best=32.2298 lat=8.790e+06
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 392
+[bo_gp|s42] [bo   7/8] obj=36.4833 best=32.2298 lat=2.187e+07
+run on device cpu
+load weights from /Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth
+Total crossbar number: 1272
+[bo_gp|s42] [bo   8/8] obj=36.7286 best=32.2298 lat=1.838e+07
+[bo_gp|s42] Done. evaluated=8 pareto=2 best_obj=32.2298 wall=22.4s
+
+============================================================
+DSE Result: bo_gp (seed=42)
+============================================================
+  Track         : single
+  Budget        : 8  (init=3)
+  Evaluated     : 8
+  Pareto size   : 2
+  Best obj (scalar) : 32.2298
+  Best latency        : 3.7423e+06
+  Best energy         : 4.3172e+05
+  Best area           : 8.3282e+08
+  Wall time     : 22.4s
+============================================================

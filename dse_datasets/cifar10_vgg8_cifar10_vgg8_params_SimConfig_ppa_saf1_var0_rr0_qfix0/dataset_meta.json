@@ -46,8 +46,8 @@
     "device",
     "dataset_signature"
   ],
-  "last_run": "run_20260408_172349",
-  "last_run_dir": "/Users/bytedance/workspace/MNSIM-2.0/dse_datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_ppa_saf1_var0_rr0_qfix0/runs/run_20260408_172349",
+  "last_run": "run_20260408_190010",
+  "last_run_dir": "/Users/bytedance/workspace/MNSIM-2.0/dse_datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_ppa_saf1_var0_rr0_qfix0/runs/run_20260408_190010",
   "appended_rows": 600,
-  "total_rows": 601
+  "total_rows": 1201
 }

@@ -1,2 +1,0 @@
-algo,seed,eval_index,phase,latency_ns,energy_nj,area_um2,power_w,accuracy,elapsed_s,xbar_size,adc_choice,dac_choice,pe_num,tile_connection,inter_tile_bw,intra_tile_bw
-nsga2,42,8,gen_5,3482181.3687248863,431721.2155879321,832873846.2285514,8.600673318782485,,1.9058029651641846,512x512,8,3,2x2,2,80,2048

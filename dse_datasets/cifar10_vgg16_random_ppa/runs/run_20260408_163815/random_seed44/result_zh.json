@@ -1,0 +1,63 @@
+{
+  "算法": "random",
+  "优化轨道": "多目标",
+  "随机种子": 44,
+  "预算评估次数": 100,
+  "总评估次数": 100,
+  "帕累托解数量": 4,
+  "超体积": null,
+  "HV参考点": null,
+  "墙钟时间_s": 420.87469696998596,
+  "开始时间_UTC": "2026-04-08T08:38:28.105030+00:00",
+  "结束时间_UTC": "2026-04-08T08:45:28.981220+00:00",
+  "运行配置": {
+    "网络": "vgg16",
+    "权重路径": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg16_params.pth",
+    "基础配置": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+    "启用精度仿真": false,
+    "设备": "cpu",
+    "算法参数": {}
+  },
+  "各目标最优": {
+    "延迟_ns": {
+      "数值": 2267737.4511600616,
+      "评估序号": 56,
+      "配置": {
+        "xbar_size": "256x256",
+        "adc_choice": "8",
+        "dac_choice": "2",
+        "pe_num": "2x2",
+        "tile_connection": "1",
+        "inter_tile_bw": "80",
+        "intra_tile_bw": "1024"
+      }
+    },
+    "能耗_nJ": {
+      "数值": 247921.65228251895,
+      "评估序号": 47,
+      "配置": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "3",
+        "pe_num": "2x2",
+        "tile_connection": "1",
+        "inter_tile_bw": "20",
+        "intra_tile_bw": "1024"
+      }
+    },
+    "面积_um2": {
+      "数值": 1339046865.729671,
+      "评估序号": 84,
+      "配置": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "10",
+        "intra_tile_bw": "1024"
+      }
+    }
+  },
+  "单目标最优": null
+}

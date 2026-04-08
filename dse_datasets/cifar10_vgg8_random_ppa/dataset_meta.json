@@ -1,0 +1,7 @@
+{
+  "dataset_root": "/Users/bytedance/workspace/MNSIM-2.0/dse_datasets/cifar10_vgg8_random_ppa",
+  "last_run": "run_20260408_163559",
+  "last_run_dir": "/Users/bytedance/workspace/MNSIM-2.0/dse_datasets/cifar10_vgg8_random_ppa/runs/run_20260408_163559",
+  "appended_rows": 150,
+  "total_rows": 2250
+}

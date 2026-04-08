@@ -1,0 +1,67 @@
+{
+  "algo": "random",
+  "track": "multi",
+  "seed": 44,
+  "budget": 200,
+  "total_evaluated": 200,
+  "pareto_size": 5,
+  "hypervolume": 1.7003290544334054e+24,
+  "hv_reference_point": [
+    50703930.682088986,
+    21022662.4757832,
+    2579586847.746608
+  ],
+  "wall_time_s": 658.224634885788,
+  "started_at": "2026-04-08T08:22:31.356590+00:00",
+  "finished_at": "2026-04-08T08:33:29.581252+00:00",
+  "run_config": {
+    "nn": "vgg8",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+    "run_accuracy": false,
+    "device": "cpu",
+    "algo_kwargs": {}
+  },
+  "best_by_objective": {
+    "latency_ns": {
+      "value": 3394446.9293064657,
+      "eval_index": 56,
+      "config": {
+        "xbar_size": "256x256",
+        "adc_choice": "8",
+        "dac_choice": "2",
+        "pe_num": "2x2",
+        "tile_connection": "1",
+        "inter_tile_bw": "80",
+        "intra_tile_bw": "1024"
+      }
+    },
+    "energy_nj": {
+      "value": 431721.2155879321,
+      "eval_index": 47,
+      "config": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "3",
+        "pe_num": "2x2",
+        "tile_connection": "1",
+        "inter_tile_bw": "20",
+        "intra_tile_bw": "1024"
+      }
+    },
+    "area_um2": {
+      "value": 832821831.1245515,
+      "eval_index": 84,
+      "config": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "10",
+        "intra_tile_bw": "1024"
+      }
+    }
+  },
+  "single_track_best": null
+}

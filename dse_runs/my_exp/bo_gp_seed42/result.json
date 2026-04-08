@@ -1,0 +1,87 @@
+{
+  "algo": "bo_gp",
+  "track": "single",
+  "seed": 42,
+  "budget": 24,
+  "total_evaluated": 24,
+  "pareto_size": 3,
+  "hypervolume": 1.429371399362772e+24,
+  "hv_reference_point": [
+    47681069.65997026,
+    18978378.803729292,
+    2579272717.314607
+  ],
+  "wall_time_s": 68.1056969165802,
+  "started_at": "2026-04-08T04:45:23.668423+00:00",
+  "finished_at": "2026-04-08T04:46:31.774134+00:00",
+  "run_config": {
+    "nn": "vgg8",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+    "run_accuracy": false,
+    "device": "cpu",
+    "algo_kwargs": {
+      "w_latency": 1.0,
+      "w_energy": 1.0,
+      "w_area": 0.2,
+      "two_stage": false,
+      "topk_accuracy": 3,
+      "accuracy_target": null,
+      "accuracy_penalty": 100.0
+    }
+  },
+  "best_by_objective": {
+    "latency_ns": {
+      "value": 3552217.1687249965,
+      "eval_index": 21,
+      "config": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "3",
+        "pe_num": "2x2",
+        "tile_connection": "3",
+        "inter_tile_bw": "80",
+        "intra_tile_bw": "2048"
+      }
+    },
+    "energy_nj": {
+      "value": 431701.84715030564,
+      "eval_index": 22,
+      "config": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "2",
+        "pe_num": "2x2",
+        "tile_connection": "3",
+        "inter_tile_bw": "80",
+        "intra_tile_bw": "2048"
+      }
+    },
+    "area_um2": {
+      "value": 832821831.1245515,
+      "eval_index": 7,
+      "config": {
+        "xbar_size": "512x512",
+        "adc_choice": "8",
+        "dac_choice": "1",
+        "pe_num": "2x2",
+        "tile_connection": "0",
+        "inter_tile_bw": "80",
+        "intra_tile_bw": "512"
+      }
+    }
+  },
+  "single_track_best": {
+    "scalarized_obj": 32.16669899246325,
+    "eval_index": 21,
+    "config": {
+      "xbar_size": "512x512",
+      "adc_choice": "8",
+      "dac_choice": "3",
+      "pe_num": "2x2",
+      "tile_connection": "3",
+      "inter_tile_bw": "80",
+      "intra_tile_bw": "2048"
+    }
+  }
+}

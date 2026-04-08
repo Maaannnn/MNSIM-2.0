@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/bytedance/workspace/MNSIM-2.0/dse/dse_bo_gp.py", line 88, in <module>
-    main()
-    ~~~~^^
-  File "/Users/bytedance/workspace/MNSIM-2.0/dse/dse_bo_gp.py", line 82, in main
-    result = run(cfg)
-  File "/Users/bytedance/workspace/MNSIM-2.0/dse/algorithms/bo_gp.py", line 86, in run
-    raise ValueError("two_stage requires run_accuracy=True")
-ValueError: two_stage requires run_accuracy=True

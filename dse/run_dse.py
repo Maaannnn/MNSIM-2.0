@@ -9,14 +9,18 @@ hypervolume reference point and generates a unified comparison report.
 
 Usage example:
   # Compare NSGA-II and MOBO across 3 seeds (multi-objective track)
+  # Omit --output-root (default AUTO) → new dir <repo>/dse_runs/run_YYYYMMDD_HHMMSS each run
   python dse/run_dse.py \
     --algos nsga2 mobo \
     --seeds 42 43 44 \
     --budget 24 --init-evals 6 \
     --nn vgg8 --weights cifar10_vgg8_params.pth \
     --base-config SimConfig.ini \
-    --output-root dse_output/run01 \
-    --workers 3
+    --workers 3 \
+    --plots
+
+  # Regenerate figures only (needs matplotlib); must pass an existing run directory
+  python dse/run_dse.py --plot-only --output-root dse_runs/run_20260101_120000
 
   # Single-objective BO (scalarized)
   python dse/run_dse.py \
@@ -25,7 +29,6 @@ Usage example:
     --budget 20 --init-evals 6 \
     --nn vgg8 --weights cifar10_vgg8_params.pth \
     --base-config SimConfig.ini \
-    --output-root dse_output/run01 \
     --w-latency 1.0 --w-energy 1.0 --w-area 0.2
 
 Comparison note:
@@ -40,20 +43,70 @@ from __future__ import annotations
 
 import argparse
 import json
+import csv
 import os
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Ensure project root is on sys.path when invoked as "python dse/run_dse.py"
 _PROJ_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJ_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJ_ROOT))
 
+# Default --output-root: new directory each run (no overwrite). See _resolve_output_root.
+AUTO_OUTPUT_ROOT = "AUTO"
+
+
+def _timestamp() -> str:
+    return time.strftime("%Y%m%d_%H%M%S")
+
+
+def _slug(s: str) -> str:
+    out = []
+    for ch in s:
+        if ch.isalnum() or ch in ("-", "_"):
+            out.append(ch)
+        else:
+            out.append("_")
+    txt = "".join(out).strip("_")
+    return txt or "x"
+
+
+def _auto_dataset_root_from_args(args: argparse.Namespace) -> Path:
+    """
+    Build a deterministic dataset root from sampling/version parameters.
+
+    Example:
+      dse_datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_ppa_saf1_var0_rr0_qfix0
+    """
+    ds = str(args.dataset_module).split(".")[-1]
+    nn = str(args.nn)
+    w_stem = Path(str(args.weights)).stem
+    cfg_stem = Path(str(args.base_config)).stem
+    acc_tag = "acc" if bool(args.run_accuracy) else "ppa"
+    flags = f"saf{int(bool(args.enable_saf))}_var{int(bool(args.enable_variation))}_rr{int(bool(args.enable_rratio))}_qfix{int(bool(args.fixed_qrange))}"
+    name = "_".join([_slug(ds), _slug(nn), _slug(w_stem), _slug(cfg_stem), acc_tag, flags])
+    return _PROJ_ROOT / "dse_datasets" / name
+
+
+def _resolve_output_root(raw: str) -> Path:
+    """
+    AUTO → <repo>/dse_runs/run_YYYYMMDD_HHMMSS (created).
+    Other values → absolute path (cwd-relative names resolved from cwd).
+    """
+    if raw == AUTO_OUTPUT_ROOT:
+        stamp = _timestamp()
+        out = _PROJ_ROOT / "dse_runs" / f"run_{stamp}"
+        out.mkdir(parents=True, exist_ok=True)
+        return out
+    return Path(os.path.abspath(os.path.expanduser(raw)))
+
+
 from dse.metrics import compute_reference_point, hypervolume_3d
-from dse.output import DSERunResult, RunConfig, print_report, write_all, write_comparison
+from dse.output import DSERunResult, RunConfig, print_report, print_report_zh, write_all, write_comparison
 
 
 def _run_trial(algo: str, seed: int, run_cfg_dict: Dict[str, Any], output_dir: str) -> str:
@@ -139,7 +192,12 @@ def load_results_from_dir(output_root: str) -> List[DSERunResult]:
             weights_path=rc_data.get("weights_path", ""),
             base_config_path=rc_data.get("base_config_path", ""),
             run_accuracy=rc_data.get("run_accuracy", False),
+            enable_saf=rc_data.get("enable_saf", True),
+            enable_variation=rc_data.get("enable_variation", False),
+            enable_rratio=rc_data.get("enable_rratio", False),
+            fixed_qrange=rc_data.get("fixed_qrange", False),
             device=rc_data.get("device", "cpu"),
+            dataset_module=rc_data.get("dataset_module", "MNSIM.Interface.cifar10"),
             algo_kwargs=rc_data.get("algo_kwargs", {}),
         )
 
@@ -179,6 +237,398 @@ def load_results_from_dir(output_root: str) -> List[DSERunResult]:
     return results
 
 
+# --- Optional comparison plots (matplotlib) ---------------------------------
+
+_ALGO_COLORS: Dict[str, str] = {
+    "bo_gp": "#d62728",
+    "nsga2": "#1f77b4",
+    "mobo": "#2ca02c",
+    "random": "#9467bd",
+}
+
+
+def _matplotlib_zh_font() -> None:
+    import matplotlib.pyplot as plt
+
+    plt.rcParams["font.sans-serif"] = [
+        "PingFang SC",
+        "Heiti SC",
+        "Songti SC",
+        "SimHei",
+        "Microsoft YaHei",
+        "Noto Sans CJK SC",
+        "DejaVu Sans",
+    ]
+    plt.rcParams["axes.unicode_minus"] = False
+
+
+def _plot_pareto_projections(results: List[DSERunResult], out_path: Path, *, zh: bool = False) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    if zh:
+        _matplotlib_zh_font()
+    fig, axes = plt.subplots(2, 2, figsize=(10, 9))
+    if zh:
+        pairs = [
+            (0, 1, "延迟 (ns)", "能耗 (nJ)"),
+            (0, 2, "延迟 (ns)", "面积 (µm²)"),
+            (1, 2, "能耗 (nJ)", "面积 (µm²)"),
+        ]
+        supt = "帕累托集（大点）与全部评估点（淡点）"
+    else:
+        pairs = [
+            (0, 1, "Latency (ns)", "Energy (nJ)"),
+            (0, 2, "Latency (ns)", "Area (µm²)"),
+            (1, 2, "Energy (nJ)", "Area (µm²)"),
+        ]
+        supt = "Pareto sets (large) vs all evaluated points (faint)"
+    ax_flat = axes.ravel()
+    for ax, (i, j, xl, yl) in zip(ax_flat[:3], pairs):
+        for r in results:
+            algo = r.run_config.algo
+            color = _ALGO_COLORS.get(algo, "#7f7f7f")
+            label = f"{algo} 种子{r.run_config.seed}" if zh else f"{algo} seed{r.run_config.seed}"
+            pts = [rec.obj_vector() for rec in r.records]
+            if pts:
+                xs = [p[i] for p in pts]
+                ys = [p[j] for p in pts]
+                ax.scatter(xs, ys, s=12, alpha=0.25, color=color, marker="o", linewidths=0)
+            pfront = [rec.obj_vector() for rec in r.pareto_records]
+            if pfront:
+                xs = [p[i] for p in pfront]
+                ys = [p[j] for p in pfront]
+                ax.scatter(
+                    xs, ys, s=55, alpha=0.9, color=color, edgecolors="white", linewidths=0.6, label=label
+                )
+        ax.set_xlabel(xl)
+        ax.set_ylabel(yl)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.grid(True, alpha=0.3, linestyle="--")
+        ax.legend(fontsize=7, loc="best")
+    axes[1, 1].axis("off")
+    fig.suptitle(supt, fontsize=12)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=160)
+    plt.close(fig)
+
+
+def _plot_convergence_history(results: List[DSERunResult], out_path: Path, *, zh: bool = False) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if zh:
+        _matplotlib_zh_font()
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for r in results:
+        algo = r.run_config.algo
+        color = _ALGO_COLORS.get(algo, "#7f7f7f")
+        tag = f"{algo} 种{r.run_config.seed}" if zh else f"{algo} s{r.run_config.seed}"
+        bests: List[float] = []
+        best = float("inf")
+        for rec in r.records:
+            v = rec.obj_vector()
+            cur = np.log(v[0]) + np.log(v[1]) + np.log(max(v[2], 1e-30))
+            best = min(best, cur)
+            bests.append(best)
+        xs = list(range(1, len(bests) + 1))
+        ax.plot(xs, bests, color=color, alpha=0.85, label=tag)
+    if zh:
+        ax.set_xlabel("评估序号")
+        ax.set_ylabel("最优 log(延迟×能耗×面积)（越小越好）")
+        ax.set_title("至今最优标量进展（诊断用）")
+    else:
+        ax.set_xlabel("Evaluation index")
+        ax.set_ylabel("Best log(lat×en×area) (lower is better)")
+        ax.set_title("Best-so-far scalar progress (diagnostic)")
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=160)
+    plt.close(fig)
+
+
+def _plot_hypervolume_bar(comparison_json: Path, out_path: Path, *, zh: bool = False) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if zh:
+        _matplotlib_zh_font()
+    with open(comparison_json, encoding="utf-8") as f:
+        data = json.load(f)
+    trials: List[Dict[str, Any]] = data.get("trials", [])
+    multi = [t for t in trials if t.get("track") == "multi" and t.get("hypervolume") is not None]
+    if not multi:
+        return
+    if zh:
+        labels = [f'{t["algo"]}\n种子{t["seed"]}' for t in multi]
+    else:
+        labels = [f'{t["algo"]}\n{t["seed"]}' for t in multi]
+    vals = [float(t["hypervolume"]) for t in multi]
+    colors = [_ALGO_COLORS.get(t["algo"], "#7f7f7f") for t in multi]
+    fig, ax = plt.subplots(figsize=(max(6, len(labels) * 0.9), 4.5))
+    x = np.arange(len(labels))
+    ax.bar(x, vals, color=colors, alpha=0.85)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=9)
+    if zh:
+        ax.set_ylabel("超体积 HV（共享参考点）")
+        ax.set_title("多目标轨道 — 各试验超体积")
+    else:
+        ax.set_ylabel("Hypervolume (shared reference)")
+        ax.set_title("Multi-objective track — hypervolume by trial")
+    ax.grid(True, axis="y", alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=160)
+    plt.close(fig)
+
+
+def write_comparison_plots(output_root: Path, plots_dir: Optional[Path] = None) -> None:
+    """
+    Write pareto/convergence/HV PNGs under comparison/plots/ or plots/.
+    Requires matplotlib (pip install matplotlib).
+    """
+    try:
+        import matplotlib  # noqa: F401
+    except ImportError:
+        print("[runner] matplotlib not installed; skip plots. pip install matplotlib")
+        return
+
+    results = load_results_from_dir(str(output_root))
+    if not results:
+        print(f"[runner] No trial results under {output_root}; skip plots.")
+        return
+
+    if plots_dir is not None:
+        plot_dir = plots_dir
+    else:
+        cmp_sub = output_root / "comparison"
+        plot_dir = cmp_sub / "plots" if cmp_sub.is_dir() else output_root / "plots"
+    plot_dir.mkdir(parents=True, exist_ok=True)
+
+    pareto_png = plot_dir / "pareto_projections.png"
+    pareto_png_zh = plot_dir / "pareto_projections_zh.png"
+    conv_png = plot_dir / "convergence_scalar.png"
+    conv_png_zh = plot_dir / "convergence_scalar_zh.png"
+    _plot_pareto_projections(results, pareto_png, zh=False)
+    _plot_pareto_projections(results, pareto_png_zh, zh=True)
+    _plot_convergence_history(results, conv_png, zh=False)
+    _plot_convergence_history(results, conv_png_zh, zh=True)
+
+    cmp_json = output_root / "comparison" / "comparison.json"
+    if cmp_json.is_file():
+        hv_png = plot_dir / "hypervolume_by_trial.png"
+        hv_png_zh = plot_dir / "hypervolume_by_trial_zh.png"
+        _plot_hypervolume_bar(cmp_json, hv_png, zh=False)
+        _plot_hypervolume_bar(cmp_json, hv_png_zh, zh=True)
+        print(
+            f"[runner] Plots (EN+ZH): {pareto_png.name}, {pareto_png_zh.name}, "
+            f"{conv_png.name}, {conv_png_zh.name}, {hv_png.name}, {hv_png_zh.name}"
+        )
+    else:
+        print(f"[runner] Plots (EN+ZH): {pareto_png.name}, {pareto_png_zh.name}, {conv_png.name}, {conv_png_zh.name}")
+
+
+def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results: List[DSERunResult]) -> None:
+    """
+    Append all evaluated points from a finished run into a standardized dataset CSV.
+
+    Created/updated under dataset_root:
+      - dataset_history.csv / dataset_history_zh.csv  (append-only, clean schema)
+      - dataset_meta.json (schema + signature + counts + last_run)
+
+    Per-run provenance remains in run_dir/ (trial folders + comparison/ + plots).
+    A strict dataset_signature check prevents mixing incompatible versions:
+      nn / dataset_module / weights_path / base_config_path / non-ideal flags.
+    """
+    import hashlib
+
+    from dse.core import DIM_NAMES, encode_dim_value
+
+    dataset_root.mkdir(parents=True, exist_ok=True)
+    run_id = run_dir.name
+    if not completed_results:
+        print("[runner] dataset-append: no completed results; skip append.")
+        return
+
+    # ---- version/signature (must stay homogeneous inside one dataset root) ----
+    first_cfg = completed_results[0].run_config
+    signature_payload = {
+        "nn": first_cfg.nn,
+        "dataset_module": first_cfg.dataset_module,
+        "weights_path": os.path.abspath(first_cfg.weights_path),
+        "base_config_path": os.path.abspath(first_cfg.base_config_path),
+        "run_accuracy": bool(first_cfg.run_accuracy),
+        "enable_saf": bool(first_cfg.enable_saf),
+        "enable_variation": bool(first_cfg.enable_variation),
+        "enable_rratio": bool(first_cfg.enable_rratio),
+        "fixed_qrange": bool(first_cfg.fixed_qrange),
+    }
+    signature_str = json.dumps(signature_payload, sort_keys=True, ensure_ascii=False)
+    dataset_signature = hashlib.sha1(signature_str.encode("utf-8")).hexdigest()[:12]
+
+    # verify all trials match this signature
+    for rr in completed_results:
+        rc = rr.run_config
+        cur = {
+            "nn": rc.nn,
+            "dataset_module": rc.dataset_module,
+            "weights_path": os.path.abspath(rc.weights_path),
+            "base_config_path": os.path.abspath(rc.base_config_path),
+            "run_accuracy": bool(rc.run_accuracy),
+            "enable_saf": bool(rc.enable_saf),
+            "enable_variation": bool(rc.enable_variation),
+            "enable_rratio": bool(rc.enable_rratio),
+            "fixed_qrange": bool(rc.fixed_qrange),
+        }
+        if cur != signature_payload:
+            raise RuntimeError(
+                "dataset-append requires one consistent version/signature per run. "
+                "Found mixed configs across trials; split runs by version."
+            )
+
+    # ---- clean schema: X / conditions / y / meta / version ----
+    x_cols = list(DIM_NAMES)
+    cond_cols = ["run_accuracy", "enable_saf", "enable_variation", "enable_rratio", "fixed_qrange"]
+    y_cols = ["latency_ns", "energy_nj", "area_um2", "power_w", "accuracy"]
+    meta_cols = ["run_id", "trial_dir", "algo", "seed", "eval_index", "phase", "elapsed_s", "is_pareto"]
+    ver_cols = ["nn", "dataset_module", "weights_path", "base_config_path", "device", "dataset_signature"]
+    out_cols = x_cols + cond_cols + y_cols + meta_cols + ver_cols
+
+    zh = {
+        "xbar_size": "交叉阵列尺寸",
+        "adc_choice": "ADC档位",
+        "dac_choice": "DAC档位",
+        "pe_num": "PE阵列规模",
+        "tile_connection": "Tile连接方式",
+        "inter_tile_bw": "片间带宽",
+        "intra_tile_bw": "片内带宽",
+        "run_accuracy": "运行条件_精度仿真",
+        "enable_saf": "运行条件_SAF",
+        "enable_variation": "运行条件_器件变异",
+        "enable_rratio": "运行条件_Rratio",
+        "fixed_qrange": "运行条件_固定量化范围",
+        "latency_ns": "标签_延迟_ns",
+        "energy_nj": "标签_能耗_nJ",
+        "area_um2": "标签_面积_um2",
+        "power_w": "标签_功耗_W",
+        "accuracy": "标签_精度",
+        "run_id": "元信息_运行ID",
+        "trial_dir": "元信息_试验目录",
+        "algo": "元信息_算法",
+        "seed": "元信息_随机种子",
+        "eval_index": "元信息_评估序号",
+        "phase": "元信息_阶段",
+        "elapsed_s": "元信息_单次耗时_s",
+        "is_pareto": "元信息_是否帕累托点",
+        "nn": "版本_网络",
+        "dataset_module": "版本_数据集模块",
+        "weights_path": "版本_权重路径",
+        "base_config_path": "版本_SimConfig路径",
+        "device": "版本_设备",
+        "dataset_signature": "版本_签名",
+    }
+    out_cols_zh = [zh.get(c, c) for c in out_cols]
+
+    dst = dataset_root / "dataset_history.csv"
+    dst_zh = dataset_root / "dataset_history_zh.csv"
+    need_header = not dst.exists()
+    need_header_zh = not dst_zh.exists()
+
+    # existing meta compatibility check
+    meta_path = dataset_root / "dataset_meta.json"
+    old_meta: Dict[str, Any] = {}
+    if meta_path.exists():
+        try:
+            with open(meta_path, encoding="utf-8") as f:
+                old_meta = json.load(f)
+        except Exception:
+            old_meta = {}
+    old_sig = old_meta.get("dataset_signature")
+    if old_sig and old_sig != dataset_signature:
+        raise RuntimeError(
+            "dataset-append signature mismatch.\n"
+            f"existing: {old_sig}\nnew     : {dataset_signature}\n"
+            "Use a different --output-root for another dataset version."
+        )
+
+    appended = 0
+    with open(dst, "a", newline="", encoding="utf-8") as fo, open(dst_zh, "a", newline="", encoding="utf-8") as fozh:
+        w = csv.DictWriter(fo, fieldnames=out_cols)
+        wzh = csv.writer(fozh)
+        if need_header:
+            w.writeheader()
+        if need_header_zh:
+            wzh.writerow(out_cols_zh)
+
+        for rr in completed_results:
+            rc = rr.run_config
+            trial_dir_name = f"{rc.algo}_seed{rc.seed}"
+            for rec in rr.records:
+                out_row: Dict[str, Any] = {}
+                # X
+                for d in x_cols:
+                    out_row[d] = encode_dim_value(rec.config.get(d, ""))
+                # conditions
+                out_row["run_accuracy"] = int(bool(rc.run_accuracy))
+                out_row["enable_saf"] = int(bool(rc.enable_saf))
+                out_row["enable_variation"] = int(bool(rc.enable_variation))
+                out_row["enable_rratio"] = int(bool(rc.enable_rratio))
+                out_row["fixed_qrange"] = int(bool(rc.fixed_qrange))
+                # y
+                out_row["latency_ns"] = rec.latency_ns
+                out_row["energy_nj"] = rec.energy_nj
+                out_row["area_um2"] = rec.area_um2
+                out_row["power_w"] = rec.power_w
+                out_row["accuracy"] = "" if rec.accuracy is None else rec.accuracy
+                # meta
+                out_row["run_id"] = run_id
+                out_row["trial_dir"] = trial_dir_name
+                out_row["algo"] = rec.algo
+                out_row["seed"] = rec.seed
+                out_row["eval_index"] = rec.eval_index
+                out_row["phase"] = rec.phase
+                out_row["elapsed_s"] = rec.elapsed_s
+                out_row["is_pareto"] = int(bool(rec.is_pareto))
+                # version
+                out_row["nn"] = rc.nn
+                out_row["dataset_module"] = rc.dataset_module
+                out_row["weights_path"] = os.path.abspath(rc.weights_path)
+                out_row["base_config_path"] = os.path.abspath(rc.base_config_path)
+                out_row["device"] = rc.device
+                out_row["dataset_signature"] = dataset_signature
+
+                w.writerow(out_row)
+                wzh.writerow([out_row[c] for c in out_cols])
+                appended += 1
+
+    total = int(old_meta.get("total_rows", 0) or 0) + appended
+    meta = {
+        "dataset_root": str(dataset_root),
+        "dataset_signature": dataset_signature,
+        "dataset_signature_payload": signature_payload,
+        "schema_version": "v2_clean_sampling",
+        "schema_columns": out_cols,
+        "last_run": run_id,
+        "last_run_dir": str(run_dir),
+        "appended_rows": appended,
+        "total_rows": total,
+    }
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2, ensure_ascii=False)
+
+    print(f"[runner] dataset-append: +{appended} rows → {dst}")
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description="Concurrent DSE runner for MNSIM-2.0",
@@ -188,7 +638,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     p.add_argument(
         "--algos", nargs="+", default=["nsga2", "mobo"],
-        choices=["bo_gp", "nsga2", "mobo"],
+        choices=["bo_gp", "nsga2", "mobo", "random"],
         help="Algorithms to run. Multi-track: nsga2/mobo. Single-track: bo_gp.",
     )
     p.add_argument("--seeds", nargs="+", type=int, default=[42],
@@ -237,11 +687,42 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--fail-fast", action="store_true",
                    help="Abort all remaining trials on first failure.")
 
-    p.add_argument("--output-root", default=os.path.join(cwd, "dse_output"),
-                   help="Root directory. Trials go in <output-root>/<algo>_seed<N>/")
+    p.add_argument(
+        "--output-root",
+        default=AUTO_OUTPUT_ROOT,
+        help=(
+            f"Root directory for trials (<algo>_seed<N>/). "
+            f"Default {AUTO_OUTPUT_ROOT}: create {_PROJ_ROOT / 'dse_runs' / 'run_<timestamp>'} "
+            "each run so plots and CSV are never overwritten. "
+            "For --compare-only / --plot-only, pass an existing directory explicitly."
+        ),
+    )
+    p.add_argument(
+        "--dataset-append",
+        action="store_true",
+        help=(
+            "Append-only dataset collection mode. Treat --output-root as a persistent dataset root. "
+            "Each run writes a new run directory under <output-root>/runs/run_<timestamp>/ (never overwrites), "
+            "then appends all history rows into <output-root>/dataset_history.csv and dataset_history_zh.csv."
+        ),
+    )
+    p.add_argument(
+        "--no-dataset-append",
+        action="store_true",
+        help=(
+            "Disable auto dataset append for random sampling. "
+            "By default, when --algos is exactly [random], dataset append is enabled automatically "
+            "and output_root is auto-composed from dataset/nn/weights/simconfig/flags."
+        ),
+    )
 
     p.add_argument("--compare-only", action="store_true",
                    help="Skip running algorithms; load existing results from --output-root and regenerate comparison.")
+
+    p.add_argument("--plots", action="store_true",
+                   help="Write comparison PNGs after run or --compare-only (pip install matplotlib).")
+    p.add_argument("--plot-only", dest="plot_only", action="store_true",
+                   help="Only write PNGs from existing results under --output-root; no simulation.")
 
     return p
 
@@ -250,8 +731,42 @@ def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
 
-    output_root = Path(args.output_root)
+    # Auto behavior: pure random sampling defaults to append-only dataset mode.
+    auto_dataset_append = set(args.algos) == {"random"} and (not args.no_dataset_append)
+    if auto_dataset_append and not args.dataset_append:
+        args.dataset_append = True
+        if args.output_root == AUTO_OUTPUT_ROOT:
+            args.output_root = str(_auto_dataset_root_from_args(args))
+        print(f"[runner] Auto dataset-append enabled for random sampling. output_root={args.output_root}")
+        print("[runner] Mode: sampling (random only, append-only dataset)")
+    elif set(args.algos) != {"random"}:
+        print("[runner] Mode: optimisation/search (bo_gp/nsga2/mobo)")
+
+    if args.output_root == AUTO_OUTPUT_ROOT and (args.plot_only or args.compare_only):
+        parser.error(
+            f"--plot-only / --compare-only require a concrete existing path; "
+            f"do not use default {AUTO_OUTPUT_ROOT}. Example: --output-root dse_runs/run_20260101_120000"
+        )
+
+    if args.dataset_append and (args.plot_only or args.compare_only):
+        parser.error("--dataset-append cannot be combined with --plot-only / --compare-only.")
+    if args.dataset_append and set(args.algos) != {"random"}:
+        parser.error("--dataset-append is only allowed with --algos random to keep clean sampling semantics.")
+
+    base_root = _resolve_output_root(args.output_root)
+    if args.dataset_append:
+        # Always create a new run dir under the dataset root.
+        output_root = base_root / "runs" / f"run_{_timestamp()}"
+        output_root.mkdir(parents=True, exist_ok=True)
+    else:
+        output_root = base_root
     compare_dir = output_root / "comparison"
+
+    if args.plot_only:
+        if args.compare_only:
+            print("[runner] Ignoring --compare-only with --plot-only.")
+        write_comparison_plots(output_root)
+        return
 
     if args.compare_only:
         print(f"[runner] Loading existing results from {output_root} ...")
@@ -266,6 +781,8 @@ def main() -> None:
                 from dse.output import write_result_json
                 write_result_json(r, str(trial_dir / "result.json"))
         write_comparison(results, str(compare_dir))
+        if args.plots:
+            write_comparison_plots(output_root)
         return
 
     trials: List[Tuple[str, int, str]] = []
@@ -375,10 +892,17 @@ def main() -> None:
 
     for r in sorted(completed_results, key=lambda r: (r.run_config.algo, r.run_config.seed)):
         print_report(r)
+        print_report_zh(r)
 
     write_comparison(completed_results, str(compare_dir))
     print(f"\n[runner] Total wall time: {total_wall:.1f}s")
     print(f"[runner] Comparison output: {compare_dir}")
+    if args.plots:
+        write_comparison_plots(output_root)
+    if args.dataset_append:
+        _append_dataset_history(base_root, output_root, completed_results)
+        print(f"[runner] Dataset root: {base_root}")
+        print(f"[runner] This run dir : {output_root}")
 
 
 if __name__ == "__main__":

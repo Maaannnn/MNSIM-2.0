@@ -1,0 +1,2 @@
+algo,track,n_seeds,mean_hypervolume,std_hypervolume,mean_pareto_size,std_pareto_size,mean_best_latency_ns,std_best_latency_ns,mean_best_energy_nj,std_best_energy_nj,mean_best_area_um2,std_best_area_um2,mean_wall_time_s
+random,multi,3,1.6854630091341544e+24,9.528644018099437e+21,3.3333333333333335,0.5773502691896257,3715054.7867441284,177479.5903678116,431708.30329618114,11.182372677417602,832844948.9485515,26484.794595583247,138.28370849291483

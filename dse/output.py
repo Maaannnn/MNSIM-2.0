@@ -16,6 +16,15 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from dse.core import DIM_NAMES, SPACE, decode_dim_value, encode_dim_value
+from dse.i18n import (
+    COMPARISON_COL_ZH,
+    DIM_COL_ZH,
+    HISTORY_COL_ZH,
+    SUMMARY_COL_ZH,
+    summary_row_zh,
+    track_zh,
+    trial_row_zh,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -26,6 +35,7 @@ ALGO_TRACK: Dict[str, str] = {
     "bo_gp": "single",
     "nsga2": "multi",
     "mobo": "multi",
+    "random": "multi",
 }
 
 
@@ -176,6 +186,24 @@ PARETO_HEADER = (
 )
 
 
+def _col_header_zh(col: str) -> str:
+    if col in HISTORY_COL_ZH:
+        return HISTORY_COL_ZH[col]
+    if col in DIM_COL_ZH:
+        return DIM_COL_ZH[col]
+    if col == "extra_json":
+        return "附加JSON"
+    return col
+
+
+def _history_headers_zh() -> list:
+    return [_col_header_zh(c) for c in HISTORY_HEADER]
+
+
+def _pareto_headers_zh() -> list:
+    return [_col_header_zh(c) for c in PARETO_HEADER]
+
+
 # ---------------------------------------------------------------------------
 # File-writing utilities
 # ---------------------------------------------------------------------------
@@ -227,11 +255,29 @@ def write_history_csv(result: DSERunResult, path: str) -> None:
             writer.writerow(_record_to_history_row(r))
 
 
+def write_history_csv_zh(result: DSERunResult, path: str) -> None:
+    """Chinese header row; same data as history.csv."""
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(_history_headers_zh())
+        for r in result.records:
+            writer.writerow(_record_to_history_row(r))
+
+
 def write_pareto_csv(result: DSERunResult, path: str) -> None:
     """Write only the Pareto-optimal records to a CSV."""
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(PARETO_HEADER)
+        for r in result.pareto_records:
+            writer.writerow(_record_to_pareto_row(r))
+
+
+def write_pareto_csv_zh(result: DSERunResult, path: str) -> None:
+    """Chinese header row; same data as pareto.csv."""
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(_pareto_headers_zh())
         for r in result.pareto_records:
             writer.writerow(_record_to_pareto_row(r))
 
@@ -267,7 +313,12 @@ def write_result_json(result: DSERunResult, path: str) -> None:
             "weights_path": cfg.weights_path,
             "base_config_path": cfg.base_config_path,
             "run_accuracy": cfg.run_accuracy,
+            "enable_saf": cfg.enable_saf,
+            "enable_variation": cfg.enable_variation,
+            "enable_rratio": cfg.enable_rratio,
+            "fixed_qrange": cfg.fixed_qrange,
             "device": cfg.device,
+            "dataset_module": cfg.dataset_module,
             "algo_kwargs": cfg.algo_kwargs,
         },
         "best_by_objective": {
@@ -295,12 +346,74 @@ def write_result_json(result: DSERunResult, path: str) -> None:
         json.dump(payload, f, indent=2, ensure_ascii=False)
 
 
+def write_result_json_zh(result: DSERunResult, path: str) -> None:
+    """Same numbers as result.json; top-level keys in Chinese for readability."""
+    cfg = result.run_config
+
+    def _best(metric: str) -> Optional[dict]:
+        r = result.best_by_metric(metric)
+        if r is None:
+            return None
+        return {
+            "数值": getattr(r, metric),
+            "评估序号": r.eval_index,
+            "配置": {k: encode_dim_value(v) for k, v in r.config.items()},
+        }
+
+    payload: Dict[str, Any] = {
+        "算法": cfg.algo,
+        "优化轨道": track_zh(cfg.track),
+        "随机种子": cfg.seed,
+        "预算评估次数": cfg.budget,
+        "总评估次数": result.total_evaluated,
+        "帕累托解数量": result.pareto_size,
+        "超体积": result.hypervolume,
+        "HV参考点": list(result.hv_reference_point) if result.hv_reference_point else None,
+        "墙钟时间_s": result.wall_time_s,
+        "开始时间_UTC": result.started_at,
+        "结束时间_UTC": result.finished_at,
+        "运行配置": {
+            "网络": cfg.nn,
+            "权重路径": cfg.weights_path,
+            "基础配置": cfg.base_config_path,
+            "启用精度仿真": cfg.run_accuracy,
+            "设备": cfg.device,
+            "算法参数": cfg.algo_kwargs,
+        },
+        "各目标最优": {
+            "延迟_ns": _best("latency_ns"),
+            "能耗_nJ": _best("energy_nj"),
+            "面积_um2": _best("area_um2"),
+        },
+        "单目标最优": None,
+    }
+
+    if cfg.track == "single":
+        best_obj = result.best_scalarized_obj()
+        if best_obj is not None:
+            best_r = min(result.records, key=lambda r: r.extra.get("scalarized_obj", float("inf")))
+            payload["单目标最优"] = {
+                "标量目标": best_obj,
+                "评估序号": best_r.eval_index,
+                "配置": {k: encode_dim_value(v) for k, v in best_r.config.items()},
+            }
+
+    if cfg.run_accuracy:
+        payload["各目标最优"]["精度"] = _best("accuracy")
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2, ensure_ascii=False)
+
+
 def write_all(result: DSERunResult, output_dir: str) -> None:
-    """Write history.csv, pareto.csv, and result.json to output_dir."""
+    """Write history/pareto/result CSV+JSON in English and Chinese variants."""
     os.makedirs(output_dir, exist_ok=True)
     write_history_csv(result, os.path.join(output_dir, "history.csv"))
+    write_history_csv_zh(result, os.path.join(output_dir, "history_zh.csv"))
     write_pareto_csv(result, os.path.join(output_dir, "pareto.csv"))
+    write_pareto_csv_zh(result, os.path.join(output_dir, "pareto_zh.csv"))
     write_result_json(result, os.path.join(output_dir, "result.json"))
+    write_result_json_zh(result, os.path.join(output_dir, "result_zh.json"))
 
 
 # ---------------------------------------------------------------------------
@@ -339,6 +452,42 @@ def print_report(result: DSERunResult) -> None:
     print(f"{'='*60}")
 
 
+def print_report_zh(result: DSERunResult) -> None:
+    """中文控制台摘要（与 print_report 数值一致）。"""
+    cfg = result.run_config
+    tr = track_zh(cfg.track)
+    print(f"\n{'='*60}")
+    print(f"DSE 结果（中文）: {cfg.algo} （种子={cfg.seed}）")
+    print(f"{'='*60}")
+    print(f"  优化轨道       : {tr}")
+    print(f"  预算           : {cfg.budget}  （初始化={cfg.init_evals}）")
+    print(f"  已完成评估     : {result.total_evaluated}")
+    print(f"  帕累托解数量   : {result.pareto_size}")
+    if result.hypervolume is not None:
+        print(f"  超体积 HV      : {result.hypervolume:.4e}")
+        ref = result.hv_reference_point
+        if ref:
+            print(f"  HV 参考点      : 延迟={ref[0]:.3e}  能耗={ref[1]:.3e}  面积={ref[2]:.3e}")
+    if cfg.track == "single":
+        best_obj = result.best_scalarized_obj()
+        if best_obj is not None:
+            print(f"  最优标量目标   : {best_obj:.4f}")
+    for metric, label in [
+        ("latency_ns", "最优延迟"),
+        ("energy_nj", "最优能耗"),
+        ("area_um2", "最优面积"),
+    ]:
+        r = result.best_by_metric(metric)
+        if r:
+            print(f"  {label:<16}: {getattr(r, metric):.4e}")
+    if cfg.run_accuracy:
+        r = result.best_by_metric("accuracy")
+        if r and r.accuracy is not None:
+            print(f"  最优精度         : {r.accuracy:.4f}")
+    print(f"  墙钟时间       : {result.wall_time_s:.1f}s")
+    print(f"{'='*60}")
+
+
 # ---------------------------------------------------------------------------
 # Comparison utilities (used by run_dse.py after all trials complete)
 # ---------------------------------------------------------------------------
@@ -364,7 +513,7 @@ SUMMARY_HEADER = [
 
 
 def write_comparison(results: List[DSERunResult], output_dir: str) -> None:
-    """Write comparison.csv, comparison_summary.csv, comparison.json, report.txt."""
+    """Write comparison CSV/JSON/report in English and Chinese (*_zh) variants."""
     import statistics
     os.makedirs(output_dir, exist_ok=True)
 
@@ -455,6 +604,96 @@ def write_comparison(results: List[DSERunResult], output_dir: str) -> None:
 
     # report.txt (ASCII table)
     _write_report_txt(summary_rows, rows, os.path.join(output_dir, "report.txt"))
+
+    # --- Chinese mirrors (same numbers) ---
+    zh_fields = [COMPARISON_COL_ZH[h] for h in COMPARISON_HEADER]
+    with open(os.path.join(output_dir, "comparison_zh.csv"), "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=zh_fields)
+        w.writeheader()
+        for row in rows:
+            w.writerow({COMPARISON_COL_ZH[k]: trial_row_zh(row)[COMPARISON_COL_ZH[k]] for k in COMPARISON_HEADER})
+
+    zh_sum_fields = [SUMMARY_COL_ZH[h] for h in SUMMARY_HEADER]
+    with open(os.path.join(output_dir, "comparison_summary_zh.csv"), "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=zh_sum_fields)
+        w.writeheader()
+        for row in summary_rows:
+            sr = summary_row_zh(row)
+            w.writerow({SUMMARY_COL_ZH[k]: sr[SUMMARY_COL_ZH[k]] for k in SUMMARY_HEADER})
+
+    with open(os.path.join(output_dir, "comparison_zh.json"), "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "说明": "与 comparison.json 数值一致，键名为中文便于阅读。",
+                "试验": [trial_row_zh(r) for r in rows],
+                "汇总": [summary_row_zh(r) for r in summary_rows],
+            },
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    _write_report_txt_zh(summary_rows, rows, os.path.join(output_dir, "report_zh.txt"))
+
+
+def _write_report_txt_zh(summary_rows, trial_rows, path: str) -> None:
+    lines = []
+    lines.append("=" * 80)
+    lines.append("MNSIM-2.0 DSE 对比报告（中文）")
+    lines.append("=" * 80)
+
+    tracks = sorted(set(r["track"] for r in summary_rows))
+    for track in tracks:
+        track_label = "单目标轨道（BO+GP）" if track == "single" else "多目标轨道（NSGA-II、MOBO）"
+        lines.append(f"\n【{track_label}】")
+        lines.append("-" * 60)
+
+        track_rows = [r for r in summary_rows if r["track"] == track]
+
+        if track == "single":
+            lines.append(
+                f"{'算法':<12} {'种子数':>5} {'标量目标均值':>14} {'延迟均值_ns':>14} {'能耗均值_nJ':>12} {'面积均值':>12}"
+            )
+            for r in track_rows:
+                best_obj_rows = [t for t in trial_rows if t["algo"] == r["algo"] and t["best_scalarized_obj"] is not None]
+                mean_obj = (
+                    sum(t["best_scalarized_obj"] for t in best_obj_rows) / len(best_obj_rows)
+                    if best_obj_rows
+                    else float("nan")
+                )
+                lines.append(
+                    f"{r['algo']:<12} {r['n_seeds']:>5} {mean_obj:>14.4f} "
+                    f"{r['mean_best_latency_ns']:>14.3e} {r['mean_best_energy_nj']:>12.3e} "
+                    f"{r['mean_best_area_um2']:>12.3e}"
+                )
+        else:
+            lines.append(
+                f"{'算法':<12} {'种子数':>5} {'HV均值':>14} {'HV标准差':>12} {'帕累托规模':>10} {'延迟均值_ns':>14} {'墙钟_s':>8}"
+            )
+            for r in track_rows:
+                hv_mean = r["mean_hypervolume"] if r["mean_hypervolume"] is not None else float("nan")
+                hv_std = r["std_hypervolume"] if r["std_hypervolume"] is not None else float("nan")
+                psize = r["mean_pareto_size"] if r["mean_pareto_size"] is not None else float("nan")
+                lat = r["mean_best_latency_ns"] if r["mean_best_latency_ns"] is not None else float("nan")
+                wall = r["mean_wall_time_s"] if r["mean_wall_time_s"] is not None else float("nan")
+                lines.append(
+                    f"{r['algo']:<12} {r['n_seeds']:>5} {hv_mean:>14.3e} {hv_std:>12.3e} "
+                    f"{psize:>10.1f} {lat:>14.3e} {wall:>8.1f}"
+                )
+
+    lines.append("\n" + "=" * 80)
+    lines.append("说明：")
+    lines.append("  - 单目标（bo_gp）：按标量目标比较（越小越好）")
+    lines.append("  - 多目标（nsga2、mobo）：按超体积 HV 比较（越大越好）")
+    lines.append("  - HV 使用所有试验共享的全局参考点（各目标最大值的 1.1 倍）")
+    lines.append("  - 请勿将单目标最优标量与多目标 HV 直接等同对比")
+    lines.append("  - 可将各方法的帕累托前沿作为补充对比")
+    lines.append("=" * 80)
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+    print("\n".join(lines))
 
 
 def _write_report_txt(summary_rows, trial_rows, path: str) -> None:

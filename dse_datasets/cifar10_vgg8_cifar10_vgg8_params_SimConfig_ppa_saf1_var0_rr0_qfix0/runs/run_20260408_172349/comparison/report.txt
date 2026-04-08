@@ -1,0 +1,17 @@
+================================================================================
+MNSIM-2.0 DSE Comparison Report
+================================================================================
+
+[Multi-Objective Track (NSGA-II, MOBO)]
+------------------------------------------------------------
+Algo         Seeds       HV(mean)      HV(std)  ParetoSz    LatNs(mean)  Wall(s)
+random           3      1.706e+24    4.732e+21       5.0      3.226e+06    549.7
+
+================================================================================
+Notes:
+  - Single-track (bo_gp): comparison via scalarized objective (lower is better)
+  - Multi-track (nsga2, mobo): comparison via Hypervolume indicator (higher is better)
+  - HV computed with shared global reference point (max*1.1 across all trials)
+  - Do NOT compare single-track best_obj with multi-track HV directly
+  - You CAN compare Pareto fronts across all methods as a supplementary analysis
+================================================================================

@@ -1,0 +1,73 @@
+{
+  "trials": [
+    {
+      "algo": "random",
+      "track": "multi",
+      "seed": 44,
+      "total_evaluated": 100,
+      "pareto_size": 4,
+      "hypervolume": 5.627234179408011e+23,
+      "hv_ref_lat": 24266301.067398094,
+      "hv_ref_en": 10105163.176967371,
+      "hv_ref_area": 3955366499.8781314,
+      "best_scalarized_obj": null,
+      "best_latency_ns": 2267737.4511600616,
+      "best_energy_nj": 247921.65228251895,
+      "best_area_um2": 1339046865.729671,
+      "best_accuracy": null,
+      "wall_time_s": 420.87469696998596
+    },
+    {
+      "algo": "random",
+      "track": "multi",
+      "seed": 43,
+      "total_evaluated": 100,
+      "pareto_size": 4,
+      "hypervolume": 5.6723404975675526e+23,
+      "hv_ref_lat": 24266301.067398094,
+      "hv_ref_en": 10105163.176967371,
+      "hv_ref_area": 3955366499.8781314,
+      "best_scalarized_obj": null,
+      "best_latency_ns": 2206714.5825780607,
+      "best_energy_nj": 247464.58029043855,
+      "best_area_um2": 1339046865.729671,
+      "best_accuracy": null,
+      "wall_time_s": 423.685720205307
+    },
+    {
+      "algo": "random",
+      "track": "multi",
+      "seed": 42,
+      "total_evaluated": 100,
+      "pareto_size": 3,
+      "hypervolume": 5.607509809315869e+23,
+      "hv_ref_lat": 24266301.067398094,
+      "hv_ref_en": 10105163.176967371,
+      "hv_ref_area": 3955366499.8781314,
+      "best_scalarized_obj": null,
+      "best_latency_ns": 2439143.1307558226,
+      "best_energy_nj": 247464.58029043855,
+      "best_area_um2": 1339046865.729671,
+      "best_accuracy": null,
+      "wall_time_s": 424.1385519504547
+    }
+  ],
+  "summary": [
+    {
+      "algo": "random",
+      "track": "multi",
+      "n_seeds": 3,
+      "mean_hypervolume": 5.635694828763811e+23,
+      "std_hypervolume": 3.323313821230385e+21,
+      "mean_pareto_size": 3.6666666666666665,
+      "std_pareto_size": 0.5773502691896257,
+      "mean_best_latency_ns": 2304531.721497982,
+      "std_best_latency_ns": 120503.61508801513,
+      "mean_best_energy_nj": 247616.937621132,
+      "std_best_energy_nj": 263.89063766665555,
+      "mean_best_area_um2": 1339046865.729671,
+      "std_best_area_um2": 0.0,
+      "mean_wall_time_s": 422.8996563752492
+    }
+  ]
+}

@@ -75,12 +75,23 @@ def _slug(s: str) -> str:
     return txt or "x"
 
 
+def _simconfig_content_hash(cfg_path: str) -> str:
+    """MD5 of SimConfig file content, stored in dataset_meta for tamper detection."""
+    import hashlib
+    p = Path(cfg_path).expanduser().resolve()
+    data = p.read_bytes() if p.exists() else b""
+    return hashlib.md5(data).hexdigest()[:16]
+
+
 def _auto_dataset_root_from_args(args: argparse.Namespace) -> Path:
     """
     Build a deterministic dataset root from sampling/version parameters.
+    The config file *stem* (e.g. SimConfig, SimConfig_v2) identifies the hardware
+    version — rename the file when hardware settings change, not this function.
 
     Example:
-      artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_ppa_saf1_var0_rr0_qfix0
+      artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_rram_formal_v3_acc_saf1_var1_rr0_qfix0_acct0_88
+      artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_v2_rram_formal_v3_acc_saf1_var1_rr0_qfix0_acct0_88
     """
     ds = str(args.dataset_module).split(".")[-1]
     nn = str(args.nn)
@@ -465,6 +476,9 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
 
     # ---- version/signature (must stay homogeneous inside one dataset root) ----
     first_cfg = completed_results[0].run_config
+    # Signature is derived from file path (stem = version name) + eval flags.
+    # base_config_hash is stored in meta ONLY for tamper detection; it is NOT
+    # part of the signature hash so that it does not pollute the directory name.
     signature_payload = {
         "nn": first_cfg.nn,
         "dataset_module": first_cfg.dataset_module,
@@ -480,6 +494,8 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
     }
     signature_str = json.dumps(signature_payload, sort_keys=True, ensure_ascii=False)
     dataset_signature = hashlib.sha1(signature_str.encode("utf-8")).hexdigest()[:12]
+    # Content hash stored separately — checked below against existing meta
+    base_config_hash = _simconfig_content_hash(first_cfg.base_config_path)
 
     # verify all trials match this signature
     for rr in completed_results:
@@ -567,10 +583,27 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
             old_meta = {}
     old_sig = old_meta.get("dataset_signature")
     if old_sig and old_sig != dataset_signature:
+        cfg_name = Path(first_cfg.base_config_path).stem
         raise RuntimeError(
-            "dataset-append signature mismatch.\n"
-            f"existing: {old_sig}\nnew     : {dataset_signature}\n"
-            "Use a different --output-root for another dataset version."
+            f"dataset-append signature mismatch — version parameters have changed.\n"
+            f"  dataset : {dataset_root}\n"
+            f"  existing signature : {old_sig}\n"
+            f"  new signature      : {dataset_signature}\n"
+            f"  existing payload   : {old_meta.get('dataset_signature_payload', {})}\n"
+            f"  new payload        : {signature_payload}\n"
+            f"If you changed hardware settings in {cfg_name}.ini, rename the file "
+            f"(e.g. {cfg_name}_v2.ini) and pass --base-config {cfg_name}_v2.ini. "
+            f"This creates a clean separate dataset automatically."
+        )
+    # Extra guard: warn if SimConfig file was silently modified without renaming
+    old_cfg_hash = old_meta.get("base_config_hash")
+    if old_cfg_hash and old_cfg_hash != base_config_hash:
+        cfg_name = Path(first_cfg.base_config_path).stem
+        print(
+            f"[dataset] WARNING: {cfg_name}.ini content has changed since this dataset "
+            f"was created, but the filename is the same. If you modified hardware "
+            f"settings, rename the file (e.g. {cfg_name}_v2.ini) to keep datasets "
+            f"cleanly separated. Proceeding anyway."
         )
 
     appended = 0
@@ -630,6 +663,7 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
         "dataset_root": str(dataset_root),
         "dataset_signature": dataset_signature,
         "dataset_signature_payload": signature_payload,
+        "base_config_hash": base_config_hash,   # content hash for tamper detection only
         "schema_version": "v2_clean_sampling",
         "schema_columns": out_cols,
         "last_run": run_id,

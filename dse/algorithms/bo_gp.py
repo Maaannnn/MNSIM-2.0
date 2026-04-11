@@ -26,9 +26,17 @@ from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, Matern, WhiteKernel
 
-from dse.core import DIM_NAMES, SPACE, evaluate_config, write_temp_config
+from dse.core import (
+    DIM_NAMES,
+    SPACE,
+    accuracy_violation,
+    evaluate_config,
+    pareto_indices_with_accuracy,
+    write_temp_config,
+)
 from dse.metrics import pareto_indices, scalarize_log
 from dse.output import DSERecord, DSERunResult, RunConfig
+from dse.progress import try_make_tqdm, update_progress
 
 
 def _expected_improvement(
@@ -108,6 +116,8 @@ def run(cfg: RunConfig) -> DSERunResult:
 
     tag = f"[bo_gp|s{cfg.seed}]"
     print(f"{tag} space={n_total} budget={n_iter} init={n_init} two_stage={two_stage}")
+    total_steps = n_iter + (max(1, min(topk_accuracy, n_iter)) if two_stage else 0)
+    pbar = try_make_tqdm(total_steps, tag)
 
     chosen: List[int] = []
     records: List[DSERecord] = []
@@ -128,6 +138,7 @@ def run(cfg: RunConfig) -> DSERunResult:
                 fixed_qrange=cfg.fixed_qrange,
                 device=cfg.device,
                 dataset_module=cfg.dataset_module,
+                max_acc_batches=cfg.max_acc_batches,
             )
         finally:
             os.remove(temp_path)
@@ -152,7 +163,11 @@ def run(cfg: RunConfig) -> DSERunResult:
             accuracy=res.accuracy,
             elapsed_s=res.elapsed_s,
             config=res.config,
-            extra={"scalarized_obj": scal, "weights": list(weights)},
+            extra={
+                "scalarized_obj": scal,
+                "weights": list(weights),
+                "accuracy_violation": accuracy_violation(res.accuracy, accuracy_target),
+            },
         )
         return rec
 
@@ -164,7 +179,14 @@ def run(cfg: RunConfig) -> DSERunResult:
         chosen.append(idx)
         records.append(rec)
         best_now = min(r.extra["scalarized_obj"] for r in records)
-        print(f"{tag} [init {len(chosen)}/{n_iter}] obj={rec.extra['scalarized_obj']:.4f} best={best_now:.4f}")
+        postfix = {
+            "phase": "init",
+            "obj": f"{rec.extra['scalarized_obj']:.4f}",
+            "best": f"{best_now:.4f}",
+        }
+        if rec.accuracy is not None:
+            postfix["acc"] = f"{rec.accuracy:.4f}"
+        update_progress(pbar, tag=tag, done=len(records), total=total_steps, t_start=t_start, postfix=postfix)
 
     # --- GP-guided acquisition ---
     gp = _build_gp(n_dims=len(dim_names), seed=cfg.seed)
@@ -185,10 +207,15 @@ def run(cfg: RunConfig) -> DSERunResult:
         records.append(rec)
 
         best_now = min(r.extra["scalarized_obj"] for r in records)
-        print(
-            f"{tag} [bo   {len(chosen)}/{n_iter}] obj={rec.extra['scalarized_obj']:.4f} "
-            f"best={best_now:.4f} lat={rec.latency_ns:.3e}"
-        )
+        postfix = {
+            "phase": "bo",
+            "obj": f"{rec.extra['scalarized_obj']:.4f}",
+            "best": f"{best_now:.4f}",
+            "lat": f"{rec.latency_ns:.2e}",
+        }
+        if rec.accuracy is not None:
+            postfix["acc"] = f"{rec.accuracy:.4f}"
+        update_progress(pbar, tag=tag, done=len(records), total=total_steps, t_start=t_start, postfix=postfix)
 
     # --- Stage-2: accuracy rerank ---
     if two_stage:
@@ -210,6 +237,7 @@ def run(cfg: RunConfig) -> DSERunResult:
                     fixed_qrange=cfg.fixed_qrange,
                     device=cfg.device,
                     dataset_module=cfg.dataset_module,
+                    max_acc_batches=cfg.max_acc_batches,
                 )
             finally:
                 os.remove(temp_path)
@@ -242,20 +270,24 @@ def run(cfg: RunConfig) -> DSERunResult:
                 },
             )
             records.append(stage2_rec)
-            print(
-                f"{tag} [stage2 {rank}/{k}] base_obj={base_rec.extra['scalarized_obj']:.4f} "
-                f"acc={res2.accuracy:.4f} penalty={acc_penalty:.4f} final={final_scal:.4f}"
-            )
+            postfix = {
+                "phase": "stage2",
+                "acc": f"{res2.accuracy:.4f}",
+                "pen": f"{acc_penalty:.4f}",
+                "final": f"{final_scal:.4f}",
+            }
+            update_progress(pbar, tag=tag, done=len(records), total=total_steps, t_start=t_start, postfix=postfix)
 
     # --- Pareto front (from all evaluations, for cross-track analysis) ---
-    vecs = [r.obj_vector() for r in records]
-    nd_idx = pareto_indices(vecs)
+    nd_idx = pareto_indices_with_accuracy(records, accuracy_target)
     for i in nd_idx:
         records[i].is_pareto = True
 
     wall_time_s = time.time() - t_start
     finished_at = datetime.now(timezone.utc).isoformat()
     best_obj = min(r.extra.get("scalarized_obj", float("inf")) for r in records)
+    if pbar is not None:
+        pbar.close()
     print(f"{tag} Done. evaluated={len(records)} pareto={len(nd_idx)} best_obj={best_obj:.4f} wall={wall_time_s:.1f}s")
 
     return DSERunResult(

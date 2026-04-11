@@ -36,6 +36,7 @@ ALGO_TRACK: Dict[str, str] = {
     "nsga2": "multi",
     "mobo": "multi",
     "random": "multi",
+    "matrixcsv": "multi",
 }
 
 
@@ -60,6 +61,8 @@ class RunConfig:
     fixed_qrange: bool = False
     device: str = "cpu"
     dataset_module: str = "MNSIM.Interface.cifar10"
+    max_acc_batches: int = 11
+    space_profile: str = "rram_v2"
     # Algorithm-specific extras (flat dict to keep RunConfig generic)
     algo_kwargs: Dict[str, Any] = field(default_factory=dict)
     # BO+GP: w_latency, w_energy, w_area, two_stage, topk_accuracy,
@@ -319,6 +322,8 @@ def write_result_json(result: DSERunResult, path: str) -> None:
             "fixed_qrange": cfg.fixed_qrange,
             "device": cfg.device,
             "dataset_module": cfg.dataset_module,
+            "max_acc_batches": cfg.max_acc_batches,
+            "space_profile": cfg.space_profile,
             "algo_kwargs": cfg.algo_kwargs,
         },
         "best_by_objective": {
@@ -378,6 +383,8 @@ def write_result_json_zh(result: DSERunResult, path: str) -> None:
             "基础配置": cfg.base_config_path,
             "启用精度仿真": cfg.run_accuracy,
             "设备": cfg.device,
+            "精度评估批次数上限": cfg.max_acc_batches,
+            "设计空间配置": cfg.space_profile,
             "算法参数": cfg.algo_kwargs,
         },
         "各目标最优": {

@@ -1,0 +1,30 @@
+{
+  "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_all.csv",
+  "selected_rows": 8,
+  "batch": {
+    "total": 8,
+    "num_batches": 1,
+    "batch_index": 1,
+    "start": 0,
+    "end": 8
+  },
+  "successful_rows": 8,
+  "failed_rows": 0,
+  "matrix_names": [
+    "D"
+  ],
+  "point_ids": [
+    "D_001",
+    "D_002",
+    "D_003",
+    "D_004",
+    "D_005",
+    "D_006",
+    "D_007",
+    "D_008"
+  ],
+  "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_rram_v2_acc_saf1_var1_rr0_qfix0_acct0_88/runs/run_20260409_230142/matrixcsv_seed42",
+  "space_profile": "rram_v2",
+  "workers": 2,
+  "failures": []
+}

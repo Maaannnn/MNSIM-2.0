@@ -1,0 +1,2 @@
+algo,seed,eval_index,phase,latency_ns,energy_nj,area_um2,power_w,accuracy,elapsed_s,rram_preset,xbar_size,adc_choice,dac_num,xbar_polarity,sub_position,group_num,pe_num,tile_connection,inter_tile_bw
+random,42,4,random,5997133.2533934815,3193060.1506895665,1006013853.5562103,29.559223145690417,0.939453125,54.215092182159424,P1,512x512,6,32,2,1,1,2x2,2,80

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-shot DSE: three algorithms, one seed, comparison plots.
-# Output directory: default AUTO in run_dse.py → <repo>/dse_runs/run_<timestamp>/ (never overwrites old runs).
+# Output directory: default AUTO in run_dse.py → <repo>/artifacts/dse/search_runs/run_<timestamp>/ (never overwrites old runs).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PYTHON="${ROOT}/.venv/bin/python"

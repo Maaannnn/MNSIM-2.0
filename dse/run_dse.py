@@ -9,7 +9,7 @@ hypervolume reference point and generates a unified comparison report.
 
 Usage example:
   # Compare NSGA-II and MOBO across 3 seeds (multi-objective track)
-  # Omit --output-root (default AUTO) → new dir <repo>/dse_runs/run_YYYYMMDD_HHMMSS each run
+  # Omit --output-root (default AUTO) → new dir <repo>/artifacts/dse/search_runs/run_YYYYMMDD_HHMMSS each run
   python dse/run_dse.py \
     --algos nsga2 mobo \
     --seeds 42 43 44 \
@@ -20,7 +20,7 @@ Usage example:
     --plots
 
   # Regenerate figures only (needs matplotlib); must pass an existing run directory
-  python dse/run_dse.py --plot-only --output-root dse_runs/run_20260101_120000
+  python dse/run_dse.py --plot-only --output-root artifacts/dse/search_runs/run_20260101_120000
 
   # Single-objective BO (scalarized)
   python dse/run_dse.py \
@@ -80,26 +80,27 @@ def _auto_dataset_root_from_args(args: argparse.Namespace) -> Path:
     Build a deterministic dataset root from sampling/version parameters.
 
     Example:
-      dse_datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_ppa_saf1_var0_rr0_qfix0
+      artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_ppa_saf1_var0_rr0_qfix0
     """
     ds = str(args.dataset_module).split(".")[-1]
     nn = str(args.nn)
     w_stem = Path(str(args.weights)).stem
     cfg_stem = Path(str(args.base_config)).stem
     acc_tag = "acc" if bool(args.run_accuracy) else "ppa"
-    flags = f"saf{int(bool(args.enable_saf))}_var{int(bool(args.enable_variation))}_rr{int(bool(args.enable_rratio))}_qfix{int(bool(args.fixed_qrange))}"
-    name = "_".join([_slug(ds), _slug(nn), _slug(w_stem), _slug(cfg_stem), acc_tag, flags])
-    return _PROJ_ROOT / "dse_datasets" / name
+    acc_target = "none" if args.accuracy_target is None else _slug(f"acct{args.accuracy_target}")
+    flags = f"saf{int(bool(args.enable_saf))}_var{int(bool(args.enable_variation))}_rr{int(bool(args.enable_rratio))}_qfix{int(bool(args.fixed_qrange))}_{acc_target}"
+    name = "_".join([_slug(ds), _slug(nn), _slug(w_stem), _slug(cfg_stem), _slug(args.space_profile), acc_tag, flags])
+    return _PROJ_ROOT / "artifacts" / "dse" / "datasets" / name
 
 
 def _resolve_output_root(raw: str) -> Path:
     """
-    AUTO → <repo>/dse_runs/run_YYYYMMDD_HHMMSS (created).
+    AUTO → <repo>/artifacts/dse/search_runs/run_YYYYMMDD_HHMMSS (created).
     Other values → absolute path (cwd-relative names resolved from cwd).
     """
     if raw == AUTO_OUTPUT_ROOT:
         stamp = _timestamp()
-        out = _PROJ_ROOT / "dse_runs" / f"run_{stamp}"
+        out = _PROJ_ROOT / "artifacts" / "dse" / "search_runs" / f"run_{stamp}"
         out.mkdir(parents=True, exist_ok=True)
         return out
     return Path(os.path.abspath(os.path.expanduser(raw)))
@@ -198,6 +199,8 @@ def load_results_from_dir(output_root: str) -> List[DSERunResult]:
             fixed_qrange=rc_data.get("fixed_qrange", False),
             device=rc_data.get("device", "cpu"),
             dataset_module=rc_data.get("dataset_module", "MNSIM.Interface.cifar10"),
+            max_acc_batches=rc_data.get("max_acc_batches", 11),
+            space_profile=rc_data.get("space_profile", "rram_v2"),
             algo_kwargs=rc_data.get("algo_kwargs", {}),
         )
 
@@ -467,11 +470,13 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
         "dataset_module": first_cfg.dataset_module,
         "weights_path": os.path.abspath(first_cfg.weights_path),
         "base_config_path": os.path.abspath(first_cfg.base_config_path),
+        "space_profile": first_cfg.space_profile,
         "run_accuracy": bool(first_cfg.run_accuracy),
         "enable_saf": bool(first_cfg.enable_saf),
         "enable_variation": bool(first_cfg.enable_variation),
         "enable_rratio": bool(first_cfg.enable_rratio),
         "fixed_qrange": bool(first_cfg.fixed_qrange),
+        "accuracy_target": first_cfg.algo_kwargs.get("accuracy_target", None),
     }
     signature_str = json.dumps(signature_payload, sort_keys=True, ensure_ascii=False)
     dataset_signature = hashlib.sha1(signature_str.encode("utf-8")).hexdigest()[:12]
@@ -484,11 +489,13 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
             "dataset_module": rc.dataset_module,
             "weights_path": os.path.abspath(rc.weights_path),
             "base_config_path": os.path.abspath(rc.base_config_path),
+            "space_profile": rc.space_profile,
             "run_accuracy": bool(rc.run_accuracy),
             "enable_saf": bool(rc.enable_saf),
             "enable_variation": bool(rc.enable_variation),
             "enable_rratio": bool(rc.enable_rratio),
             "fixed_qrange": bool(rc.fixed_qrange),
+            "accuracy_target": rc.algo_kwargs.get("accuracy_target", None),
         }
         if cur != signature_payload:
             raise RuntimeError(
@@ -498,25 +505,29 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
 
     # ---- clean schema: X / conditions / y / meta / version ----
     x_cols = list(DIM_NAMES)
-    cond_cols = ["run_accuracy", "enable_saf", "enable_variation", "enable_rratio", "fixed_qrange"]
+    cond_cols = ["run_accuracy", "enable_saf", "enable_variation", "enable_rratio", "fixed_qrange", "accuracy_target"]
     y_cols = ["latency_ns", "energy_nj", "area_um2", "power_w", "accuracy"]
     meta_cols = ["run_id", "trial_dir", "algo", "seed", "eval_index", "phase", "elapsed_s", "is_pareto"]
-    ver_cols = ["nn", "dataset_module", "weights_path", "base_config_path", "device", "dataset_signature"]
+    ver_cols = ["nn", "dataset_module", "weights_path", "base_config_path", "device", "space_profile", "dataset_signature"]
     out_cols = x_cols + cond_cols + y_cols + meta_cols + ver_cols
 
     zh = {
+        "rram_preset": "RRAM器件预设",
         "xbar_size": "交叉阵列尺寸",
         "adc_choice": "ADC档位",
-        "dac_choice": "DAC档位",
+        "dac_num": "DAC数量",
+        "xbar_polarity": "正负权实现方式",
+        "sub_position": "差分相减位置",
+        "group_num": "阵列分组数",
         "pe_num": "PE阵列规模",
         "tile_connection": "Tile连接方式",
         "inter_tile_bw": "片间带宽",
-        "intra_tile_bw": "片内带宽",
         "run_accuracy": "运行条件_精度仿真",
         "enable_saf": "运行条件_SAF",
         "enable_variation": "运行条件_器件变异",
         "enable_rratio": "运行条件_Rratio",
         "fixed_qrange": "运行条件_固定量化范围",
+        "accuracy_target": "运行条件_精度约束",
         "latency_ns": "标签_延迟_ns",
         "energy_nj": "标签_能耗_nJ",
         "area_um2": "标签_面积_um2",
@@ -535,6 +546,7 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
         "weights_path": "版本_权重路径",
         "base_config_path": "版本_SimConfig路径",
         "device": "版本_设备",
+        "space_profile": "版本_设计空间配置",
         "dataset_signature": "版本_签名",
     }
     out_cols_zh = [zh.get(c, c) for c in out_cols]
@@ -584,6 +596,7 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
                 out_row["enable_variation"] = int(bool(rc.enable_variation))
                 out_row["enable_rratio"] = int(bool(rc.enable_rratio))
                 out_row["fixed_qrange"] = int(bool(rc.fixed_qrange))
+                out_row["accuracy_target"] = rc.algo_kwargs.get("accuracy_target", None)
                 # y
                 out_row["latency_ns"] = rec.latency_ns
                 out_row["energy_nj"] = rec.energy_nj
@@ -605,6 +618,7 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
                 out_row["weights_path"] = os.path.abspath(rc.weights_path)
                 out_row["base_config_path"] = os.path.abspath(rc.base_config_path)
                 out_row["device"] = rc.device
+                out_row["space_profile"] = rc.space_profile
                 out_row["dataset_signature"] = dataset_signature
 
                 w.writerow(out_row)
@@ -630,6 +644,8 @@ def _append_dataset_history(dataset_root: Path, run_dir: Path, completed_results
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    from dse.core import available_space_profiles, current_space_profile
+
     p = argparse.ArgumentParser(
         description="Concurrent DSE runner for MNSIM-2.0",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -652,8 +668,17 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--base-config", default=os.path.join(cwd, "SimConfig.ini"))
     p.add_argument("--weights", default=os.path.join(cwd, "cifar10_vgg8_params.pth"))
     p.add_argument("--nn", default="vgg8")
-    p.add_argument("--device", default="cpu")
+    p.add_argument("--device", default="cpu",
+                   help="Torch device spec: cpu, mps, cuda:0, or a CUDA index like 0.")
     p.add_argument("--dataset-module", default="MNSIM.Interface.cifar10")
+    p.add_argument(
+        "--space-profile",
+        default=current_space_profile(),
+        choices=available_space_profiles(),
+        help="Design-space profile. `rram_v2` is the paper-oriented pruned space; `rram_full` keeps the original wider space.",
+    )
+    p.add_argument("--max-acc-batches", type=int, default=11,
+                   help="Maximum test batches for each accuracy evaluation. Smaller is faster.")
 
     p.add_argument("--run-accuracy", action="store_true",
                    help="Include accuracy simulation (slower but includes acc metric).")
@@ -673,7 +698,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--topk-accuracy", type=int, default=3,
                    help="[bo_gp] Number of candidates for stage-2 accuracy rerank.")
     p.add_argument("--accuracy-target", type=float, default=None,
-                   help="[bo_gp] Accuracy constraint (penalise below this value).")
+                   help="Global minimum accuracy constraint. Requires --run-accuracy.")
     p.add_argument("--accuracy-penalty", type=float, default=100.0,
                    help="[bo_gp] Penalty coefficient for accuracy constraint.")
 
@@ -692,7 +717,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default=AUTO_OUTPUT_ROOT,
         help=(
             f"Root directory for trials (<algo>_seed<N>/). "
-            f"Default {AUTO_OUTPUT_ROOT}: create {_PROJ_ROOT / 'dse_runs' / 'run_<timestamp>'} "
+            f"Default {AUTO_OUTPUT_ROOT}: create {_PROJ_ROOT / 'artifacts' / 'dse' / 'search_runs' / 'run_<timestamp>'} "
             "each run so plots and CSV are never overwritten. "
             "For --compare-only / --plot-only, pass an existing directory explicitly."
         ),
@@ -730,6 +755,9 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
+    from dse.core import apply_space_profile, current_space_profile, space_size
+
+    apply_space_profile(args.space_profile)
 
     # Auto behavior: pure random sampling defaults to append-only dataset mode.
     auto_dataset_append = set(args.algos) == {"random"} and (not args.no_dataset_append)
@@ -745,13 +773,15 @@ def main() -> None:
     if args.output_root == AUTO_OUTPUT_ROOT and (args.plot_only or args.compare_only):
         parser.error(
             f"--plot-only / --compare-only require a concrete existing path; "
-            f"do not use default {AUTO_OUTPUT_ROOT}. Example: --output-root dse_runs/run_20260101_120000"
+            f"do not use default {AUTO_OUTPUT_ROOT}. Example: --output-root artifacts/dse/search_runs/run_20260101_120000"
         )
 
     if args.dataset_append and (args.plot_only or args.compare_only):
         parser.error("--dataset-append cannot be combined with --plot-only / --compare-only.")
     if args.dataset_append and set(args.algos) != {"random"}:
         parser.error("--dataset-append is only allowed with --algos random to keep clean sampling semantics.")
+    if args.accuracy_target is not None and not args.run_accuracy:
+        parser.error("--accuracy-target requires --run-accuracy.")
 
     base_root = _resolve_output_root(args.output_root)
     if args.dataset_append:
@@ -795,6 +825,7 @@ def main() -> None:
     max_workers = args.workers if args.workers > 0 else max(1, min(n_trials, (os.cpu_count() or 2) // 2))
     print(f"[runner] {n_trials} trials × {max_workers} parallel workers")
     print(f"[runner] output root: {output_root}")
+    print(f"[runner] space profile: {current_space_profile()}  size={space_size()}")
     print(f"[runner] algorithms: {args.algos}  seeds: {args.seeds}  budget: {args.budget}")
     print(f"[runner] Multi-track: {[a for a in args.algos if a != 'bo_gp']}")
     print(f"[runner] Single-track: {[a for a in args.algos if a == 'bo_gp']}")
@@ -814,8 +845,9 @@ def main() -> None:
     nsga2_kwargs: Dict[str, Any] = {
         "population": args.population,
         "evals_per_gen": args.evals_per_gen,
+        "accuracy_target": args.accuracy_target,
     }
-    algo_kwargs_map = {"bo_gp": bo_kwargs, "nsga2": nsga2_kwargs, "mobo": {}}
+    algo_kwargs_map = {"bo_gp": bo_kwargs, "nsga2": nsga2_kwargs, "mobo": {"accuracy_target": args.accuracy_target}, "random": {"accuracy_target": args.accuracy_target}}
 
     def _make_run_cfg_dict(algo: str, seed: int) -> Dict[str, Any]:
         return {
@@ -833,6 +865,8 @@ def main() -> None:
             "fixed_qrange": args.fixed_qrange,
             "device": args.device,
             "dataset_module": args.dataset_module,
+            "max_acc_batches": args.max_acc_batches,
+            "space_profile": args.space_profile,
             "algo_kwargs": algo_kwargs_map.get(algo, {}),
         }
 

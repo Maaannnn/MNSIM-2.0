@@ -1,0 +1,1257 @@
+{
+  "source": "dataset_root:/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_acc_saf1_var1_rr0_qfix0_acct0_88",
+  "source_kind": "dataset_root",
+  "source_path": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_acc_saf1_var1_rr0_qfix0_acct0_88",
+  "dataset_name": "cifar10_vgg8_cifar10_vgg8_params_SimConfig_acc_saf1_var1_rr0_qfix0_acct0_88",
+  "space_profile": "legacy",
+  "space_profile_label": "历史数据集（未显式记录空间）",
+  "space_profile_note": "旧版数据集，未在数据中显式记录搜索空间，建议只作为先导对照，不作为主结论来源。",
+  "analysis_scope": "random",
+  "main_phase": "random",
+  "space_dimensions": [
+    {
+      "dim": "rram_preset",
+      "dim_zh": "RRAM器件预设",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "P0, P1, P2, P3, P4"
+    },
+    {
+      "dim": "xbar_size",
+      "dim_zh": "交叉阵列尺寸",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "128x128, 256x256, 512x512"
+    },
+    {
+      "dim": "adc_choice",
+      "dim_zh": "ADC档位",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "4, 6, 7, 8"
+    },
+    {
+      "dim": "dac_num",
+      "dim_zh": "DAC数量",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "128, 32, 64"
+    },
+    {
+      "dim": "xbar_polarity",
+      "dim_zh": "正负权实现方式",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "1, 2"
+    },
+    {
+      "dim": "sub_position",
+      "dim_zh": "差分相减位置",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "0, 1"
+    },
+    {
+      "dim": "group_num",
+      "dim_zh": "阵列分组数",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "1, 2, 4"
+    },
+    {
+      "dim": "pe_num",
+      "dim_zh": "PE阵列规模",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "2x2, 4x4, 8x8"
+    },
+    {
+      "dim": "tile_connection",
+      "dim_zh": "Tile连接方式",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "0, 1, 2, 3"
+    },
+    {
+      "dim": "inter_tile_bw",
+      "dim_zh": "片间带宽",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "10, 20, 40, 80"
+    }
+  ],
+  "workload": "vgg8",
+  "weights_file": "cifar10_vgg8_params.pth",
+  "base_config_file": "SimConfig.ini",
+  "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+  "simconfig_rows": [
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Device_Tech",
+      "key_zh": "器件工艺节点",
+      "key_desc": "存储器件所采用的工艺节点，单位通常为 nm。",
+      "value": "130"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Device_Type",
+      "key_zh": "器件类型",
+      "key_desc": "存内计算所用存储器类型，如 NVM 或 SRAM。",
+      "value": "NVM"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Device_Area",
+      "key_zh": "器件面积",
+      "key_desc": "单个存储单元面积，单位通常为 μm²。",
+      "value": "1.44"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Read_Level",
+      "key_zh": "读电平数",
+      "key_desc": "读操作可区分的电平数量。",
+      "value": "2"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Read_Voltage",
+      "key_zh": "读电压",
+      "key_desc": "读操作施加的电压范围，单位 V。",
+      "value": "0,0.15"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Write_Level",
+      "key_zh": "写电平数",
+      "key_desc": "写操作可区分的电平数量。",
+      "value": "2"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Write_Voltage",
+      "key_zh": "写电压",
+      "key_desc": "写操作施加的电压范围，单位 V。",
+      "value": "0,3"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Read_Latency",
+      "key_zh": "读延迟",
+      "key_desc": "单次读操作延迟，单位 ns。",
+      "value": "3.16"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Write_Latency",
+      "key_zh": "写延迟",
+      "key_desc": "单次写操作延迟，单位 ns。",
+      "value": "10"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Device_Level",
+      "key_zh": "器件比特级数",
+      "key_desc": "单器件可表达的离散电导/阻值级数。",
+      "value": "2"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Device_Resistance",
+      "key_zh": "器件阻值",
+      "key_desc": "器件不同状态下的阻值范围，通常从 HRS 到 LRS。",
+      "value": "1e6, 1e4"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Device_Variation",
+      "key_zh": "器件波动",
+      "key_desc": "器件阻值相对理想值的随机波动比例。",
+      "value": "1"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Device_SAF",
+      "key_zh": "卡死故障率",
+      "key_desc": "Stuck-At-HRS / Stuck-At-LRS 缺陷率。",
+      "value": "0.1,0.1"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Read_Energy",
+      "key_zh": "读能耗",
+      "key_desc": "单 bit 读操作能耗，常用于 SRAM 场景。",
+      "value": "1.12e-15"
+    },
+    {
+      "section": "Device level",
+      "section_zh": "器件层",
+      "key": "Write_Energy",
+      "key_zh": "写能耗",
+      "key_desc": "单 bit 写操作能耗，常用于 SRAM 场景。",
+      "value": "1.6e-15"
+    },
+    {
+      "section": "Crossbar level",
+      "section_zh": "交叉阵列层",
+      "key": "Xbar_Size",
+      "key_zh": "交叉阵列尺寸",
+      "key_desc": "Crossbar 的行列规模。",
+      "value": "256,256"
+    },
+    {
+      "section": "Crossbar level",
+      "section_zh": "交叉阵列层",
+      "key": "Subarray_Size",
+      "key_zh": "子阵列行数",
+      "key_desc": "单个子阵列的行规模。",
+      "value": "256"
+    },
+    {
+      "section": "Crossbar level",
+      "section_zh": "交叉阵列层",
+      "key": "Cell_Type",
+      "key_zh": "存储单元类型",
+      "key_desc": "如 1T1R / 0T1R。",
+      "value": "1T1R"
+    },
+    {
+      "section": "Crossbar level",
+      "section_zh": "交叉阵列层",
+      "key": "Transistor_Tech",
+      "key_zh": "晶体管工艺",
+      "key_desc": "外围晶体管工艺节点，单位 nm。",
+      "value": "130"
+    },
+    {
+      "section": "Crossbar level",
+      "section_zh": "交叉阵列层",
+      "key": "Wire_Resistance",
+      "key_zh": "线电阻",
+      "key_desc": "阵列连线电阻，-1 表示使用默认模型。",
+      "value": "-1"
+    },
+    {
+      "section": "Crossbar level",
+      "section_zh": "交叉阵列层",
+      "key": "Wire_Capacity",
+      "key_zh": "线电容",
+      "key_desc": "阵列连线电容，-1 表示使用默认模型。",
+      "value": "-1"
+    },
+    {
+      "section": "Crossbar level",
+      "section_zh": "交叉阵列层",
+      "key": "Load_Resistance",
+      "key_zh": "负载电阻",
+      "key_desc": "阵列输出端负载电阻。",
+      "value": "-1"
+    },
+    {
+      "section": "Crossbar level",
+      "section_zh": "交叉阵列层",
+      "key": "Area_Calculation",
+      "key_zh": "面积计算模式",
+      "key_desc": "面积估算所采用的方法。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "DAC_Choice",
+      "key_zh": "DAC 方案",
+      "key_desc": "DAC 采用的默认配置编号。",
+      "value": "1"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "DAC_Area",
+      "key_zh": "DAC 面积",
+      "key_desc": "DAC 面积；0 表示使用默认配置。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "DAC_Precision",
+      "key_zh": "DAC 精度",
+      "key_desc": "DAC 量化精度，单位 bit。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "DAC_Power",
+      "key_zh": "DAC 功耗",
+      "key_desc": "DAC 功耗，单位 W。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "DAC_Sample_Rate",
+      "key_zh": "DAC 采样率",
+      "key_desc": "DAC 采样率。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "ADC_Choice",
+      "key_zh": "ADC 方案",
+      "key_desc": "ADC 采用的默认配置编号。",
+      "value": "6"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "ADC_Area",
+      "key_zh": "ADC 面积",
+      "key_desc": "ADC 面积；0 表示使用默认配置。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "ADC_Precision",
+      "key_zh": "ADC 精度",
+      "key_desc": "ADC 量化精度，单位 bit。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "ADC_Power",
+      "key_zh": "ADC 功耗",
+      "key_desc": "ADC 功耗，单位 W。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "ADC_Sample_Rate",
+      "key_zh": "ADC 采样率",
+      "key_desc": "ADC 采样率。",
+      "value": "0"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "ADC_Interval_Thres",
+      "key_zh": "ADC 阈值表",
+      "key_desc": "ADC 各量化区间的判决阈值。",
+      "value": "-1"
+    },
+    {
+      "section": "Interface level",
+      "section_zh": "接口层",
+      "key": "Logic_Op",
+      "key_zh": "逻辑操作模式",
+      "key_desc": "数字 PIM 下支持的逻辑运算类型。",
+      "value": "-1"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "PIM_Type",
+      "key_zh": "PIM 类型",
+      "key_desc": "0 表示模拟型 PIM，1 表示数字型 PIM。",
+      "value": "0"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "Xbar_Polarity",
+      "key_zh": "正负权实现方式",
+      "key_desc": "正负权重在 xbar 中的实现方式。",
+      "value": "2"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "Sub_Position",
+      "key_zh": "差分相减位置",
+      "key_desc": "正负阵列的相减发生在模拟域还是数字域。",
+      "value": "0"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "Group_Num",
+      "key_zh": "阵列分组数",
+      "key_desc": "每个 PE 中 crossbar 的分组数量。",
+      "value": "1"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "DAC_Num",
+      "key_zh": "DAC 数量",
+      "key_desc": "每个 group / subarray 使用的 DAC 数量。",
+      "value": "128"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "ADC_Num",
+      "key_zh": "ADC 数量",
+      "key_desc": "每个 group / subarray 使用的 ADC 数量。",
+      "value": "128"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "PE_inBuf_Size",
+      "key_zh": "PE 输入缓冲大小",
+      "key_desc": "每个 PE 输入缓冲的容量。",
+      "value": "0"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "PE_inBuf_Area",
+      "key_zh": "PE 输入缓冲面积",
+      "key_desc": "每个 PE 输入缓冲面积。",
+      "value": "0"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "Tile_outBuf_Size",
+      "key_zh": "Tile 输出缓冲大小",
+      "key_desc": "每个 Tile 输出缓冲容量。",
+      "value": "0"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "Tile_outBuf_Area",
+      "key_zh": "Tile 输出缓冲面积",
+      "key_desc": "每个 Tile 输出缓冲面积。",
+      "value": "0"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "DFU_Buf_Size",
+      "key_zh": "DFU 缓冲大小",
+      "key_desc": "数据转发单元缓冲容量。",
+      "value": "0"
+    },
+    {
+      "section": "Process element level",
+      "section_zh": "PE 层",
+      "key": "DFU_Buf_Area",
+      "key_zh": "DFU 缓冲面积",
+      "key_desc": "数据转发单元缓冲面积。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Digital_Frequency",
+      "key_zh": "数字频率",
+      "key_desc": "数字模块工作频率，单位 MHz。",
+      "value": "500"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Adder_Tech",
+      "key_zh": "加法器工艺",
+      "key_desc": "加法器模块工艺节点。",
+      "value": "45"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Adder_Area",
+      "key_zh": "加法器面积",
+      "key_desc": "加法器面积。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Adder_Power",
+      "key_zh": "加法器功耗",
+      "key_desc": "加法器功耗。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Multiplier_Tech",
+      "key_zh": "乘法器工艺",
+      "key_desc": "乘法器模块工艺节点。",
+      "value": "45"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Multiplier_Area",
+      "key_zh": "乘法器面积",
+      "key_desc": "乘法器面积。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Multiplier_Power",
+      "key_zh": "乘法器功耗",
+      "key_desc": "乘法器功耗。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "ShiftReg_Tech",
+      "key_zh": "移位寄存器工艺",
+      "key_desc": "移位寄存器模块工艺节点。",
+      "value": "65"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "ShiftReg_Area",
+      "key_zh": "移位寄存器面积",
+      "key_desc": "移位寄存器面积。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "ShiftReg_Power",
+      "key_zh": "移位寄存器功耗",
+      "key_desc": "移位寄存器功耗。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Reg_Tech",
+      "key_zh": "寄存器工艺",
+      "key_desc": "寄存器模块工艺节点。",
+      "value": "45"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Reg_Area",
+      "key_zh": "寄存器面积",
+      "key_desc": "寄存器面积。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "Reg_Power",
+      "key_zh": "寄存器功耗",
+      "key_desc": "寄存器功耗。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "JointModule_Tech",
+      "key_zh": "拼接模块工艺",
+      "key_desc": "Joint module 工艺节点。",
+      "value": "45"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "JointModule_Area",
+      "key_zh": "拼接模块面积",
+      "key_desc": "Joint module 面积。",
+      "value": "0"
+    },
+    {
+      "section": "Digital module",
+      "section_zh": "数字模块层",
+      "key": "JointModule_Power",
+      "key_zh": "拼接模块功耗",
+      "key_desc": "Joint module 功耗。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "PE_Num",
+      "key_zh": "PE 阵列规模",
+      "key_desc": "每个 Tile 中 PE 的二维排布。",
+      "value": "2,2"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Pooling_shape",
+      "key_zh": "池化窗口",
+      "key_desc": "硬件支持的池化核尺寸。",
+      "value": "3,3"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Pooling_unit_num",
+      "key_zh": "池化单元数",
+      "key_desc": "每个 Tile 中池化单元数量。",
+      "value": "64"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Pooling_Tech",
+      "key_zh": "池化工艺",
+      "key_desc": "池化单元工艺节点。",
+      "value": "65"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Pooling_area",
+      "key_zh": "池化面积",
+      "key_desc": "池化相关模块总面积。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Tile_Adder_Num",
+      "key_zh": "Tile 加法器数",
+      "key_desc": "每个 Tile 内加法器数量。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Tile_Adder_Level",
+      "key_zh": "Tile 加法层级",
+      "key_desc": "Tile 内加法树的最大层级。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Tile_ShiftReg_Num",
+      "key_zh": "Tile 移位寄存器数",
+      "key_desc": "每个 Tile 内移位寄存器数量。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Tile_ShiftReg_Level",
+      "key_zh": "Tile 移位层级",
+      "key_desc": "Tile 内移位寄存器层级。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Inter_Tile_Bandwidth",
+      "key_zh": "Tile 间带宽",
+      "key_desc": "不同 Tile 之间通信带宽，单位 Gbps。",
+      "value": "20"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Intra_Tile_Bandwidth",
+      "key_zh": "Tile 内带宽",
+      "key_desc": "Tile 内部 PE 间通信带宽，单位 Gbps。",
+      "value": "1024"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Tile_outBuf_Size",
+      "key_zh": "Tile 输出缓冲大小",
+      "key_desc": "每个 Tile 输出缓冲容量。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "Tile_outBuf_Area",
+      "key_zh": "Tile 输出缓冲面积",
+      "key_desc": "每个 Tile 输出缓冲面积。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "DFU_Buf_Size",
+      "key_zh": "DFU 缓冲大小",
+      "key_desc": "数据转发单元缓冲容量。",
+      "value": "0"
+    },
+    {
+      "section": "Tile level",
+      "section_zh": "Tile 层",
+      "key": "DFU_Buf_Area",
+      "key_zh": "DFU 缓冲面积",
+      "key_desc": "数据转发单元缓冲面积。",
+      "value": "0"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "Buffer_Choice",
+      "key_zh": "缓冲类型",
+      "key_desc": "架构级缓冲采用 SRAM/DRAM/RRAM 等哪种实现。",
+      "value": "1"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "Buffer_Technology",
+      "key_zh": "缓冲工艺",
+      "key_desc": "架构缓冲所用工艺节点。",
+      "value": "90"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "Buffer_ReadPower",
+      "key_zh": "缓冲读功耗",
+      "key_desc": "架构缓冲读功耗。",
+      "value": "0"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "Buffer_WritePower",
+      "key_zh": "缓冲写功耗",
+      "key_desc": "架构缓冲写功耗。",
+      "value": "0"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "Buffer_Bitwidth",
+      "key_zh": "缓冲位宽",
+      "key_desc": "架构缓冲总线位宽。",
+      "value": "64"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "LUT_Capacity",
+      "key_zh": "LUT 容量",
+      "key_desc": "查找表容量。",
+      "value": "1"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "LUT_Area",
+      "key_zh": "LUT 面积",
+      "key_desc": "查找表面积。",
+      "value": "0"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "LUT_Power",
+      "key_zh": "LUT 功耗",
+      "key_desc": "查找表功耗。",
+      "value": "0"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "LUT_Bandwidth",
+      "key_zh": "LUT 带宽",
+      "key_desc": "查找表访问带宽。",
+      "value": "0"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "Tile_Connection",
+      "key_zh": "Tile 连接方式",
+      "key_desc": "Tile 之间的拓扑/连接模式编号。",
+      "value": "2"
+    },
+    {
+      "section": "Architecture level",
+      "section_zh": "架构层",
+      "key": "Tile_Num",
+      "key_zh": "Tile 总规模",
+      "key_desc": "整个加速器 Tile 阵列规模。",
+      "value": "64,64"
+    },
+    {
+      "section": "Algorithm Configuration",
+      "section_zh": "算法配置层",
+      "key": "Weight_Polarity",
+      "key_zh": "权重极性模式",
+      "key_desc": "算法映射中权重正负表示方式。",
+      "value": "1"
+    },
+    {
+      "section": "Algorithm Configuration",
+      "section_zh": "算法配置层",
+      "key": "Simulation_Level",
+      "key_zh": "仿真级别",
+      "key_desc": "行为级或估算级等仿真模式。",
+      "value": "0"
+    },
+    {
+      "section": "Algorithm Configuration",
+      "section_zh": "算法配置层",
+      "key": "NoC_enable",
+      "key_zh": "NoC 开关",
+      "key_desc": "是否启用 NoC 模型。",
+      "value": "0"
+    }
+  ],
+  "preset_rows": [
+    {
+      "preset": "P0",
+      "observed_samples": 2,
+      "device_resistance": "1e6,1e4",
+      "device_variation": "0.5",
+      "device_saf": "0.01,0.01"
+    },
+    {
+      "preset": "P1",
+      "observed_samples": 2,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "1.0",
+      "device_saf": "0.05,0.05"
+    },
+    {
+      "preset": "P2",
+      "observed_samples": 2,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "3.0",
+      "device_saf": "0.05,0.05"
+    },
+    {
+      "preset": "P3",
+      "observed_samples": 2,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "1.5",
+      "device_saf": "0.5,0.5"
+    },
+    {
+      "preset": "P4",
+      "observed_samples": 2,
+      "device_resistance": "5e5,5e4",
+      "device_variation": "5.0",
+      "device_saf": "1.0,1.0"
+    }
+  ],
+  "preset_payloads": {
+    "P0": {
+      "preset": "P0",
+      "note": "近理想基线器件，用作对照组。",
+      "observed_samples": 2,
+      "device_resistance": "1e6,1e4",
+      "device_variation": "0.5",
+      "device_saf": "0.01,0.01"
+    },
+    "P1": {
+      "preset": "P1",
+      "note": "轻度退化器件，阻值窗口与缺陷率略变差。",
+      "observed_samples": 2,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "1.0",
+      "device_saf": "0.05,0.05"
+    },
+    "P2": {
+      "preset": "P2",
+      "note": "中度退化器件，波动进一步增大。",
+      "observed_samples": 2,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "3.0",
+      "device_saf": "0.05,0.05"
+    },
+    "P3": {
+      "preset": "P3",
+      "note": "重度退化器件，当前主实验下已整体掉出可行域。",
+      "observed_samples": 2,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "1.5",
+      "device_saf": "0.5,0.5"
+    },
+    "P4": {
+      "preset": "P4",
+      "note": "极限压力器件，通常只用于边界失效测试。",
+      "observed_samples": 2,
+      "device_resistance": "5e5,5e4",
+      "device_variation": "5.0",
+      "device_saf": "1.0,1.0"
+    }
+  },
+  "effect_rows": [
+    {
+      "group_by_zh": "Tile连接方式",
+      "value_count": 4,
+      "balanced_score_spread": 1.5571723522422103,
+      "accuracy_spread": 0.4150390625,
+      "latency_spread": 19454862.221624486,
+      "energy_spread": 8350139.27879539,
+      "area_spread": 2399828458.248562,
+      "dominant_value": "1"
+    },
+    {
+      "group_by_zh": "交叉阵列尺寸",
+      "value_count": 3,
+      "balanced_score_spread": 1.487595166093278,
+      "accuracy_spread": 0.265625,
+      "latency_spread": 17599908.861686155,
+      "energy_spread": 13205400.176296568,
+      "area_spread": 1374821685.076388,
+      "dominant_value": "256x256"
+    },
+    {
+      "group_by_zh": "PE阵列规模",
+      "value_count": 3,
+      "balanced_score_spread": 1.4778843986786159,
+      "accuracy_spread": 0.41162109375,
+      "latency_spread": 18635252.94829517,
+      "energy_spread": 4446860.064860474,
+      "area_spread": 2112327219.5303047,
+      "dominant_value": "2x2"
+    },
+    {
+      "group_by_zh": "DAC数量",
+      "value_count": 3,
+      "balanced_score_spread": 1.1641163508340127,
+      "accuracy_spread": 0.4127604166666667,
+      "latency_spread": 8701971.47601387,
+      "energy_spread": 5188178.0114795435,
+      "area_spread": 2173269319.0242743,
+      "dominant_value": "32"
+    },
+    {
+      "group_by_zh": "RRAM器件预设",
+      "value_count": 5,
+      "balanced_score_spread": 1.130050629144822,
+      "accuracy_spread": 0.830078125,
+      "latency_spread": 17461437.943418257,
+      "energy_spread": 7332391.789177814,
+      "area_spread": 2524630128.247814,
+      "dominant_value": "P2"
+    },
+    {
+      "group_by_zh": "ADC档位",
+      "value_count": 4,
+      "balanced_score_spread": 0.8901089056961676,
+      "accuracy_spread": 0.4029947916666667,
+      "latency_spread": 10014881.828071281,
+      "energy_spread": 9229140.20762522,
+      "area_spread": 1589941913.8770652,
+      "dominant_value": "8"
+    },
+    {
+      "group_by_zh": "片间带宽",
+      "value_count": 4,
+      "balanced_score_spread": 0.8138629818362234,
+      "accuracy_spread": 0.26888020833333337,
+      "latency_spread": 17703848.99012257,
+      "energy_spread": 8294125.673644211,
+      "area_spread": 1731297235.5088413,
+      "dominant_value": "80"
+    },
+    {
+      "group_by_zh": "差分相减位置",
+      "value_count": 2,
+      "balanced_score_spread": 0.014727722207413585,
+      "accuracy_spread": 0.15169270833333331,
+      "latency_spread": 5265873.816623544,
+      "energy_spread": 2817860.046762729,
+      "area_spread": 590212282.7218864,
+      "dominant_value": "1"
+    }
+  ],
+  "interaction_cells": [
+    {
+      "x": "512x512",
+      "y": "2x2",
+      "samples": 2,
+      "feasible_rate": 0.5,
+      "mean_accuracy": 0.51953125,
+      "best_latency_ns": 5370465.03940621,
+      "best_energy_nj": 3193060.1506895665
+    },
+    {
+      "x": "128x128",
+      "y": "4x4",
+      "samples": 2,
+      "feasible_rate": 0.5,
+      "mean_accuracy": 0.509765625,
+      "best_latency_ns": 14379162.483616222,
+      "best_energy_nj": 8819197.425288975
+    },
+    {
+      "x": "256x256",
+      "y": "4x4",
+      "samples": 1,
+      "feasible_rate": 0.0,
+      "mean_accuracy": 0.111328125,
+      "best_latency_ns": 8448704.031956494,
+      "best_energy_nj": 660743.0108614445
+    },
+    {
+      "x": "512x512",
+      "y": "4x4",
+      "samples": 1,
+      "feasible_rate": 0.0,
+      "mean_accuracy": 0.099609375,
+      "best_latency_ns": 16262945.769408964,
+      "best_energy_nj": 9245404.061644342
+    },
+    {
+      "x": "128x128",
+      "y": "8x8",
+      "samples": 1,
+      "feasible_rate": 0.0,
+      "mean_accuracy": 0.111328125,
+      "best_latency_ns": 48107582.663695194,
+      "best_energy_nj": 22244869.760856073
+    },
+    {
+      "x": "512x512",
+      "y": "8x8",
+      "samples": 3,
+      "feasible_rate": 0.0,
+      "mean_accuracy": 0.10677083333333333,
+      "best_latency_ns": 10481166.528073765,
+      "best_energy_nj": 1566016.2360366941
+    }
+  ],
+  "interaction_xs": [
+    "128x128",
+    "256x256",
+    "512x512"
+  ],
+  "interaction_ys": [
+    "2x2",
+    "4x4",
+    "8x8"
+  ],
+  "preset_best_rows": [
+    {
+      "preset": "P1",
+      "xbar_size": "512x512",
+      "adc_choice": "6",
+      "dac_num": "32",
+      "pe_num": "2x2",
+      "latency_ns": 5997133.2533934815,
+      "energy_nj": 3193060.1506895665,
+      "area_um2": 1006013853.5562103,
+      "accuracy": 0.939453125
+    }
+  ],
+  "samples": 10,
+  "feasible_samples": 2,
+  "feasible_rate": 0.2,
+  "global_pareto_samples": 1,
+  "accuracy_target_override": 0.88,
+  "accuracy_targets_in_data": [
+    0.88
+  ],
+  "algo_counts": {
+    "random": 10
+  },
+  "rram_preset_counts": {
+    "P2": 2,
+    "P0": 2,
+    "P1": 2,
+    "P3": 2,
+    "P4": 2
+  },
+  "best_feasible_latency": {
+    "rram_preset": "P1",
+    "xbar_size": "512x512",
+    "adc_choice": "6",
+    "dac_num": "32",
+    "xbar_polarity": "2",
+    "sub_position": "1",
+    "group_num": "1",
+    "pe_num": "2x2",
+    "tile_connection": "2",
+    "inter_tile_bw": "80",
+    "run_accuracy": true,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "accuracy_target": 0.88,
+    "latency_ns": 5997133.2533934815,
+    "energy_nj": 3193060.1506895665,
+    "area_um2": 1006013853.5562103,
+    "power_w": 29.559223145690417,
+    "accuracy": 0.939453125,
+    "run_id": "run_20260409_160500",
+    "trial_dir": "random_seed42",
+    "algo": "random",
+    "seed": 42,
+    "eval_index": 4,
+    "phase": "random",
+    "elapsed_s": 54.215092182159424,
+    "is_pareto": true,
+    "nn": "vgg8",
+    "dataset_module": "MNSIM.Interface.cifar10",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+    "device": "mps",
+    "dataset_signature": "9acc1b176e2b",
+    "feasible": true,
+    "global_pareto": true
+  },
+  "best_feasible_energy": {
+    "rram_preset": "P1",
+    "xbar_size": "512x512",
+    "adc_choice": "6",
+    "dac_num": "32",
+    "xbar_polarity": "2",
+    "sub_position": "1",
+    "group_num": "1",
+    "pe_num": "2x2",
+    "tile_connection": "2",
+    "inter_tile_bw": "80",
+    "run_accuracy": true,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "accuracy_target": 0.88,
+    "latency_ns": 5997133.2533934815,
+    "energy_nj": 3193060.1506895665,
+    "area_um2": 1006013853.5562103,
+    "power_w": 29.559223145690417,
+    "accuracy": 0.939453125,
+    "run_id": "run_20260409_160500",
+    "trial_dir": "random_seed42",
+    "algo": "random",
+    "seed": 42,
+    "eval_index": 4,
+    "phase": "random",
+    "elapsed_s": 54.215092182159424,
+    "is_pareto": true,
+    "nn": "vgg8",
+    "dataset_module": "MNSIM.Interface.cifar10",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+    "device": "mps",
+    "dataset_signature": "9acc1b176e2b",
+    "feasible": true,
+    "global_pareto": true
+  },
+  "best_feasible_area": {
+    "rram_preset": "P1",
+    "xbar_size": "512x512",
+    "adc_choice": "6",
+    "dac_num": "32",
+    "xbar_polarity": "2",
+    "sub_position": "1",
+    "group_num": "1",
+    "pe_num": "2x2",
+    "tile_connection": "2",
+    "inter_tile_bw": "80",
+    "run_accuracy": true,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "accuracy_target": 0.88,
+    "latency_ns": 5997133.2533934815,
+    "energy_nj": 3193060.1506895665,
+    "area_um2": 1006013853.5562103,
+    "power_w": 29.559223145690417,
+    "accuracy": 0.939453125,
+    "run_id": "run_20260409_160500",
+    "trial_dir": "random_seed42",
+    "algo": "random",
+    "seed": 42,
+    "eval_index": 4,
+    "phase": "random",
+    "elapsed_s": 54.215092182159424,
+    "is_pareto": true,
+    "nn": "vgg8",
+    "dataset_module": "MNSIM.Interface.cifar10",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+    "device": "mps",
+    "dataset_signature": "9acc1b176e2b",
+    "feasible": true,
+    "global_pareto": true
+  },
+  "best_accuracy": {
+    "rram_preset": "P1",
+    "xbar_size": "512x512",
+    "adc_choice": "6",
+    "dac_num": "32",
+    "xbar_polarity": "2",
+    "sub_position": "1",
+    "group_num": "1",
+    "pe_num": "2x2",
+    "tile_connection": "2",
+    "inter_tile_bw": "80",
+    "run_accuracy": true,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "accuracy_target": 0.88,
+    "latency_ns": 5997133.2533934815,
+    "energy_nj": 3193060.1506895665,
+    "area_um2": 1006013853.5562103,
+    "power_w": 29.559223145690417,
+    "accuracy": 0.939453125,
+    "run_id": "run_20260409_160500",
+    "trial_dir": "random_seed42",
+    "algo": "random",
+    "seed": 42,
+    "eval_index": 4,
+    "phase": "random",
+    "elapsed_s": 54.215092182159424,
+    "is_pareto": true,
+    "nn": "vgg8",
+    "dataset_module": "MNSIM.Interface.cifar10",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/SimConfig.ini",
+    "device": "mps",
+    "dataset_signature": "9acc1b176e2b",
+    "feasible": true,
+    "global_pareto": true
+  },
+  "metric_ranges": {
+    "latency_ns": {
+      "min": 5370465.03940621,
+      "max": 48107582.663695194
+    },
+    "energy_nj": {
+      "min": 660743.0108614445,
+      "max": 22244869.760856073
+    },
+    "area_um2": {
+      "min": 806405342.0955797,
+      "max": 3535253138.9269333
+    },
+    "accuracy": {
+      "min": 0.099609375,
+      "max": 0.939453125
+    }
+  }
+}

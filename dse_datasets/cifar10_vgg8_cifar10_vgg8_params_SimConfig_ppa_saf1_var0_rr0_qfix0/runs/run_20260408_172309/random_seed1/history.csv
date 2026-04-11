@@ -1,2 +1,0 @@
-algo,seed,eval_index,phase,latency_ns,energy_nj,area_um2,power_w,accuracy,elapsed_s,is_pareto,xbar_size,adc_choice,dac_choice,pe_num,tile_connection,inter_tile_bw,intra_tile_bw,extra_json
-random,1,1,random,16858401.915013786,2837962.093420527,1077746876.16584,64.44947507120662,,1.9403069019317627,1,512x512,4,3,4x4,2,20,512,{}

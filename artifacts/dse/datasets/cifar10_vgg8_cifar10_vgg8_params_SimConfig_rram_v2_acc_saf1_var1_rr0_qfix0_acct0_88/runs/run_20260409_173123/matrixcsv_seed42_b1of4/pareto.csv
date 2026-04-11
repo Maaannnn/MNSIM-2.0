@@ -1,0 +1,3 @@
+algo,seed,eval_index,phase,latency_ns,energy_nj,area_um2,power_w,accuracy,elapsed_s,rram_preset,xbar_size,adc_choice,dac_num,xbar_polarity,sub_position,group_num,pe_num,tile_connection,inter_tile_bw
+matrixcsv,42,1,matrix_A,4430024.989793121,9452907.30945102,2426702222.653233,429.6055257914888,0.931640625,1066.1578629016876,P0,128x128,4,32,2,1,1,2x2,2,80
+matrixcsv,42,5,matrix_A,5997133.2533934815,3196862.6607138305,894254493.5562104,29.65455182969042,0.93359375,207.20196986198425,P0,512x512,4,32,2,1,1,2x2,2,80

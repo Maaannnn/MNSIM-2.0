@@ -9,6 +9,7 @@ All algorithms import from here — never define SPACE or evaluate_config locall
 from __future__ import annotations
 
 import configparser as cp
+import copy
 import os
 import tempfile
 import time
@@ -28,46 +29,274 @@ from MNSIM.Energy_Model.Model_energy import Model_energy
 # Design Space Definition
 # ---------------------------------------------------------------------------
 
-SPACE: Dict[str, Dict[str, Any]] = {
-    "xbar_size": {
-        "section": "Crossbar level",
-        "key": "Xbar_Size",
-        # must satisfy xbar_row % Subarray_Size == 0 (default Subarray_Size=256)
-        "values": [(256, 256), (512, 512)],
+RRAM_PRESETS: Dict[str, Dict[str, Dict[str, str]]] = {
+    "P0": {
+        "Device level": {
+            "Device_Resistance": "1e6,1e4",
+            "Device_Variation": "0.5",
+            "Device_SAF": "0.01,0.01",
+        },
     },
-    "adc_choice": {
-        "section": "Interface level",
-        "key": "ADC_Choice",
-        "values": [4, 6, 7, 8],
+    "P1": {
+        "Device level": {
+            "Device_Resistance": "1e6,2e4",
+            "Device_Variation": "1.0",
+            "Device_SAF": "0.05,0.05",
+        },
     },
-    "dac_choice": {
-        "section": "Interface level",
-        "key": "DAC_Choice",
-        "values": [1, 2, 3, 4],
+    "P2": {
+        "Device level": {
+            "Device_Resistance": "1e6,2e4",
+            "Device_Variation": "3.0",
+            "Device_SAF": "0.05,0.05",
+        },
     },
-    "pe_num": {
-        "section": "Tile level",
-        "key": "PE_Num",
-        "values": [(2, 2), (4, 4), (8, 8)],
+    "P3": {
+        "Device level": {
+            "Device_Resistance": "1e6,2e4",
+            "Device_Variation": "1.5",
+            "Device_SAF": "0.5,0.5",
+        },
     },
-    "tile_connection": {
-        "section": "Architecture level",
-        "key": "Tile_Connection",
-        "values": [0, 1, 2, 3],
-    },
-    "inter_tile_bw": {
-        "section": "Tile level",
-        "key": "Inter_Tile_Bandwidth",
-        "values": [10, 20, 40, 80],
-    },
-    "intra_tile_bw": {
-        "section": "Tile level",
-        "key": "Intra_Tile_Bandwidth",
-        "values": [512, 1024, 2048],
+    "P4": {
+        "Device level": {
+            "Device_Resistance": "5e5,5e4",
+            "Device_Variation": "5.0",
+            "Device_SAF": "1.0,1.0",
+        },
     },
 }
 
-DIM_NAMES: list[str] = list(SPACE.keys())
+
+SPACE_PROFILES: Dict[str, Dict[str, Dict[str, Any]]] = {
+    "rram_full": {
+        "rram_preset": {
+            "values": list(RRAM_PRESETS.keys()),
+        },
+        "xbar_size": {
+            "section": "Crossbar level",
+            "key": "Xbar_Size",
+            "values": [(128, 128), (256, 256), (512, 512)],
+        },
+        "adc_choice": {
+            "section": "Interface level",
+            "key": "ADC_Choice",
+            "values": [4, 6, 7, 8],
+        },
+        "dac_num": {
+            "section": "Process element level",
+            "key": "DAC_Num",
+            "values": [32, 64, 128],
+        },
+        "xbar_polarity": {
+            "section": "Process element level",
+            "key": "Xbar_Polarity",
+            "values": [1, 2],
+        },
+        "sub_position": {
+            "section": "Process element level",
+            "key": "Sub_Position",
+            "values": [0, 1],
+        },
+        "group_num": {
+            "section": "Process element level",
+            "key": "Group_Num",
+            "values": [1, 2, 4],
+        },
+        "pe_num": {
+            "section": "Tile level",
+            "key": "PE_Num",
+            "values": [(2, 2), (4, 4), (8, 8)],
+        },
+        "tile_connection": {
+            "section": "Architecture level",
+            "key": "Tile_Connection",
+            "values": [0, 1, 2, 3],
+        },
+        "inter_tile_bw": {
+            "section": "Tile level",
+            "key": "Inter_Tile_Bandwidth",
+            "values": [10, 20, 40, 80],
+        },
+    },
+    "rram_v2": {
+        "rram_preset": {
+            "values": ["P0", "P1", "P2", "P3"],
+        },
+        "xbar_size": {
+            "section": "Crossbar level",
+            "key": "Xbar_Size",
+            "values": [(128, 128), (512, 512)],
+        },
+        "adc_choice": {
+            "section": "Interface level",
+            "key": "ADC_Choice",
+            "values": [4, 6],
+        },
+        "dac_num": {
+            "section": "Process element level",
+            "key": "DAC_Num",
+            "values": [32, 128],
+        },
+        "xbar_polarity": {
+            "section": "Process element level",
+            "key": "Xbar_Polarity",
+            "values": [2],
+        },
+        "sub_position": {
+            "section": "Process element level",
+            "key": "Sub_Position",
+            "values": [0, 1],
+        },
+        "group_num": {
+            "section": "Process element level",
+            "key": "Group_Num",
+            "values": [1],
+        },
+        "pe_num": {
+            "section": "Tile level",
+            "key": "PE_Num",
+            "values": [(2, 2), (4, 4)],
+        },
+        "tile_connection": {
+            "section": "Architecture level",
+            "key": "Tile_Connection",
+            "values": [2, 3],
+        },
+        "inter_tile_bw": {
+            "section": "Tile level",
+            "key": "Inter_Tile_Bandwidth",
+            "values": [40, 80],
+        },
+    },
+    "rram_formal_v3": {
+        "rram_preset": {
+            "values": ["P1", "P2", "P3"],
+        },
+        "xbar_size": {
+            "section": "Crossbar level",
+            "key": "Xbar_Size",
+            "values": [(512, 512)],
+        },
+        "adc_choice": {
+            "section": "Interface level",
+            "key": "ADC_Choice",
+            "values": [4, 6, 7],
+        },
+        "dac_num": {
+            "section": "Process element level",
+            "key": "DAC_Num",
+            "values": [32, 128],
+        },
+        "xbar_polarity": {
+            "section": "Process element level",
+            "key": "Xbar_Polarity",
+            "values": [2],
+        },
+        "sub_position": {
+            "section": "Process element level",
+            "key": "Sub_Position",
+            "values": [0, 1],
+        },
+        "group_num": {
+            "section": "Process element level",
+            "key": "Group_Num",
+            "values": [1],
+        },
+        "pe_num": {
+            "section": "Tile level",
+            "key": "PE_Num",
+            "values": [(2, 2)],
+        },
+        "tile_connection": {
+            "section": "Architecture level",
+            "key": "Tile_Connection",
+            "values": [2],
+        },
+        "inter_tile_bw": {
+            "section": "Tile level",
+            "key": "Inter_Tile_Bandwidth",
+            "values": [80],
+        },
+    },
+    "rram_guidance_v4": {
+        "rram_preset": {
+            "values": ["P1", "P2", "P3"],
+        },
+        "xbar_size": {
+            "section": "Crossbar level",
+            "key": "Xbar_Size",
+            "values": [(128, 128), (256, 256), (512, 512)],
+        },
+        "adc_choice": {
+            "section": "Interface level",
+            "key": "ADC_Choice",
+            "values": [4, 6, 7],
+        },
+        "dac_num": {
+            "section": "Process element level",
+            "key": "DAC_Num",
+            "values": [32, 128],
+        },
+        "xbar_polarity": {
+            "section": "Process element level",
+            "key": "Xbar_Polarity",
+            "values": [2],
+        },
+        "sub_position": {
+            "section": "Process element level",
+            "key": "Sub_Position",
+            "values": [0, 1],
+        },
+        "group_num": {
+            "section": "Process element level",
+            "key": "Group_Num",
+            "values": [1],
+        },
+        "pe_num": {
+            "section": "Tile level",
+            "key": "PE_Num",
+            "values": [(2, 2), (4, 4)],
+        },
+        "tile_connection": {
+            "section": "Architecture level",
+            "key": "Tile_Connection",
+            "values": [2, 3],
+        },
+        "inter_tile_bw": {
+            "section": "Tile level",
+            "key": "Inter_Tile_Bandwidth",
+            "values": [40, 80],
+        },
+    },
+}
+
+SPACE: Dict[str, Dict[str, Any]] = {}
+DIM_NAMES: list[str] = []
+ACTIVE_SPACE_PROFILE: str = ""
+
+
+def available_space_profiles() -> list[str]:
+    return sorted(SPACE_PROFILES.keys())
+
+
+def current_space_profile() -> str:
+    return ACTIVE_SPACE_PROFILE
+
+
+def apply_space_profile(profile: str) -> None:
+    """Mutate the global SPACE/DIM_NAMES in-place so imported references stay valid."""
+    global ACTIVE_SPACE_PROFILE
+    if profile not in SPACE_PROFILES:
+        raise KeyError(f"Unknown space profile: {profile}. choices={available_space_profiles()}")
+    SPACE.clear()
+    SPACE.update(copy.deepcopy(SPACE_PROFILES[profile]))
+    DIM_NAMES[:] = list(SPACE.keys())
+    ACTIVE_SPACE_PROFILE = profile
+
+
+DEFAULT_SPACE_PROFILE = os.environ.get("MNSIM_DSE_SPACE_PROFILE", "rram_v2")
+apply_space_profile(DEFAULT_SPACE_PROFILE)
 
 
 def space_size() -> int:
@@ -109,6 +338,21 @@ def _to_ini_value(v: Any) -> str:
     return str(v)
 
 
+def _apply_rram_preset(parser: cp.ConfigParser, preset: str) -> None:
+    overrides = RRAM_PRESETS[preset]
+    for section, kv in overrides.items():
+        for key, value in kv.items():
+            parser.set(section, key, value)
+
+
+def _apply_xbar_size(parser: cp.ConfigParser, size: Tuple[int, int]) -> None:
+    row, col = size
+    parser.set("Crossbar level", "Xbar_Size", f"{row},{col}")
+    # Keep the built-in subarray divisibility constraint valid for smaller xbars.
+    cur_sub = int(parser.get("Crossbar level", "Subarray_Size"))
+    parser.set("Crossbar level", "Subarray_Size", str(min(cur_sub, row)))
+
+
 # ---------------------------------------------------------------------------
 # Config management
 # ---------------------------------------------------------------------------
@@ -121,6 +365,12 @@ def write_temp_config(base_config: str, config_values: Dict[str, Any]) -> str:
     parser = cp.ConfigParser()
     parser.read(base_config, encoding="UTF-8")
     for dim, v in config_values.items():
+        if dim == "rram_preset":
+            _apply_rram_preset(parser, str(v))
+            continue
+        if dim == "xbar_size":
+            _apply_xbar_size(parser, v)
+            continue
         meta = SPACE[dim]
         parser.set(meta["section"], meta["key"], _to_ini_value(v))
     fd, path = tempfile.mkstemp(prefix="mnsim_dse_", suffix=".ini")
@@ -155,6 +405,61 @@ class EvalResult:
         return (self.latency_ns, self.energy_nj, self.area_um2)
 
 
+def accuracy_violation(accuracy: Optional[float], accuracy_target: Optional[float]) -> float:
+    """Constraint violation amount for minimum accuracy constraint."""
+    if accuracy_target is None:
+        return 0.0
+    if accuracy is None:
+        return float("inf")
+    return max(0.0, float(accuracy_target) - float(accuracy))
+
+
+def selection_objective_vector(
+    obj_vec: Tuple[float, float, float],
+    accuracy: Optional[float],
+    accuracy_target: Optional[float],
+) -> Tuple[float, ...]:
+    """
+    Objective vector used inside DSE algorithms.
+
+    Without an accuracy constraint, use the native 3-objective PPA vector.
+    With an accuracy constraint, prepend the violation term so the search
+    accounts for feasibility before optimizing PPA.
+    """
+    violation = accuracy_violation(accuracy, accuracy_target)
+    if accuracy_target is None:
+        return obj_vec
+    return (violation,) + obj_vec
+
+
+def pareto_indices_with_accuracy(records: list[Any], accuracy_target: Optional[float]) -> list[int]:
+    """
+    Final Pareto set for reporting.
+
+    If an accuracy constraint is active, report the Pareto front among feasible
+    points only. If no feasible point exists, fall back to constrained Pareto
+    over (violation, latency, energy, area) to expose the least-bad designs.
+    """
+    from dse.metrics import pareto_indices
+
+    if accuracy_target is None:
+        return pareto_indices([r.obj_vector() for r in records])
+
+    feasible = [
+        i for i, r in enumerate(records)
+        if r.accuracy is not None and r.accuracy >= float(accuracy_target)
+    ]
+    if feasible:
+        local = pareto_indices([records[i].obj_vector() for i in feasible])
+        return [feasible[i] for i in local]
+
+    constrained = [
+        selection_objective_vector(r.obj_vector(), r.accuracy, accuracy_target)
+        for r in records
+    ]
+    return pareto_indices(constrained)
+
+
 # ---------------------------------------------------------------------------
 # Evaluation
 # ---------------------------------------------------------------------------
@@ -171,6 +476,7 @@ def evaluate_config(
     fixed_qrange: bool = False,
     device: str = "cpu",
     dataset_module: str = "MNSIM.Interface.cifar10",
+    max_acc_batches: int = 11,
 ) -> EvalResult:
     """
     Evaluate a single hardware configuration by running the MNSIM simulator.
@@ -186,6 +492,7 @@ def evaluate_config(
         SimConfig_path=sim_config_path,
         weights_file=weights_path,
         device=device,
+        max_eval_batches=max_acc_batches,
     )
     structure = test_if.get_structure()
     tcg = TCG(structure, sim_config_path)

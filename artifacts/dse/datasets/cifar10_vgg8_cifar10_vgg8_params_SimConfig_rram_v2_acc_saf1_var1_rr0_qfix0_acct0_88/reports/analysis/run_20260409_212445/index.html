@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MNSIM DSE Analysis</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #dbe2ea;
+      --accent: #2563eb;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 8px; font-size: 30px; }
+    .sub { color: var(--muted); margin-bottom: 20px; }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 16px; margin-bottom: 18px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+    .card-label { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+    .card-value { font-size: 28px; font-weight: 700; }
+    .section { margin-top: 18px; }
+    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .note { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .chart-card, .table-card, .info-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+    .chart-title, .table-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .chart-svg { width: 100%; height: auto; display: block; }
+    .point-dot { cursor: pointer; }
+    .axis { stroke: #374151; stroke-width: 1.2; }
+    .grid { stroke: #e5e7eb; stroke-width: 1; }
+    .tick { fill: #6b7280; font-size: 11px; }
+    .axis-label { fill: #374151; font-size: 12px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-note { margin-left: auto; }
+    .swatch { width: 12px; height: 12px; display: inline-block; border-radius: 999px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); text-align: left; padding: 8px 10px; vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; background: #fafbfc; position: sticky; top: 0; }
+    .table-card { overflow: auto; max-height: 420px; }
+    .chart-empty { color: var(--muted); padding: 16px 0; }
+    .kv { display: grid; grid-template-columns: 180px 1fr; gap: 8px; font-size: 14px; }
+    .kv div:nth-child(odd) { color: var(--muted); }
+    .pill { display: inline-block; background: #eef2ff; color: #3730a3; border-radius: 999px; padding: 4px 10px; font-size: 12px; margin-right: 8px; }
+    .stage { display:inline-block; background:#ecfeff; color:#155e75; border:1px solid #a5f3fc; border-radius:999px; padding:4px 10px; font-size:12px; margin-bottom:10px; }
+    .tooltip {
+      position: fixed;
+      display: none;
+      max-width: 360px;
+      background: rgba(17, 24, 39, 0.96);
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.55;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.20);
+      pointer-events: none;
+      white-space: normal;
+      z-index: 9999;
+    }
+    ul.tight { margin: 6px 0 0 18px; padding: 0; }
+    ul.tight li { margin: 6px 0; line-height: 1.5; }
+    @media (max-width: 960px) {
+      .cards, .grid2 { grid-template-columns: 1fr; }
+      .legend-note { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>MNSIM DSE 采样结果分析</h1>
+    <div class="sub">输出目录：/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_rram_v2_acc_saf1_var1_rr0_qfix0_acct0_88/reports/analysis/run_20260409_212445</div>
+    <div class="cards"><div class='card'><div class='card-label'>样本数</div><div class='card-value'>24</div></div><div class='card'><div class='card-label'>可行样本</div><div class='card-value'>24</div></div><div class='card'><div class='card-label'>可行率</div><div class='card-value'>100%</div></div><div class='card'><div class='card-label'>全局 Pareto</div><div class='card-value'>4</div></div></div>
+
+    <div class="section">
+      <div class="section-title">摘要</div>
+      <div class="grid2">
+        <div class="info-card">
+          <div class="stage">当前阶段：进入正式搜索</div>
+          <div class="table-title">当前结果说明什么</div>
+          <ul class="tight"><li>当前可行率约 100.0%，已经可以开始做 NSGA-II / MOBO 正式搜索。</li><li>器件预设里当前最有希望的是 `P0`，其可行率约为 100.0%。</li><li>阵列规模上当前最值得继续比较的是 `128x128`，但仍需与另一个可行候选做迁移对照。</li><li>ADC 当前最值得保留的是 `4` 档，建议只保留少数档位做论文主实验。</li><li>PE 规模里 `2x2` 当前更稳，建议暂时不要回到更大的并行度。</li></ul>
+        </div>
+        <div class="info-card">
+          <div class="table-title">建议下一步实验</div>
+          <ul class="tight"><li>实验 1：只跑矩阵 A（主迁移矩阵），确认 P0/P1/P2/P3 下最优设计是否迁移。</li><li>实验 2：若矩阵 A 可行率仍低，再跑矩阵 B，验证 DAC 数量和差分相减位置是否能补偿器件退化。</li><li>实验 3：等可行率提升后，再在 rram_v2 空间上启动 NSGA-II 或 MOBO。</li></ul>
+        </div>
+      </div>
+      <div class="info-card" style="margin-top:16px;">
+        <div class="table-title">风险提示</div>
+        <ul class="tight"><li>样本数目前仍然很小，现阶段的结论只能用于缩空间，不能直接当最终论文结论。</li><li>如果后续 P2/P3 仍几乎全部不可行，要考虑下调精度门槛或进一步收紧结构空间。</li><li>如果只在 P1 上有可行点，论文主卖点会偏弱，必须补做迁移或鲁棒性实验。</li></ul>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="info-card">
+        <div class="section-title">数据说明</div>
+        <div class="kv">
+          <div>输入来源</div><div>dataset_root:/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/datasets/cifar10_vgg8_cifar10_vgg8_params_SimConfig_rram_v2_acc_saf1_var1_rr0_qfix0_acct0_88</div>
+          <div>精度门槛</div><div>0.88（若为 -，使用每行自带 accuracy_target）</div>
+          <div>算法分布</div><div>{&quot;matrixcsv&quot;: 24}</div>
+          <div>器件预设分布</div><div>{&quot;P0&quot;: 8, &quot;P1&quot;: 8, &quot;P2&quot;: 8}</div>
+        </div>
+        <div class="note" style="margin-top:12px;">
+          <span class="pill">浅色点=精度不达标</span>
+          <span class="pill">黑边点=全局 Pareto</span>
+          <span class="pill">颜色=RRAM preset</span>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="section-title">最好结果速览</div>
+        <div class="kv">
+          <div>最小时延</div><div>4,430,024.99 ns，preset=P0, xbar=128x128, adc=4</div>
+          <div>最小能耗</div><div>3,193,060.15 nJ，preset=P1, xbar=512x512, adc=4</div>
+          <div>最小面积</div><div>894,254,493.56 μm²，preset=P0, xbar=512x512, adc=4</div>
+          <div>最高精度</div><div>0.93457，preset=P0, xbar=128x128, adc=4</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PPA 散点图</div>
+      <div class="grid2">
+        
+    <div class="chart-card">
+      <div class="chart-title">时延-能耗散点</div>
+      <svg viewBox="0 0 560 360" class="chart-svg" role="img" aria-label="时延-能耗散点">
+        <rect x="0" y="0" width="560" height="360" fill="#ffffff" />
+        <line x1='68.0' y1='34' x2='68.0' y2='306' class='grid' /><line x1='68' y1='34.0' x2='544' y2='34.0' class='grid' /><line x1='187.0' y1='34' x2='187.0' y2='306' class='grid' /><line x1='68' y1='102.0' x2='544' y2='102.0' class='grid' /><line x1='306.0' y1='34' x2='306.0' y2='306' class='grid' /><line x1='68' y1='170.0' x2='544' y2='170.0' class='grid' /><line x1='425.0' y1='34' x2='425.0' y2='306' class='grid' /><line x1='68' y1='238.0' x2='544' y2='238.0' class='grid' /><line x1='544.0' y1='34' x2='544.0' y2='306' class='grid' /><line x1='68' y1='306.0' x2='544' y2='306.0' class='grid' />
+        <line x1="68" y1="306" x2="544" y2="306" class="axis" />
+        <line x1="68" y1="34" x2="68" y2="306" class="axis" />
+        <text x='68.0' y='342' class='tick' text-anchor='middle'>4,430,024.99</text><text x='60' y='38.0' class='tick' text-anchor='end'>14,239,571.05</text><text x='187.0' y='342' class='tick' text-anchor='middle'>6,231,713.85</text><text x='60' y='106.0' class='tick' text-anchor='end'>9,798,835.23</text><text x='306.0' y='342' class='tick' text-anchor='middle'>8,766,148.64</text><text x='60' y='174.0' class='tick' text-anchor='end'>6,742,982.05</text><text x='425.0' y='342' class='tick' text-anchor='middle'>12,331,336.73</text><text x='60' y='242.0' class='tick' text-anchor='end'>4,640,123.63</text><text x='544.0' y='342' class='tick' text-anchor='middle'>17,346,484.97</text><text x='60' y='310.0' class='tick' text-anchor='end'>3,193,060.15</text>
+        <circle cx='68.00' cy='108.54' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：2,426,702,222.65 μm²
+精度：0.931641'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：2,426,702,222.65 μm²
+精度：0.931641</title></circle><circle cx='493.21' cy='34.00' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：2,354,348,727.12 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：2,354,348,727.12 μm²
+精度：0.93457</title></circle><circle cx='68.00' cy='108.54' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711</title></circle><circle cx='493.21' cy='34.00' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：3,018,330,807.12 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：3,018,330,807.12 μm²
+精度：0.929688</title></circle><circle cx='173.62' cy='305.78' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：894,254,493.56 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：894,254,493.56 μm²
+精度：0.933594</title></circle><circle cx='544.00' cy='213.33' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617</title></circle><circle cx='173.62' cy='305.78' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：1,006,013,853.56 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：1,006,013,853.56 μm²
+精度：0.93457</title></circle><circle cx='544.00' cy='213.33' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,214,711,702.64 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,214,711,702.64 μm²
+精度：0.933594</title></circle><circle cx='68.00' cy='108.65' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.920898'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.920898</title></circle><circle cx='493.21' cy='34.07' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.929688</title></circle><circle cx='68.00' cy='108.65' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711</title></circle><circle cx='493.21' cy='34.07' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.928711</title></circle><circle cx='173.62' cy='306.00' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.933594</title></circle><circle cx='544.00' cy='213.48' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617</title></circle><circle cx='173.62' cy='306.00' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.90918'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.90918</title></circle><circle cx='544.00' cy='213.48' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.929688</title></circle><circle cx='68.00' cy='108.65' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.902344'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.902344</title></circle><circle cx='493.21' cy='34.07' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.919922'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.919922</title></circle><circle cx='68.00' cy='108.65' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.892578'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.892578</title></circle><circle cx='493.21' cy='34.07' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.93457</title></circle><circle cx='173.62' cy='306.00' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.929688</title></circle><circle cx='544.00' cy='213.48' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.923828'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.923828</title></circle><circle cx='173.62' cy='306.00' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.929688</title></circle><circle cx='544.00' cy='213.48' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.923828'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.923828</title></circle>
+        <text x="306.0" y="356" class="axis-label" text-anchor="middle">时延（ns）（对数坐标）</text>
+        <text x="16" y="170.0" class="axis-label" text-anchor="middle" transform="rotate(-90 16 170.0)">能耗（nJ）（对数坐标）</text>
+      </svg>
+      <div class="legend"><span class='legend-item'><span class='swatch' style='background:#4e79a7'></span>P0</span><span class='legend-item'><span class='swatch' style='background:#59a14f'></span>P1</span><span class='legend-item'><span class='swatch' style='background:#f28e2b'></span>P2</span><span class='legend-item'><span class='swatch' style='background:#e15759'></span>P3</span><span class='legend-item'><span class='swatch' style='background:#b07aa1'></span>P4</span><span class="legend-note">浅色=不可行；黑边=全局 Pareto；悬停可看详细配置</span></div>
+    </div>
+    
+        
+    <div class="chart-card">
+      <div class="chart-title">时延-面积散点</div>
+      <svg viewBox="0 0 560 360" class="chart-svg" role="img" aria-label="时延-面积散点">
+        <rect x="0" y="0" width="560" height="360" fill="#ffffff" />
+        <line x1='68.0' y1='34' x2='68.0' y2='306' class='grid' /><line x1='68' y1='34.0' x2='544' y2='34.0' class='grid' /><line x1='187.0' y1='34' x2='187.0' y2='306' class='grid' /><line x1='68' y1='102.0' x2='544' y2='102.0' class='grid' /><line x1='306.0' y1='34' x2='306.0' y2='306' class='grid' /><line x1='68' y1='170.0' x2='544' y2='170.0' class='grid' /><line x1='425.0' y1='34' x2='425.0' y2='306' class='grid' /><line x1='68' y1='238.0' x2='544' y2='238.0' class='grid' /><line x1='544.0' y1='34' x2='544.0' y2='306' class='grid' /><line x1='68' y1='306.0' x2='544' y2='306.0' class='grid' />
+        <line x1="68" y1="306" x2="544" y2="306" class="axis" />
+        <line x1="68" y1="34" x2="68" y2="306" class="axis" />
+        <text x='68.0' y='342' class='tick' text-anchor='middle'>4,430,024.99</text><text x='60' y='38.0' class='tick' text-anchor='end'>3,083,014,542.65</text><text x='187.0' y='342' class='tick' text-anchor='middle'>6,231,713.85</text><text x='60' y='106.0' class='tick' text-anchor='end'>2,262,543,630.21</text><text x='306.0' y='342' class='tick' text-anchor='middle'>8,766,148.64</text><text x='60' y='174.0' class='tick' text-anchor='end'>1,660,421,515.3</text><text x='425.0' y='342' class='tick' text-anchor='middle'>12,331,336.73</text><text x='60' y='242.0' class='tick' text-anchor='end'>1,218,539,864.45</text><text x='544.0' y='342' class='tick' text-anchor='middle'>17,346,484.97</text><text x='60' y='310.0' class='tick' text-anchor='end'>894,254,493.56</text>
+        <circle cx='68.00' cy='86.61' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：2,426,702,222.65 μm²
+精度：0.931641'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：2,426,702,222.65 μm²
+精度：0.931641</title></circle><circle cx='493.21' cy='93.26' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：2,354,348,727.12 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：2,354,348,727.12 μm²
+精度：0.93457</title></circle><circle cx='68.00' cy='34.00' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711</title></circle><circle cx='493.21' cy='38.66' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：3,018,330,807.12 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：3,018,330,807.12 μm²
+精度：0.929688</title></circle><circle cx='173.62' cy='306.00' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：894,254,493.56 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：894,254,493.56 μm²
+精度：0.933594</title></circle><circle cx='544.00' cy='264.76' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617</title></circle><circle cx='173.62' cy='280.12' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：1,006,013,853.56 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：1,006,013,853.56 μm²
+精度：0.93457</title></circle><circle cx='544.00' cy='238.69' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,214,711,702.64 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,214,711,702.64 μm²
+精度：0.933594</title></circle><circle cx='68.00' cy='86.61' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.920898'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.920898</title></circle><circle cx='493.21' cy='93.26' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.929688</title></circle><circle cx='68.00' cy='34.00' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711</title></circle><circle cx='493.21' cy='38.66' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.928711</title></circle><circle cx='173.62' cy='306.00' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.933594</title></circle><circle cx='544.00' cy='264.76' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617</title></circle><circle cx='173.62' cy='280.12' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.90918'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.90918</title></circle><circle cx='544.00' cy='238.69' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.929688</title></circle><circle cx='68.00' cy='86.61' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.902344'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.902344</title></circle><circle cx='493.21' cy='93.26' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.919922'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.919922</title></circle><circle cx='68.00' cy='34.00' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.892578'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.892578</title></circle><circle cx='493.21' cy='38.66' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.93457</title></circle><circle cx='173.62' cy='306.00' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.929688</title></circle><circle cx='544.00' cy='264.76' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.923828'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.923828</title></circle><circle cx='173.62' cy='280.12' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.929688</title></circle><circle cx='544.00' cy='238.69' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.923828'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.923828</title></circle>
+        <text x="306.0" y="356" class="axis-label" text-anchor="middle">时延（ns）（对数坐标）</text>
+        <text x="16" y="170.0" class="axis-label" text-anchor="middle" transform="rotate(-90 16 170.0)">面积（μm²）（对数坐标）</text>
+      </svg>
+      <div class="legend"><span class='legend-item'><span class='swatch' style='background:#4e79a7'></span>P0</span><span class='legend-item'><span class='swatch' style='background:#59a14f'></span>P1</span><span class='legend-item'><span class='swatch' style='background:#f28e2b'></span>P2</span><span class='legend-item'><span class='swatch' style='background:#e15759'></span>P3</span><span class='legend-item'><span class='swatch' style='background:#b07aa1'></span>P4</span><span class="legend-note">浅色=不可行；黑边=全局 Pareto；悬停可看详细配置</span></div>
+    </div>
+    
+      </div>
+      <div class="grid2" style="margin-top:16px;">
+        
+    <div class="chart-card">
+      <div class="chart-title">能耗-面积散点</div>
+      <svg viewBox="0 0 560 360" class="chart-svg" role="img" aria-label="能耗-面积散点">
+        <rect x="0" y="0" width="560" height="360" fill="#ffffff" />
+        <line x1='68.0' y1='34' x2='68.0' y2='306' class='grid' /><line x1='68' y1='34.0' x2='544' y2='34.0' class='grid' /><line x1='187.0' y1='34' x2='187.0' y2='306' class='grid' /><line x1='68' y1='102.0' x2='544' y2='102.0' class='grid' /><line x1='306.0' y1='34' x2='306.0' y2='306' class='grid' /><line x1='68' y1='170.0' x2='544' y2='170.0' class='grid' /><line x1='425.0' y1='34' x2='425.0' y2='306' class='grid' /><line x1='68' y1='238.0' x2='544' y2='238.0' class='grid' /><line x1='544.0' y1='34' x2='544.0' y2='306' class='grid' /><line x1='68' y1='306.0' x2='544' y2='306.0' class='grid' />
+        <line x1="68" y1="306" x2="544" y2="306" class="axis" />
+        <line x1="68" y1="34" x2="68" y2="306" class="axis" />
+        <text x='68.0' y='342' class='tick' text-anchor='middle'>3,193,060.15</text><text x='60' y='38.0' class='tick' text-anchor='end'>3,083,014,542.65</text><text x='187.0' y='342' class='tick' text-anchor='middle'>4,640,123.63</text><text x='60' y='106.0' class='tick' text-anchor='end'>2,262,543,630.21</text><text x='306.0' y='342' class='tick' text-anchor='middle'>6,742,982.05</text><text x='60' y='174.0' class='tick' text-anchor='end'>1,660,421,515.3</text><text x='425.0' y='342' class='tick' text-anchor='middle'>9,798,835.23</text><text x='60' y='242.0' class='tick' text-anchor='end'>1,218,539,864.45</text><text x='544.0' y='342' class='tick' text-anchor='middle'>14,239,571.05</text><text x='60' y='310.0' class='tick' text-anchor='end'>894,254,493.56</text>
+        <circle cx='413.56' cy='86.61' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：2,426,702,222.65 μm²
+精度：0.931641'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：2,426,702,222.65 μm²
+精度：0.931641</title></circle><circle cx='544.00' cy='93.26' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：2,354,348,727.12 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：2,354,348,727.12 μm²
+精度：0.93457</title></circle><circle cx='413.56' cy='34.00' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711</title></circle><circle cx='544.00' cy='38.66' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：3,018,330,807.12 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：3,018,330,807.12 μm²
+精度：0.929688</title></circle><circle cx='68.38' cy='306.00' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：894,254,493.56 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：894,254,493.56 μm²
+精度：0.933594</title></circle><circle cx='230.18' cy='264.76' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617</title></circle><circle cx='68.38' cy='280.12' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：1,006,013,853.56 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：1,006,013,853.56 μm²
+精度：0.93457</title></circle><circle cx='230.18' cy='238.69' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,214,711,702.64 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,214,711,702.64 μm²
+精度：0.933594</title></circle><circle cx='413.37' cy='86.61' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.920898'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.920898</title></circle><circle cx='543.88' cy='93.26' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.929688</title></circle><circle cx='413.37' cy='34.00' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711</title></circle><circle cx='543.88' cy='38.66' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.928711</title></circle><circle cx='68.00' cy='306.00' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.933594</title></circle><circle cx='229.92' cy='264.76' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617</title></circle><circle cx='68.00' cy='280.12' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.90918'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.90918</title></circle><circle cx='229.92' cy='238.69' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.929688</title></circle><circle cx='413.37' cy='86.61' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.902344'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.902344</title></circle><circle cx='543.88' cy='93.26' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.919922'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.919922</title></circle><circle cx='413.37' cy='34.00' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.892578'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.892578</title></circle><circle cx='543.88' cy='38.66' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.93457</title></circle><circle cx='68.00' cy='306.00' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.929688</title></circle><circle cx='229.92' cy='264.76' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.923828'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.923828</title></circle><circle cx='68.00' cy='280.12' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.929688</title></circle><circle cx='229.92' cy='238.69' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.923828'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.923828</title></circle>
+        <text x="306.0" y="356" class="axis-label" text-anchor="middle">能耗（nJ）（对数坐标）</text>
+        <text x="16" y="170.0" class="axis-label" text-anchor="middle" transform="rotate(-90 16 170.0)">面积（μm²）（对数坐标）</text>
+      </svg>
+      <div class="legend"><span class='legend-item'><span class='swatch' style='background:#4e79a7'></span>P0</span><span class='legend-item'><span class='swatch' style='background:#59a14f'></span>P1</span><span class='legend-item'><span class='swatch' style='background:#f28e2b'></span>P2</span><span class='legend-item'><span class='swatch' style='background:#e15759'></span>P3</span><span class='legend-item'><span class='swatch' style='background:#b07aa1'></span>P4</span><span class="legend-note">浅色=不可行；黑边=全局 Pareto；悬停可看详细配置</span></div>
+    </div>
+    
+        
+    <div class="chart-card">
+      <div class="chart-title">时延-精度散点</div>
+      <svg viewBox="0 0 560 360" class="chart-svg" role="img" aria-label="时延-精度散点">
+        <rect x="0" y="0" width="560" height="360" fill="#ffffff" />
+        <line x1='68.0' y1='34' x2='68.0' y2='306' class='grid' /><line x1='68' y1='34.0' x2='544' y2='34.0' class='grid' /><line x1='187.0' y1='34' x2='187.0' y2='306' class='grid' /><line x1='68' y1='102.0' x2='544' y2='102.0' class='grid' /><line x1='306.0' y1='34' x2='306.0' y2='306' class='grid' /><line x1='68' y1='170.0' x2='544' y2='170.0' class='grid' /><line x1='425.0' y1='34' x2='425.0' y2='306' class='grid' /><line x1='68' y1='238.0' x2='544' y2='238.0' class='grid' /><line x1='544.0' y1='34' x2='544.0' y2='306' class='grid' /><line x1='68' y1='306.0' x2='544' y2='306.0' class='grid' />
+        <line x1="68" y1="306" x2="544" y2="306" class="axis" />
+        <line x1="68" y1="34" x2="68" y2="306" class="axis" />
+        <text x='68.0' y='342' class='tick' text-anchor='middle'>4,430,024.99</text><text x='60' y='38.0' class='tick' text-anchor='end'>0.93457</text><text x='187.0' y='342' class='tick' text-anchor='middle'>6,231,713.85</text><text x='60' y='106.0' class='tick' text-anchor='end'>0.924072</text><text x='306.0' y='342' class='tick' text-anchor='middle'>8,766,148.64</text><text x='60' y='174.0' class='tick' text-anchor='end'>0.913574</text><text x='425.0' y='342' class='tick' text-anchor='middle'>12,331,336.73</text><text x='60' y='242.0' class='tick' text-anchor='end'>0.903076</text><text x='544.0' y='342' class='tick' text-anchor='middle'>17,346,484.97</text><text x='60' y='310.0' class='tick' text-anchor='end'>0.892578</text>
+        <circle cx='68.00' cy='52.98' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：2,426,702,222.65 μm²
+精度：0.931641'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：2,426,702,222.65 μm²
+精度：0.931641</title></circle><circle cx='493.21' cy='34.00' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：2,354,348,727.12 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：2,354,348,727.12 μm²
+精度：0.93457</title></circle><circle cx='68.00' cy='71.95' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,452,907.31 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711</title></circle><circle cx='493.21' cy='65.63' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：3,018,330,807.12 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,239,571.05 nJ
+面积：3,018,330,807.12 μm²
+精度：0.929688</title></circle><circle cx='173.62' cy='40.33' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：894,254,493.56 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：894,254,493.56 μm²
+精度：0.933594</title></circle><circle cx='544.00' cy='46.65' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617</title></circle><circle cx='173.62' cy='34.00' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：1,006,013,853.56 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,196,862.66 nJ
+面积：1,006,013,853.56 μm²
+精度：0.93457</title></circle><circle cx='544.00' cy='40.33' r='4.5' fill='#4e79a7' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,214,711,702.64 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P0
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,314,097.76 nJ
+面积：1,214,711,702.64 μm²
+精度：0.933594</title></circle><circle cx='68.00' cy='122.56' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.920898'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.920898</title></circle><circle cx='493.21' cy='65.63' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.929688</title></circle><circle cx='68.00' cy='71.95' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.928711</title></circle><circle cx='493.21' cy='71.95' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.928711'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.928711</title></circle><circle cx='173.62' cy='40.33' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.933594'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.933594</title></circle><circle cx='544.00' cy='46.65' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.932617</title></circle><circle cx='173.62' cy='198.47' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.90918'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.90918</title></circle><circle cx='544.00' cy='65.63' r='4.5' fill='#59a14f' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P1
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.929688</title></circle><circle cx='68.00' cy='242.74' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.902344'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：2,426,702,222.65 μm²
+精度：0.902344</title></circle><circle cx='493.21' cy='128.88' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.919922'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：2,354,348,727.12 μm²
+精度：0.919922</title></circle><circle cx='68.00' cy='306.00' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.892578'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：4,430,024.99 ns
+能耗：9,447,367.8 nJ
+面积：3,083,014,542.65 μm²
+精度：0.892578</title></circle><circle cx='493.21' cy='34.00' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.93457'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：128x128
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：14,995,379.26 ns
+能耗：14,234,031.54 nJ
+面积：3,018,330,807.12 μm²
+精度：0.93457</title></circle><circle cx='173.62' cy='65.63' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='#111827' stroke-width='1.5' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：是
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：894,254,493.56 μm²
+精度：0.929688</title></circle><circle cx='544.00' cy='103.58' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.923828'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：4
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,078,847,382.64 μm²
+精度：0.923828</title></circle><circle cx='173.62' cy='65.63' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.929688'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：2x2
+Tile连接：2
+片间带宽：80 Gb/s
+时延：5,997,133.25 ns
+能耗：3,193,060.15 nJ
+面积：1,006,013,853.56 μm²
+精度：0.929688</title></circle><circle cx='544.00' cy='103.58' r='4.5' fill='#f28e2b' fill-opacity='0.85' stroke='none' stroke-width='0' class='point-dot' data-tooltip='点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.923828'><title>点ID：-
+可行：是
+全局Pareto：否
+器件预设：P2
+交叉阵列：512x512
+ADC：6
+DAC数量：32
+PE规模：4x4
+Tile连接：2
+片间带宽：80 Gb/s
+时延：17,346,484.97 ns
+能耗：5,309,737.22 nJ
+面积：1,214,711,702.64 μm²
+精度：0.923828</title></circle>
+        <text x="306.0" y="356" class="axis-label" text-anchor="middle">时延（ns）（对数坐标）</text>
+        <text x="16" y="170.0" class="axis-label" text-anchor="middle" transform="rotate(-90 16 170.0)">精度</text>
+      </svg>
+      <div class="legend"><span class='legend-item'><span class='swatch' style='background:#4e79a7'></span>P0</span><span class='legend-item'><span class='swatch' style='background:#59a14f'></span>P1</span><span class='legend-item'><span class='swatch' style='background:#f28e2b'></span>P2</span><span class='legend-item'><span class='swatch' style='background:#e15759'></span>P3</span><span class='legend-item'><span class='swatch' style='background:#b07aa1'></span>P4</span><span class="legend-note">浅色=不可行；黑边=全局 Pareto；悬停可看详细配置</span></div>
+    </div>
+    
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">名词说明</div>
+      <div class="info-card">
+        <div class="kv">
+          <div>feasible（可行）</div><div>表示该设计点满足精度约束，即 `accuracy >= accuracy_target`。</div>
+          <div>global Pareto（全局帕累托）</div><div>表示该设计点在全部可行样本里，不会被其他点同时在时延、能耗、面积三项上完全压制。</div>
+          <div>时延</div><div>单位是 `ns`。</div>
+          <div>能耗</div><div>单位是 `nJ`。</div>
+          <div>面积</div><div>单位是 `μm²`。</div>
+          <div>片间带宽</div><div>按 `Gb/s` 理解更直观，当前页面已显式写出单位。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">推荐配置</div>
+      <div class='table-card'><div class='table-title'>Top Configs（优先展示可行解）</div><table><thead><tr><th>排序</th><th>是否可行（feasible）</th><th>是否全局帕累托（global Pareto）</th><th>RRAM 器件预设</th><th>交叉阵列尺寸</th><th>ADC 档位</th><th>PE 阵列规模</th><th>时延（ns）</th><th>能耗（nJ）</th><th>面积（μm²）</th><th>精度</th><th>算法</th><th>随机种子</th><th>评估序号</th></tr></thead><tbody><tr><td>1</td><td>是</td><td>是</td><td>P1</td><td>512x512</td><td>4</td><td>2x2</td><td>5,997,133.25</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.933594</td><td>matrixcsv</td><td>42</td><td>5</td></tr><tr><td>2</td><td>是</td><td>否</td><td>P0</td><td>512x512</td><td>4</td><td>2x2</td><td>5,997,133.25</td><td>3,196,862.66</td><td>894,254,493.56</td><td>0.933594</td><td>matrixcsv</td><td>42</td><td>5</td></tr><tr><td>3</td><td>是</td><td>是</td><td>P2</td><td>512x512</td><td>4</td><td>2x2</td><td>5,997,133.25</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.929688</td><td>matrixcsv</td><td>42</td><td>5</td></tr><tr><td>4</td><td>是</td><td>否</td><td>P0</td><td>512x512</td><td>6</td><td>2x2</td><td>5,997,133.25</td><td>3,196,862.66</td><td>1,006,013,853.56</td><td>0.93457</td><td>matrixcsv</td><td>42</td><td>7</td></tr><tr><td>5</td><td>是</td><td>否</td><td>P2</td><td>512x512</td><td>6</td><td>2x2</td><td>5,997,133.25</td><td>3,193,060.15</td><td>1,006,013,853.56</td><td>0.929688</td><td>matrixcsv</td><td>42</td><td>7</td></tr><tr><td>6</td><td>是</td><td>否</td><td>P1</td><td>512x512</td><td>6</td><td>2x2</td><td>5,997,133.25</td><td>3,193,060.15</td><td>1,006,013,853.56</td><td>0.90918</td><td>matrixcsv</td><td>42</td><td>7</td></tr><tr><td>7</td><td>是</td><td>否</td><td>P0</td><td>128x128</td><td>4</td><td>2x2</td><td>4,430,024.99</td><td>9,452,907.31</td><td>2,426,702,222.65</td><td>0.931641</td><td>matrixcsv</td><td>42</td><td>1</td></tr><tr><td>8</td><td>是</td><td>是</td><td>P1</td><td>128x128</td><td>4</td><td>2x2</td><td>4,430,024.99</td><td>9,447,367.8</td><td>2,426,702,222.65</td><td>0.920898</td><td>matrixcsv</td><td>42</td><td>1</td></tr><tr><td>9</td><td>是</td><td>是</td><td>P2</td><td>128x128</td><td>4</td><td>2x2</td><td>4,430,024.99</td><td>9,447,367.8</td><td>2,426,702,222.65</td><td>0.902344</td><td>matrixcsv</td><td>42</td><td>1</td></tr><tr><td>10</td><td>是</td><td>否</td><td>P1</td><td>512x512</td><td>4</td><td>4x4</td><td>17,346,484.97</td><td>5,309,737.22</td><td>1,078,847,382.64</td><td>0.932617</td><td>matrixcsv</td><td>42</td><td>6</td></tr><tr><td>11</td><td>是</td><td>否</td><td>P0</td><td>512x512</td><td>4</td><td>4x4</td><td>17,346,484.97</td><td>5,314,097.76</td><td>1,078,847,382.64</td><td>0.932617</td><td>matrixcsv</td><td>42</td><td>6</td></tr><tr><td>12</td><td>是</td><td>否</td><td>P2</td><td>512x512</td><td>4</td><td>4x4</td><td>17,346,484.97</td><td>5,309,737.22</td><td>1,078,847,382.64</td><td>0.923828</td><td>matrixcsv</td><td>42</td><td>6</td></tr><tr><td>13</td><td>是</td><td>否</td><td>P0</td><td>512x512</td><td>6</td><td>4x4</td><td>17,346,484.97</td><td>5,314,097.76</td><td>1,214,711,702.64</td><td>0.933594</td><td>matrixcsv</td><td>42</td><td>8</td></tr><tr><td>14</td><td>是</td><td>否</td><td>P1</td><td>512x512</td><td>6</td><td>4x4</td><td>17,346,484.97</td><td>5,309,737.22</td><td>1,214,711,702.64</td><td>0.929688</td><td>matrixcsv</td><td>42</td><td>8</td></tr><tr><td>15</td><td>是</td><td>否</td><td>P2</td><td>512x512</td><td>6</td><td>4x4</td><td>17,346,484.97</td><td>5,309,737.22</td><td>1,214,711,702.64</td><td>0.923828</td><td>matrixcsv</td><td>42</td><td>8</td></tr><tr><td>16</td><td>是</td><td>否</td><td>P1</td><td>128x128</td><td>6</td><td>2x2</td><td>4,430,024.99</td><td>9,447,367.8</td><td>3,083,014,542.65</td><td>0.928711</td><td>matrixcsv</td><td>42</td><td>3</td></tr><tr><td>17</td><td>是</td><td>否</td><td>P0</td><td>128x128</td><td>6</td><td>2x2</td><td>4,430,024.99</td><td>9,452,907.31</td><td>3,083,014,542.65</td><td>0.928711</td><td>matrixcsv</td><td>42</td><td>3</td></tr><tr><td>18</td><td>是</td><td>否</td><td>P2</td><td>128x128</td><td>6</td><td>2x2</td><td>4,430,024.99</td><td>9,447,367.8</td><td>3,083,014,542.65</td><td>0.892578</td><td>matrixcsv</td><td>42</td><td>3</td></tr><tr><td>19</td><td>是</td><td>否</td><td>P0</td><td>128x128</td><td>4</td><td>4x4</td><td>14,995,379.26</td><td>14,239,571.05</td><td>2,354,348,727.12</td><td>0.93457</td><td>matrixcsv</td><td>42</td><td>2</td></tr><tr><td>20</td><td>是</td><td>否</td><td>P1</td><td>128x128</td><td>4</td><td>4x4</td><td>14,995,379.26</td><td>14,234,031.54</td><td>2,354,348,727.12</td><td>0.929688</td><td>matrixcsv</td><td>42</td><td>2</td></tr></tbody></table></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">变量影响摘要</div>
+      <div class="grid2">
+        <div class='table-card'><div class='table-title'>按 RRAM preset 分组</div><table><thead><tr><th>分组维度</th><th>取值</th><th>样本数</th><th>可行样本数</th><th>可行率</th><th>全局 Pareto 点数</th><th>best_latency_ns</th><th>best_energy_nj</th><th>best_area_um2</th><th>最高精度</th></tr></thead><tbody><tr><td>RRAM器件预设</td><td>P0</td><td>8</td><td>8</td><td>1</td><td>0</td><td>4,430,024.99</td><td>3,196,862.66</td><td>894,254,493.56</td><td>0.93457</td></tr><tr><td>RRAM器件预设</td><td>P1</td><td>8</td><td>8</td><td>1</td><td>2</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.933594</td></tr><tr><td>RRAM器件预设</td><td>P2</td><td>8</td><td>8</td><td>1</td><td>2</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr></tbody></table></div>
+        <div class='table-card'><div class='table-title'>按 xbar_size 分组</div><table><thead><tr><th>分组维度</th><th>取值</th><th>样本数</th><th>可行样本数</th><th>可行率</th><th>全局 Pareto 点数</th><th>best_latency_ns</th><th>best_energy_nj</th><th>best_area_um2</th><th>最高精度</th></tr></thead><tbody><tr><td>交叉阵列尺寸</td><td>128x128</td><td>12</td><td>12</td><td>1</td><td>2</td><td>4,430,024.99</td><td>9,447,367.8</td><td>2,354,348,727.12</td><td>0.93457</td></tr><tr><td>交叉阵列尺寸</td><td>512x512</td><td>12</td><td>12</td><td>1</td><td>2</td><td>5,997,133.25</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr></tbody></table></div>
+      </div>
+      <div class="grid2" style="margin-top:16px;">
+        <div class='table-card'><div class='table-title'>按 adc_choice 分组</div><table><thead><tr><th>分组维度</th><th>取值</th><th>样本数</th><th>可行样本数</th><th>可行率</th><th>全局 Pareto 点数</th><th>best_latency_ns</th><th>best_energy_nj</th><th>best_area_um2</th><th>最高精度</th></tr></thead><tbody><tr><td>ADC档位</td><td>4</td><td>12</td><td>12</td><td>1</td><td>4</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr><tr><td>ADC档位</td><td>6</td><td>12</td><td>12</td><td>1</td><td>0</td><td>4,430,024.99</td><td>3,193,060.15</td><td>1,006,013,853.56</td><td>0.93457</td></tr></tbody></table></div>
+        <div class='table-card'><div class='table-title'>全部分组摘要</div><table><thead><tr><th>分组维度</th><th>取值</th><th>样本数</th><th>可行样本数</th><th>可行率</th><th>全局 Pareto 点数</th><th>best_latency_ns</th><th>best_energy_nj</th><th>best_area_um2</th><th>最高精度</th></tr></thead><tbody><tr><td>ADC档位</td><td>4</td><td>12</td><td>12</td><td>1</td><td>4</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr><tr><td>ADC档位</td><td>6</td><td>12</td><td>12</td><td>1</td><td>0</td><td>4,430,024.99</td><td>3,193,060.15</td><td>1,006,013,853.56</td><td>0.93457</td></tr><tr><td>片间带宽</td><td>80</td><td>24</td><td>24</td><td>1</td><td>4</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr><tr><td>PE阵列规模</td><td>2x2</td><td>12</td><td>12</td><td>1</td><td>4</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr><tr><td>PE阵列规模</td><td>4x4</td><td>12</td><td>12</td><td>1</td><td>0</td><td>14,995,379.26</td><td>5,309,737.22</td><td>1,078,847,382.64</td><td>0.93457</td></tr><tr><td>RRAM器件预设</td><td>P0</td><td>8</td><td>8</td><td>1</td><td>0</td><td>4,430,024.99</td><td>3,196,862.66</td><td>894,254,493.56</td><td>0.93457</td></tr><tr><td>RRAM器件预设</td><td>P1</td><td>8</td><td>8</td><td>1</td><td>2</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.933594</td></tr><tr><td>RRAM器件预设</td><td>P2</td><td>8</td><td>8</td><td>1</td><td>2</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr><tr><td>Tile连接方式</td><td>2</td><td>24</td><td>24</td><td>1</td><td>4</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr><tr><td>交叉阵列尺寸</td><td>128x128</td><td>12</td><td>12</td><td>1</td><td>2</td><td>4,430,024.99</td><td>9,447,367.8</td><td>2,354,348,727.12</td><td>0.93457</td></tr><tr><td>交叉阵列尺寸</td><td>512x512</td><td>12</td><td>12</td><td>1</td><td>2</td><td>5,997,133.25</td><td>3,193,060.15</td><td>894,254,493.56</td><td>0.93457</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <div id="chart-tooltip" class="tooltip"></div>
+  <script>
+    (() => {
+      const tooltip = document.getElementById("chart-tooltip");
+      if (!tooltip) return;
+      const show = (event, text) => {
+        tooltip.innerHTML = String(text || "").replace(/\n/g, "<br>");
+        tooltip.style.display = "block";
+        const offset = 16;
+        let left = event.clientX + offset;
+        let top = event.clientY + offset;
+        const rect = tooltip.getBoundingClientRect();
+        if (left + rect.width > window.innerWidth - 12) left = event.clientX - rect.width - offset;
+        if (top + rect.height > window.innerHeight - 12) top = event.clientY - rect.height - offset;
+        tooltip.style.left = left + "px";
+        tooltip.style.top = top + "px";
+      };
+      const hide = () => {
+        tooltip.style.display = "none";
+      };
+      document.querySelectorAll(".point-dot").forEach((node) => {
+        node.addEventListener("mouseenter", (event) => show(event, node.getAttribute("data-tooltip")));
+        node.addEventListener("mousemove", (event) => show(event, node.getAttribute("data-tooltip")));
+        node.addEventListener("mouseleave", hide);
+      });
+    })();
+  </script>
+</body>
+</html>

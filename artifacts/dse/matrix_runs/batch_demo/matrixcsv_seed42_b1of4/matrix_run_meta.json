@@ -1,0 +1,27 @@
+{
+  "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_all.csv",
+  "selected_rows": 8,
+  "batch": {
+    "total": 32,
+    "num_batches": 4,
+    "batch_index": 1,
+    "start": 0,
+    "end": 8
+  },
+  "matrix_names": [
+    "A"
+  ],
+  "point_ids": [
+    "A_001",
+    "A_002",
+    "A_003",
+    "A_004",
+    "A_005",
+    "A_006",
+    "A_007",
+    "A_008"
+  ],
+  "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/batch_demo/matrixcsv_seed42_b1of4",
+  "space_profile": "rram_v2",
+  "dry_run": true
+}

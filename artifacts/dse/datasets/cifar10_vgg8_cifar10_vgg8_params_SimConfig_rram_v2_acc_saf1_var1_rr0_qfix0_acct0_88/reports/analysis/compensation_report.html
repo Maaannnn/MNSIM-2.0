@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>补偿前后对比报告</title>
+  <style>
+    :root {
+      --bg:#f7f8fb; --card:#fff; --text:#111827; --muted:#6b7280; --line:#dbe2ea; --good:#166534; --bad:#b91c1c; --accent:#2563eb;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .wrap { max-width:1320px; margin:0 auto; padding:24px; }
+    h1 { margin:0 0 8px; font-size:30px; }
+    .sub { color:var(--muted); margin-bottom:18px; }
+    .section { margin-top:24px; }
+    .section-title { font-size:18px; font-weight:700; margin:0 0 12px; }
+    .cmp-grid { display:grid; grid-template-columns:repeat(4, minmax(180px, 1fr)); gap:14px; }
+    .cmp-card, .info-card, .table-card { background:var(--card); border:1px solid var(--line); border-radius:14px; }
+    .cmp-card { padding:16px; }
+    .cmp-title { color:var(--muted); font-size:13px; margin-bottom:10px; }
+    .cmp-main { display:grid; gap:8px; font-size:20px; font-weight:700; }
+    .cmp-tag { display:inline-block; min-width:26px; margin-right:8px; color:var(--accent); font-size:12px; font-weight:700; }
+    .cmp-delta { margin-top:12px; font-size:13px; font-weight:700; }
+    .cmp-delta.up { color:var(--bad); }
+    .cmp-delta.down { color:var(--good); }
+    .cmp-delta.neutral { color:var(--muted); }
+    .info-card { padding:14px; }
+    .note { color:var(--muted); font-size:13px; line-height:1.65; }
+    ul.tight { margin:8px 0 0 18px; padding:0; }
+    ul.tight li { margin:6px 0; line-height:1.5; }
+    .table-card { overflow:hidden; }
+    .table-scroll { max-height:430px; overflow:auto; }
+    .table-sticky-title { position:sticky; top:0; z-index:5; background:var(--card); padding:14px 14px 10px; border-bottom:1px solid var(--line); font-size:15px; font-weight:700; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { border-bottom:1px solid var(--line); text-align:left; padding:8px 10px; vertical-align:top; background:var(--card); }
+    th { position:sticky; top:45px; z-index:4; color:var(--muted); background:#fafbfc; }
+    .back-link { display:inline-block; margin-top:12px; color:var(--accent); text-decoration:none; font-weight:600; }
+    @media (max-width:960px) { .cmp-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>补偿前后对比报告</h1>
+    <div class="sub">对比对象：矩阵 A（主迁移矩阵） vs 矩阵 B（接口补偿矩阵）</div>
+    <div class="cmp-grid"><div class='cmp-card'><div class='cmp-title'>可行率</div><div class='cmp-main'><div><span class='cmp-tag'>A</span>75%</div><div><span class='cmp-tag'>B</span>100%</div></div><div class='cmp-delta up'>Δ 25%</div></div><div class='cmp-card'><div class='cmp-title'>平均精度</div><div class='cmp-main'><div><span class='cmp-tag'>A</span>0.89978</div><div><span class='cmp-tag'>B</span>0.918945</div></div><div class='cmp-delta up'>Δ 0.019165</div></div><div class='cmp-card'><div class='cmp-title'>最小时延</div><div class='cmp-main'><div><span class='cmp-tag'>A</span>4,430,024.99 ns</div><div><span class='cmp-tag'>B</span>3,884,383.15 ns</div></div><div class='cmp-delta down'>Δ -545,641.84 ns</div></div><div class='cmp-card'><div class='cmp-title'>最小能耗</div><div class='cmp-main'><div><span class='cmp-tag'>A</span>3,193,060.15 nJ</div><div><span class='cmp-tag'>B</span>1,248,300.86 nJ</div></div><div class='cmp-delta down'>Δ -1,944,759.29 nJ</div></div></div>
+    <div class="section">
+      <div class="section-title">结论摘要</div>
+      <div class="info-card">
+        <ul class="tight"><li>整体可行率：A 为 75%，B 为 100%，变化 25 个百分点。</li><li>整体平均精度：A 为 0.89978，B 为 0.918945，变化 0.019165。</li><li>可行率改善最明显的器件预设是 P1，变化 0 个百分点。</li><li>平均精度改善最明显的器件预设是 P1，变化 -0.002686。</li><li>P3 在当前补偿样本下仍未恢复到稳定可行，后续应继续补 B 或考虑更强补偿策略。</li></ul>
+        <div class="note">说明：这里比较的是矩阵级聚合结果，不是逐点一一配对。</div>
+        <a class="back-link" href="./index.html">返回主分析页</a>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">按器件预设看补偿收益</div>
+      <div class='table-card'><div class='table-scroll'><div class='table-sticky-title'>A/B 对比：每个 preset 的可行率、精度与能耗变化</div><table><thead><tr><th>预设名</th><th>A 样本数</th><th>B 样本数</th><th>A 可行率</th><th>B 可行率</th><th>可行率变化</th><th>A 平均精度</th><th>B 平均精度</th><th>平均精度变化</th><th>A 最小能耗（nJ）</th><th>B 最小能耗（nJ）</th><th>最小能耗变化（nJ）</th></tr></thead><tbody><tr><td><button class='preset-chip' data-preset='P0'>P0</button></td><td>8</td><td>0</td><td>1</td><td>-</td><td>-</td><td>0.932373</td><td>-</td><td>-</td><td>3,196,862.66</td><td>-</td><td>-</td></tr><tr><td><button class='preset-chip' data-preset='P1'>P1</button></td><td>8</td><td>8</td><td>1</td><td>1</td><td>0</td><td>0.926636</td><td>0.92395</td><td>-0.002686</td><td>3,193,060.15</td><td>1,248,300.86</td><td>-1,944,759.29</td></tr><tr><td><button class='preset-chip' data-preset='P2'>P2</button></td><td>8</td><td>8</td><td>1</td><td>1</td><td>0</td><td>0.919556</td><td>0.91394</td><td>-0.005615</td><td>3,193,060.15</td><td>1,248,300.86</td><td>-1,944,759.29</td></tr><tr><td><button class='preset-chip' data-preset='P3'>P3</button></td><td>8</td><td>0</td><td>0</td><td>-</td><td>-</td><td>0.820557</td><td>-</td><td>-</td><td>3,193,060.15</td><td>-</td><td>-</td></tr></tbody></table></div></div>
+    </div>
+    <div class="section">
+      <div class="section-title">按阶段展开的原始聚合</div>
+      <div class='table-card'><div class='table-scroll'><div class='table-sticky-title'>矩阵 A 与矩阵 B 的分阶段聚合统计</div><table><thead><tr><th>实验相位</th><th>预设名</th><th>样本数</th><th>可行样本数</th><th>可行率</th><th>平均精度</th><th>最高精度</th><th>最小时延（ns）</th><th>最小能耗（nJ）</th><th>最小面积（μm²）</th></tr></thead><tbody><tr><td>matrix_A</td><td><button class='preset-chip' data-preset='P0'>P0</button></td><td>8</td><td>8</td><td>1</td><td>0.932373</td><td>0.93457</td><td>4,430,024.99</td><td>3,196,862.66</td><td>894,254,493.56</td></tr><tr><td>matrix_A</td><td><button class='preset-chip' data-preset='P1'>P1</button></td><td>8</td><td>8</td><td>1</td><td>0.926636</td><td>0.933594</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td></tr><tr><td>matrix_A</td><td><button class='preset-chip' data-preset='P2'>P2</button></td><td>8</td><td>8</td><td>1</td><td>0.919556</td><td>0.93457</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td></tr><tr><td>matrix_A</td><td><button class='preset-chip' data-preset='P3'>P3</button></td><td>8</td><td>0</td><td>0</td><td>0.820557</td><td>0.870117</td><td>4,430,024.99</td><td>3,193,060.15</td><td>894,254,493.56</td></tr><tr><td>matrix_B</td><td><button class='preset-chip' data-preset='P1'>P1</button></td><td>8</td><td>8</td><td>1</td><td>0.92395</td><td>0.936523</td><td>3,884,383.15</td><td>1,248,300.86</td><td>1,005,056,583.12</td></tr><tr><td>matrix_B</td><td><button class='preset-chip' data-preset='P2'>P2</button></td><td>8</td><td>8</td><td>1</td><td>0.91394</td><td>0.925781</td><td>3,884,383.15</td><td>1,248,300.86</td><td>1,005,056,583.12</td></tr></tbody></table></div></div>
+    </div>
+  </div>
+</body>
+</html>

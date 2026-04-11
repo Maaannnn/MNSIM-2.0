@@ -1,0 +1,109 @@
+{
+  "algo": "matrixcsv",
+  "track": "multi",
+  "seed": 42,
+  "budget": 16,
+  "total_evaluated": 16,
+  "pareto_size": 2,
+  "hypervolume": 1.2306178510244918e+22,
+  "hv_reference_point": [
+    20074654.34634978,
+    5840710.943270167,
+    1336182872.9068625
+  ],
+  "wall_time_s": 1333.5322198867798,
+  "started_at": "2026-04-10T03:54:50.340509+00:00",
+  "finished_at": "2026-04-10T04:17:03.872744+00:00",
+  "run_config": {
+    "nn": "vgg8",
+    "weights_path": "cifar10_vgg8_params.pth",
+    "base_config_path": "SimConfig.ini",
+    "run_accuracy": true,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "device": "mps",
+    "dataset_module": "MNSIM.Interface.cifar10",
+    "max_acc_batches": 4,
+    "space_profile": "rram_v2",
+    "algo_kwargs": {
+      "accuracy_target": 0.88,
+      "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_all.csv",
+      "batch": {
+        "total": 16,
+        "num_batches": 1,
+        "batch_index": 1,
+        "start": 0,
+        "end": 16
+      }
+    }
+  },
+  "best_by_objective": {
+    "latency_ns": {
+      "value": 5997133.2533934815,
+      "eval_index": 2,
+      "config": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "energy_nj": {
+      "value": 3193060.1506895665,
+      "eval_index": 1,
+      "config": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "40"
+      }
+    },
+    "area_um2": {
+      "value": 1006013853.5562103,
+      "eval_index": 1,
+      "config": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "40"
+      }
+    },
+    "accuracy": {
+      "value": 0.9345703125,
+      "eval_index": 12,
+      "config": {
+        "rram_preset": "P2",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "3",
+        "inter_tile_bw": "80"
+      }
+    }
+  },
+  "single_track_best": null
+}

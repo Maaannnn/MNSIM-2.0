@@ -31,7 +31,7 @@ def main() -> None:
     parser.add_argument(
         "--config-json",
         required=True,
-        help='JSON object, e.g. \'{"xbar_size":[256,256],"adc_choice":6,"dac_choice":1,"pe_num":[4,4],"tile_connection":2,"inter_tile_bw":20,"intra_tile_bw":1024}\'',
+        help='JSON object, e.g. \'{"rram_preset":"P1","xbar_size":[256,256],"adc_choice":6,"dac_num":64,"xbar_polarity":2,"sub_position":0,"group_num":2,"pe_num":[4,4],"tile_connection":2,"inter_tile_bw":20}\'',
     )
     args = parser.parse_args()
 

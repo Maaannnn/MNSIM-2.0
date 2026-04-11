@@ -1,0 +1,2 @@
+algo,track,seed,total_evaluated,pareto_size,hypervolume,hv_ref_lat,hv_ref_en,hv_ref_area,best_scalarized_obj,best_latency_ns,best_energy_nj,best_area_um2,best_accuracy,wall_time_s
+matrixcsv,multi,42,8,4,8.07798832545538e+22,6596846.5787328305,18760361.47252773,3391973813.534123,,3884383.145814948,1248300.8586948751,1005056583.1245512,0.9365234375,1297.7506828308105

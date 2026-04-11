@@ -26,9 +26,18 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
-from dse.core import DIM_NAMES, SPACE, evaluate_config, write_temp_config
+from dse.core import (
+    DIM_NAMES,
+    SPACE,
+    accuracy_violation,
+    evaluate_config,
+    pareto_indices_with_accuracy,
+    selection_objective_vector,
+    write_temp_config,
+)
 from dse.metrics import nsga2_select, pareto_indices
 from dse.output import DSERecord, DSERunResult, RunConfig
+from dse.progress import try_make_tqdm, update_progress
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +74,9 @@ def run(cfg: RunConfig) -> DSERunResult:
     kw = cfg.algo_kwargs
     pop_size: int = int(kw.get("population", 20))
     evals_per_gen: int = int(kw.get("evals_per_gen", 4))
+    accuracy_target = kw.get("accuracy_target", None)
+    if accuracy_target is not None and not cfg.run_accuracy:
+        raise ValueError("accuracy_target requires run_accuracy=True for nsga2.")
 
     random.seed(cfg.seed)
     np.random.seed(cfg.seed)
@@ -86,10 +98,12 @@ def run(cfg: RunConfig) -> DSERunResult:
 
     tag = f"[nsga2|s{cfg.seed}]"
     print(f"{tag} space={len(all_points)} budget={cfg.budget} init={n_init} gens={n_gens} evals/gen={evals_per_gen}")
+    total_steps = min(cfg.budget, len(all_points))
+    pbar = try_make_tqdm(total_steps, tag)
 
     # Evaluated archive
     X_eval: List[List[int]] = []
-    Y_eval: List[Tuple[float, float, float]] = []
+    Y_eval: List[Tuple[float, ...]] = []
     records: List[DSERecord] = []
 
     pool = list(range(len(all_points)))
@@ -113,12 +127,13 @@ def run(cfg: RunConfig) -> DSERunResult:
                 fixed_qrange=cfg.fixed_qrange,
                 device=cfg.device,
                 dataset_module=cfg.dataset_module,
+                max_acc_batches=cfg.max_acc_batches,
             )
         finally:
             os.remove(temp_path)
 
         X_eval.append(x)
-        Y_eval.append(res.obj_vector())
+        Y_eval.append(selection_objective_vector(res.obj_vector(), res.accuracy, accuracy_target))
         records.append(
             DSERecord(
                 algo="nsga2",
@@ -132,10 +147,21 @@ def run(cfg: RunConfig) -> DSERunResult:
                 accuracy=res.accuracy,
                 elapsed_s=res.elapsed_s,
                 config=res.config,
-                extra={"generation": 0},
+                extra={
+                    "generation": 0,
+                    "accuracy_violation": accuracy_violation(res.accuracy, accuracy_target),
+                },
             )
         )
-        print(f"{tag} [init {t+1}/{n_init}] lat={res.latency_ns:.3e} en={res.energy_nj:.3e} area={res.area_um2:.3e}")
+        postfix = {
+            "phase": "init",
+            "lat": f"{res.latency_ns:.2e}",
+            "en": f"{res.energy_nj:.2e}",
+            "area": f"{res.area_um2:.2e}",
+        }
+        if res.accuracy is not None:
+            postfix["acc"] = f"{res.accuracy:.4f}"
+        update_progress(pbar, tag=tag, done=len(records), total=total_steps, t_start=t_start, postfix=postfix)
 
     # Initial population selection via NSGA-II
     all_idx = list(range(len(X_eval)))
@@ -198,12 +224,13 @@ def run(cfg: RunConfig) -> DSERunResult:
                     fixed_qrange=cfg.fixed_qrange,
                     device=cfg.device,
                     dataset_module=cfg.dataset_module,
+                    max_acc_batches=cfg.max_acc_batches,
                 )
             finally:
                 os.remove(temp_path)
 
             X_eval.append(x)
-            Y_eval.append(res.obj_vector())
+            Y_eval.append(selection_objective_vector(res.obj_vector(), res.accuracy, accuracy_target))
             records.append(
                 DSERecord(
                     algo="nsga2",
@@ -217,10 +244,21 @@ def run(cfg: RunConfig) -> DSERunResult:
                     accuracy=res.accuracy,
                     elapsed_s=res.elapsed_s,
                     config=res.config,
-                    extra={"generation": gen},
+                    extra={
+                        "generation": gen,
+                        "accuracy_violation": accuracy_violation(res.accuracy, accuracy_target),
+                    },
                 )
             )
-            print(f"{tag} [gen {gen}] lat={res.latency_ns:.3e} en={res.energy_nj:.3e} area={res.area_um2:.3e}")
+            postfix = {
+                "phase": f"gen{gen}",
+                "lat": f"{res.latency_ns:.2e}",
+                "en": f"{res.energy_nj:.2e}",
+                "area": f"{res.area_um2:.2e}",
+            }
+            if res.accuracy is not None:
+                postfix["acc"] = f"{res.accuracy:.4f}"
+            update_progress(pbar, tag=tag, done=len(records), total=total_steps, t_start=t_start, postfix=postfix)
 
         # Re-select population
         all_idx = list(range(len(X_eval)))
@@ -229,14 +267,19 @@ def run(cfg: RunConfig) -> DSERunResult:
         print(f"{tag} [gen {gen}] total={len(X_eval)} pareto={len(nd_now)}")
 
     # --- Final Pareto front ---
-    vecs = [r.obj_vector() for r in records]
-    nd_idx = pareto_indices(vecs)
+    nd_idx = pareto_indices_with_accuracy(records, accuracy_target)
     for i in nd_idx:
         records[i].is_pareto = True
 
     wall_time_s = time.time() - t_start
     finished_at = datetime.now(timezone.utc).isoformat()
-    print(f"{tag} Done. evaluated={len(records)} pareto={len(nd_idx)} wall={wall_time_s:.1f}s")
+    if pbar is not None:
+        pbar.close()
+    n_feasible = sum(
+        1 for r in records
+        if accuracy_target is None or (r.accuracy is not None and r.accuracy >= float(accuracy_target))
+    )
+    print(f"{tag} Done. evaluated={len(records)} feasible={n_feasible} pareto={len(nd_idx)} wall={wall_time_s:.1f}s")
 
     return DSERunResult(
         run_config=cfg,

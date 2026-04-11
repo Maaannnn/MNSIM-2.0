@@ -35,13 +35,16 @@ PARETO_EXTRA_COL_ZH: Dict[str, str] = {
 
 # design-space dimension short names (keys stay English in cells)
 DIM_COL_ZH: Dict[str, str] = {
+    "rram_preset": "RRAM器件预设",
     "xbar_size": "交叉阵列尺寸",
     "adc_choice": "ADC档位",
-    "dac_choice": "DAC档位",
+    "dac_num": "DAC数量",
+    "xbar_polarity": "正负权实现方式",
+    "sub_position": "差分相减位置",
+    "group_num": "阵列分组数",
     "pe_num": "PE阵列规模",
     "tile_connection": "Tile连接方式",
     "inter_tile_bw": "片间带宽",
-    "intra_tile_bw": "片内带宽",
 }
 
 COMPARISON_COL_ZH: Dict[str, str] = {

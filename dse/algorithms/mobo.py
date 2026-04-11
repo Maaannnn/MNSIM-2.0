@@ -30,9 +30,18 @@ from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel, Matern, WhiteKernel
 
-from dse.core import DIM_NAMES, SPACE, evaluate_config, write_temp_config
+from dse.core import (
+    DIM_NAMES,
+    SPACE,
+    accuracy_violation,
+    evaluate_config,
+    pareto_indices_with_accuracy,
+    selection_objective_vector,
+    write_temp_config,
+)
 from dse.metrics import normalize_objectives, pareto_indices, tchebycheff_normalized
 from dse.output import DSERecord, DSERunResult, RunConfig
+from dse.progress import try_make_tqdm, update_progress
 
 
 def _expected_improvement(
@@ -57,6 +66,9 @@ def run(cfg: RunConfig) -> DSERunResult:
     """
     random.seed(cfg.seed)
     np.random.seed(cfg.seed)
+    accuracy_target = cfg.algo_kwargs.get("accuracy_target", None)
+    if accuracy_target is not None and not cfg.run_accuracy:
+        raise ValueError("accuracy_target requires run_accuracy=True for mobo.")
 
     started_at = datetime.now(timezone.utc).isoformat()
     t_start = time.time()
@@ -74,10 +86,11 @@ def run(cfg: RunConfig) -> DSERunResult:
 
     tag = f"[mobo|s{cfg.seed}]"
     print(f"{tag} space={n_total} budget={n_iter} init={n_init}")
+    pbar = try_make_tqdm(n_iter, tag)
 
     chosen: List[int] = []
     records: List[DSERecord] = []
-    Y_list: List[Tuple[float, float, float]] = []
+    Y_list: List[Tuple[float, ...]] = []
 
     # --- Random initialisation ---
     init_pool = list(range(n_total))
@@ -98,12 +111,13 @@ def run(cfg: RunConfig) -> DSERunResult:
                 fixed_qrange=cfg.fixed_qrange,
                 device=cfg.device,
                 dataset_module=cfg.dataset_module,
+                max_acc_batches=cfg.max_acc_batches,
             )
         finally:
             os.remove(temp_path)
 
         chosen.append(idx)
-        Y_list.append(res.obj_vector())
+        Y_list.append(selection_objective_vector(res.obj_vector(), res.accuracy, accuracy_target))
         records.append(
             DSERecord(
                 algo="mobo",
@@ -117,9 +131,18 @@ def run(cfg: RunConfig) -> DSERunResult:
                 accuracy=res.accuracy,
                 elapsed_s=res.elapsed_s,
                 config=res.config,
+                extra={"accuracy_violation": accuracy_violation(res.accuracy, accuracy_target)},
             )
         )
-        print(f"{tag} [init {len(chosen)}/{n_iter}] lat={res.latency_ns:.3e} en={res.energy_nj:.3e} area={res.area_um2:.3e}")
+        postfix = {
+            "phase": "init",
+            "lat": f"{res.latency_ns:.2e}",
+            "en": f"{res.energy_nj:.2e}",
+            "area": f"{res.area_um2:.2e}",
+        }
+        if res.accuracy is not None:
+            postfix["acc"] = f"{res.accuracy:.4f}"
+        update_progress(pbar, tag=tag, done=len(records), total=n_iter, t_start=t_start, postfix=postfix)
 
     # --- Build GP ---
     kernel = (
@@ -167,13 +190,14 @@ def run(cfg: RunConfig) -> DSERunResult:
                 fixed_qrange=cfg.fixed_qrange,
                 device=cfg.device,
                 dataset_module=cfg.dataset_module,
+                max_acc_batches=cfg.max_acc_batches,
             )
         finally:
             os.remove(temp_path)
 
         chosen.append(next_idx)
         chosen_set.add(next_idx)
-        Y_list.append(res.obj_vector())
+        Y_list.append(selection_objective_vector(res.obj_vector(), res.accuracy, accuracy_target))
         nd_now = len(pareto_indices(Y_list))
         records.append(
             DSERecord(
@@ -188,23 +212,37 @@ def run(cfg: RunConfig) -> DSERunResult:
                 accuracy=res.accuracy,
                 elapsed_s=res.elapsed_s,
                 config=res.config,
-                extra={"parego_weight": w.tolist()},
+                extra={
+                    "parego_weight": w.tolist(),
+                    "accuracy_violation": accuracy_violation(res.accuracy, accuracy_target),
+                },
             )
         )
-        print(
-            f"{tag} [mobo {len(chosen)}/{n_iter}] lat={res.latency_ns:.3e} "
-            f"en={res.energy_nj:.3e} area={res.area_um2:.3e} pareto={nd_now}"
-        )
+        postfix = {
+            "phase": "mobo",
+            "lat": f"{res.latency_ns:.2e}",
+            "en": f"{res.energy_nj:.2e}",
+            "area": f"{res.area_um2:.2e}",
+            "pareto": str(nd_now),
+        }
+        if res.accuracy is not None:
+            postfix["acc"] = f"{res.accuracy:.4f}"
+        update_progress(pbar, tag=tag, done=len(records), total=n_iter, t_start=t_start, postfix=postfix)
 
     # --- Final Pareto front ---
-    vecs = [r.obj_vector() for r in records]
-    nd_idx = pareto_indices(vecs)
+    nd_idx = pareto_indices_with_accuracy(records, accuracy_target)
     for i in nd_idx:
         records[i].is_pareto = True
 
     wall_time_s = time.time() - t_start
     finished_at = datetime.now(timezone.utc).isoformat()
-    print(f"{tag} Done. evaluated={len(records)} pareto={len(nd_idx)} wall={wall_time_s:.1f}s")
+    if pbar is not None:
+        pbar.close()
+    n_feasible = sum(
+        1 for r in records
+        if accuracy_target is None or (r.accuracy is not None and r.accuracy >= float(accuracy_target))
+    )
+    print(f"{tag} Done. evaluated={len(records)} feasible={n_feasible} pareto={len(nd_idx)} wall={wall_time_s:.1f}s")
 
     return DSERunResult(
         run_config=cfg,

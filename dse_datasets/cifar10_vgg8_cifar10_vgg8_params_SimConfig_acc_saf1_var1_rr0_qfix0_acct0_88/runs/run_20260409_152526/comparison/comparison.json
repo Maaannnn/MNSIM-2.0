@@ -1,0 +1,39 @@
+{
+  "trials": [
+    {
+      "algo": "random",
+      "track": "multi",
+      "seed": 42,
+      "total_evaluated": 20,
+      "pareto_size": 3,
+      "hypervolume": 3.159618544249037e+24,
+      "hv_ref_lat": 52918340.930064715,
+      "hv_ref_en": 26372079.69816355,
+      "hv_ref_area": 3889689414.37238,
+      "best_scalarized_obj": null,
+      "best_latency_ns": 4430024.989793121,
+      "best_energy_nj": 660743.0108614445,
+      "best_area_um2": 806405342.0955797,
+      "best_accuracy": 0.94921875,
+      "wall_time_s": 9548.56777215004
+    }
+  ],
+  "summary": [
+    {
+      "algo": "random",
+      "track": "multi",
+      "n_seeds": 1,
+      "mean_hypervolume": 3.159618544249037e+24,
+      "std_hypervolume": 0.0,
+      "mean_pareto_size": 3,
+      "std_pareto_size": 0.0,
+      "mean_best_latency_ns": 4430024.989793121,
+      "std_best_latency_ns": 0.0,
+      "mean_best_energy_nj": 660743.0108614445,
+      "std_best_energy_nj": 0.0,
+      "mean_best_area_um2": 806405342.0955797,
+      "std_best_area_um2": 0.0,
+      "mean_wall_time_s": 9548.56777215004
+    }
+  ]
+}

@@ -20,35 +20,16 @@ from typing import List, Optional
 
 import numpy as np
 
-from dse.core import DIM_NAMES, SPACE, evaluate_config, write_temp_config
-from dse.metrics import pareto_indices
+from dse.core import (
+    DIM_NAMES,
+    SPACE,
+    accuracy_violation,
+    evaluate_config,
+    pareto_indices_with_accuracy,
+    write_temp_config,
+)
 from dse.output import DSERecord, DSERunResult, RunConfig
-
-
-def _fmt_s(sec: float) -> str:
-    sec = max(0.0, float(sec))
-    m, s = divmod(int(sec), 60)
-    h, m = divmod(m, 60)
-    if h > 0:
-        return f"{h:d}:{m:02d}:{s:02d}"
-    return f"{m:02d}:{s:02d}"
-
-
-def _try_make_tqdm(total: int, desc: str):
-    """Create a tqdm progress bar if available; otherwise return None."""
-    try:
-        from tqdm import tqdm  # type: ignore
-
-        return tqdm(
-            total=total,
-            desc=desc,
-            dynamic_ncols=True,
-            leave=True,
-            unit="it",
-            smoothing=0.1,
-        )
-    except Exception:
-        return None
+from dse.progress import try_make_tqdm, update_progress
 
 
 def run(cfg: RunConfig) -> DSERunResult:
@@ -61,6 +42,9 @@ def run(cfg: RunConfig) -> DSERunResult:
     """
     random.seed(cfg.seed)
     np.random.seed(cfg.seed)
+    accuracy_target = cfg.algo_kwargs.get("accuracy_target", None)
+    if accuracy_target is not None and not cfg.run_accuracy:
+        raise ValueError("accuracy_target requires --run-accuracy for random sampling.")
 
     started_at = datetime.now(timezone.utc).isoformat()
     t_start = time.time()
@@ -79,7 +63,7 @@ def run(cfg: RunConfig) -> DSERunResult:
     chosen = idxs[:n_iter]
 
     records: List[DSERecord] = []
-    pbar = _try_make_tqdm(n_iter, tag)
+    pbar = try_make_tqdm(n_iter, tag)
     for k, idx in enumerate(chosen, start=1):
         cfg_vals = candidates[idx]
         temp_path = write_temp_config(cfg.base_config_path, cfg_vals)
@@ -96,6 +80,7 @@ def run(cfg: RunConfig) -> DSERunResult:
                 fixed_qrange=cfg.fixed_qrange,
                 device=cfg.device,
                 dataset_module=cfg.dataset_module,
+                max_acc_batches=cfg.max_acc_batches,
             )
         finally:
             os.remove(temp_path)
@@ -112,48 +97,31 @@ def run(cfg: RunConfig) -> DSERunResult:
             accuracy=res.accuracy,
             elapsed_s=res.elapsed_s,
             config=res.config,
+            extra={"accuracy_violation": accuracy_violation(res.accuracy, accuracy_target)},
         )
         records.append(rec)
-        if pbar is not None:
-            postfix = {
-                "lat": f"{rec.latency_ns:.2e}",
-                "en": f"{rec.energy_nj:.2e}",
-                "area": f"{rec.area_um2:.2e}",
-            }
-            if cfg.run_accuracy and rec.accuracy is not None:
-                postfix["acc"] = f"{rec.accuracy:.4f}"
-            pbar.set_postfix(postfix, refresh=False)
-            pbar.update(1)
-        elif k == 1 or k == n_iter or (k % 5 == 0):
-            elapsed = time.time() - t_start
-            avg = elapsed / max(1, k)
-            remain = max(0, n_iter - k)
-            eta = remain * avg
-            pct = 100.0 * k / max(1, n_iter)
-            speed = 1.0 / avg if avg > 0 else 0.0
-            if cfg.run_accuracy and rec.accuracy is not None:
-                print(
-                    f"{tag} [{k:>3}/{n_iter}] {pct:6.2f}% | {speed:5.2f} it/s | "
-                    f"elapsed={_fmt_s(elapsed)} eta={_fmt_s(eta)} | "
-                    f"lat={rec.latency_ns:.3e} en={rec.energy_nj:.3e} area={rec.area_um2:.3e} acc={rec.accuracy:.4f}"
-                )
-            else:
-                print(
-                    f"{tag} [{k:>3}/{n_iter}] {pct:6.2f}% | {speed:5.2f} it/s | "
-                    f"elapsed={_fmt_s(elapsed)} eta={_fmt_s(eta)} | "
-                    f"lat={rec.latency_ns:.3e} en={rec.energy_nj:.3e} area={rec.area_um2:.3e}"
-                )
+        postfix = {
+            "lat": f"{rec.latency_ns:.2e}",
+            "en": f"{rec.energy_nj:.2e}",
+            "area": f"{rec.area_um2:.2e}",
+        }
+        if cfg.run_accuracy and rec.accuracy is not None:
+            postfix["acc"] = f"{rec.accuracy:.4f}"
+        update_progress(pbar, tag=tag, done=k, total=n_iter, t_start=t_start, postfix=postfix)
     if pbar is not None:
         pbar.close()
 
-    vecs = [r.obj_vector() for r in records]
-    nd_idx = pareto_indices(vecs)
+    nd_idx = pareto_indices_with_accuracy(records, accuracy_target)
     for i in nd_idx:
         records[i].is_pareto = True
 
     wall_time_s = time.time() - t_start
     finished_at = datetime.now(timezone.utc).isoformat()
-    print(f"{tag} Done. evaluated={len(records)} pareto={len(nd_idx)} wall={wall_time_s:.1f}s")
+    n_feasible = sum(
+        1 for r in records
+        if accuracy_target is None or (r.accuracy is not None and r.accuracy >= float(accuracy_target))
+    )
+    print(f"{tag} Done. evaluated={len(records)} feasible={n_feasible} pareto={len(nd_idx)} wall={wall_time_s:.1f}s")
 
     return DSERunResult(
         run_config=cfg,
@@ -165,4 +133,3 @@ def run(cfg: RunConfig) -> DSERunResult:
         started_at=started_at,
         finished_at=finished_at,
     )
-

@@ -1,0 +1,2 @@
+algo,track,n_seeds,mean_hypervolume,std_hypervolume,mean_pareto_size,std_pareto_size,mean_best_latency_ns,std_best_latency_ns,mean_best_energy_nj,std_best_energy_nj,mean_best_area_um2,std_best_area_um2,mean_wall_time_s
+matrixcsv,multi,1,2.5517299244688696e+22,0.0,1,0.0,4001328.28973039,0.0,1606120.9014031086,0.0,885898653.5562104,0.0,1314.8782420158386

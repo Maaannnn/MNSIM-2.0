@@ -10,9 +10,42 @@ from importlib import import_module
 import numpy as np
 import torch
 
+_TEST_LOADER_CACHE = {}
+_WEIGHTS_CACHE = {}
+
+
+def _resolve_torch_device(device):
+    if device is None:
+        return torch.device('cpu')
+
+    dev = str(device).strip().lower()
+    if dev in ('cpu',):
+        return torch.device('cpu')
+
+    if dev == 'mps':
+        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            return torch.device('mps')
+        print('warning: mps requested but unavailable, fallback to cpu')
+        return torch.device('cpu')
+
+    if dev.startswith('cuda'):
+        if torch.cuda.is_available():
+            return torch.device(dev)
+        print('warning: cuda requested but unavailable, fallback to cpu')
+        return torch.device('cpu')
+
+    if dev.isdigit():
+        if torch.cuda.is_available():
+            return torch.device(f'cuda:{dev}')
+        print('warning: cuda device index requested but cuda unavailable, fallback to cpu')
+        return torch.device('cpu')
+
+    print(f'warning: unknown device "{device}", fallback to cpu')
+    return torch.device('cpu')
+
 
 class TrainTestInterface(object):
-    def __init__(self, network_module, dataset_module, SimConfig_path, weights_file = None, device = None, extra_define = None):
+    def __init__(self, network_module, dataset_module, SimConfig_path, weights_file = None, device = None, extra_define = None, max_eval_batches = 11):
         # network_module: e.g., 'lenet'
         # dataset_module: e.g., 'cifar10'
         # weights_file: e.g., './zoo/cifar10_lenet_train_params.pth'
@@ -22,6 +55,7 @@ class TrainTestInterface(object):
         self.dataset_module = dataset_module
         self.weights_file = weights_file
         self.test_loader = None
+        self.max_eval_batches = max_eval_batches
         # load simconfig
         ## xbar_size, input_bit, weight_bit, ADC_quantize_bit
         xbar_config = configparser.ConfigParser()
@@ -79,10 +113,7 @@ class TrainTestInterface(object):
         self.tile_row = self.tile_size[0]
         self.tile_column = self.tile_size[1]
         # net and weights
-        if device != None:
-            self.device = torch.device(f'cuda:{device}' if torch.cuda.is_available() else 'cpu')
-        else:
-            self.device = torch.device('cpu')
+        self.device = _resolve_torch_device(device)
         print(f'run on device {self.device}')
         if dataset_module.endswith('cifar10'):
             num_classes = 10
@@ -100,20 +131,22 @@ class TrainTestInterface(object):
         self.net = import_module('MNSIM.Interface.network').get_net(self.hardware_config, cate = self.network_module, num_classes = num_classes)
         if weights_file is not None:
             print(f'load weights from {weights_file}')
-            # load weights and split weights according to HW parameters
-            #linqiushi modified
-            self.net.load_change_weights(torch.load(weights_file, map_location=self.device))
-            #linqiushi above
+            cache_key = (os.path.abspath(weights_file), str(self.device))
+            if cache_key not in _WEIGHTS_CACHE:
+                _WEIGHTS_CACHE[cache_key] = torch.load(weights_file, map_location=self.device)
+            self.net.load_change_weights(_WEIGHTS_CACHE[cache_key])
     def origin_evaluate(self, method = 'SINGLE_FIX_TEST', adc_action = 'SCALE'):
         if self.test_loader == None:
-            self.test_loader = import_module(self.dataset_module).get_dataloader()[1]
+            if self.dataset_module not in _TEST_LOADER_CACHE:
+                _TEST_LOADER_CACHE[self.dataset_module] = import_module(self.dataset_module).get_dataloader()[1]
+            self.test_loader = _TEST_LOADER_CACHE[self.dataset_module]
         self.net.to(self.device)
         self.net.eval()
         test_correct = 0
         test_total = 0
         with torch.no_grad():
             for i, (images, labels) in enumerate(self.test_loader):
-                if i > 10:
+                if i >= self.max_eval_batches:
                     break
                 images = images.to(self.device)
                 test_total += labels.size(0)
@@ -132,14 +165,16 @@ class TrainTestInterface(object):
         return net_bit_weights
     def set_net_bits_evaluate(self, net_bit_weights, adc_action = 'SCALE'):
         if self.test_loader == None:
-            self.test_loader = import_module(self.dataset_module).get_dataloader()[1]
+            if self.dataset_module not in _TEST_LOADER_CACHE:
+                _TEST_LOADER_CACHE[self.dataset_module] = import_module(self.dataset_module).get_dataloader()[1]
+            self.test_loader = _TEST_LOADER_CACHE[self.dataset_module]
         self.net.to(self.device)
         self.net.eval()
         test_correct = 0
         test_total = 0
         with torch.no_grad():
             for i, (images, labels) in enumerate(self.test_loader):
-                if i > 10:
+                if i >= self.max_eval_batches:
                     break
                 images = images.to(self.device)
                 test_total += labels.size(0)

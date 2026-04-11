@@ -1,0 +1,104 @@
+{
+  "算法": "matrixcsv",
+  "优化轨道": "多目标",
+  "随机种子": 42,
+  "预算评估次数": 16,
+  "总评估次数": 16,
+  "帕累托解数量": 2,
+  "超体积": 1.2306178510244918e+22,
+  "HV参考点": [
+    20074654.34634978,
+    5840710.943270167,
+    1336182872.9068625
+  ],
+  "墙钟时间_s": 1333.5322198867798,
+  "开始时间_UTC": "2026-04-10T03:54:50.340509+00:00",
+  "结束时间_UTC": "2026-04-10T04:17:03.872744+00:00",
+  "运行配置": {
+    "网络": "vgg8",
+    "权重路径": "cifar10_vgg8_params.pth",
+    "基础配置": "SimConfig.ini",
+    "启用精度仿真": true,
+    "设备": "mps",
+    "精度评估批次数上限": 4,
+    "设计空间配置": "rram_v2",
+    "算法参数": {
+      "accuracy_target": 0.88,
+      "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_all.csv",
+      "batch": {
+        "total": 16,
+        "num_batches": 1,
+        "batch_index": 1,
+        "start": 0,
+        "end": 16
+      }
+    }
+  },
+  "各目标最优": {
+    "延迟_ns": {
+      "数值": 5997133.2533934815,
+      "评估序号": 2,
+      "配置": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "能耗_nJ": {
+      "数值": 3193060.1506895665,
+      "评估序号": 1,
+      "配置": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "40"
+      }
+    },
+    "面积_um2": {
+      "数值": 1006013853.5562103,
+      "评估序号": 1,
+      "配置": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "40"
+      }
+    },
+    "精度": {
+      "数值": 0.9345703125,
+      "评估序号": 12,
+      "配置": {
+        "rram_preset": "P2",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "3",
+        "inter_tile_bw": "80"
+      }
+    }
+  },
+  "单目标最优": null
+}

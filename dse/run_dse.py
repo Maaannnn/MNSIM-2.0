@@ -131,12 +131,29 @@ def _run_trial(algo: str, seed: int, run_cfg_dict: Dict[str, Any], output_dir: s
     from dse.algorithms import REGISTRY
     from dse.output import RunConfig, write_all
 
-    cfg = RunConfig(**run_cfg_dict)
+    # Inject trial_dir so algorithms can open the DB writer
+    cfg_dict = dict(run_cfg_dict)
+    cfg_dict["trial_dir"] = os.path.abspath(output_dir)
+
+    cfg = RunConfig(**cfg_dict)
     module = REGISTRY[algo]
     result = module.run(cfg)
 
     os.makedirs(output_dir, exist_ok=True)
     write_all(result, output_dir)
+
+    # After run completes, update hypervolume in DB if db_path is set
+    if cfg.db_path:
+        try:
+            from dse.db_writer import DSEDbWriter
+            # HV is applied globally after all trials in main; update here if available
+            if result.hypervolume is not None:
+                w = DSEDbWriter(cfg.db_path, cfg, output_dir)
+                w.finalize(result.hypervolume, result.hv_reference_point, result.wall_time_s, result.finished_at)
+                w.close()
+        except Exception as _e:
+            print(f"[db] post-run HV update failed (non-fatal): {_e}")
+
     return os.path.join(output_dir, "result.json")
 
 
@@ -775,6 +792,16 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    p.add_argument(
+        "--db-path",
+        default="",
+        help=(
+            "Path to the shared SQLite DSE database. "
+            "Default: <repo>/app/dse_records.db. "
+            "Set to empty string to disable live DB writes."
+        ),
+    )
+
     p.add_argument("--compare-only", action="store_true",
                    help="Skip running algorithms; load existing results from --output-root and regenerate comparison.")
 
@@ -883,6 +910,16 @@ def main() -> None:
     }
     algo_kwargs_map = {"bo_gp": bo_kwargs, "nsga2": nsga2_kwargs, "mobo": {"accuracy_target": args.accuracy_target}, "random": {"accuracy_target": args.accuracy_target}}
 
+    # Default DB path: app/dse_records.db (auto-created if not exists)
+    _default_db_path = str(_PROJ_ROOT / "app" / "dse_records.db")
+    _db_path = getattr(args, "db_path", _default_db_path) or _default_db_path
+    # Ensure DB schema is created before any subprocess writes
+    if _db_path:
+        from dse.db_writer import init_db
+        Path(_db_path).parent.mkdir(parents=True, exist_ok=True)
+        init_db(_db_path)
+        print(f"[runner] DB: {_db_path}")
+
     def _make_run_cfg_dict(algo: str, seed: int) -> Dict[str, Any]:
         return {
             "algo": algo,
@@ -902,6 +939,8 @@ def main() -> None:
             "max_acc_batches": args.max_acc_batches,
             "space_profile": args.space_profile,
             "algo_kwargs": algo_kwargs_map.get(algo, {}),
+            "db_path": _db_path,
+            # trial_dir is injected by _run_trial at subprocess start
         }
 
     t0 = time.time()
@@ -957,6 +996,17 @@ def main() -> None:
         if trial_dir.exists():
             from dse.output import write_result_json
             write_result_json(r, str(trial_dir / "result.json"))
+        # Push final HV into DB (computed globally after all trials finish)
+        if _db_path and r.hypervolume is not None:
+            try:
+                from dse.db_writer import DSEDbWriter
+                _cfg_tmp = RunConfig(**{**_make_run_cfg_dict(r.run_config.algo, r.run_config.seed),
+                                        "trial_dir": str(trial_dir)})
+                _w = DSEDbWriter(_db_path, _cfg_tmp, str(trial_dir))
+                _w.finalize(r.hypervolume, r.hv_reference_point, r.wall_time_s, r.finished_at)
+                _w.close()
+            except Exception as _e:
+                print(f"[runner] [db] HV update failed (non-fatal): {_e}")
 
     for r in sorted(completed_results, key=lambda r: (r.run_config.algo, r.run_config.seed)):
         print_report(r)

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MNSIM DSE 实验记录</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  [x-cloak] { display: none !important; }
+  body { font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+  .algo-nsga2   { background: #1d4ed8; }
+  .algo-mobo    { background: #7c3aed; }
+  .algo-bo_gp   { background: #0369a1; }
+  .algo-random  { background: #374151; }
+  .algo-matrixcsv { background: #065f46; }
+  .pareto-row   { background: rgba(245, 158, 11, 0.08) !important; }
+  .fade-in { animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
+</style>
+<script>
+tailwind.config = {
+  theme: { extend: { colors: {
+    slate: { 950: '#020617' }
+  }}}
+}
+</script>
+</head>
+
+<body class="bg-slate-950 text-slate-200 min-h-screen" x-data="dseApp()" x-init="init()">
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header class="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
+  <div class="max-w-screen-2xl mx-auto flex items-center justify-between px-6 py-3">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-sm font-bold">M</div>
+      <div>
+        <h1 class="text-sm font-semibold text-white leading-none">MNSIM DSE 实验记录</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Design Space Exploration Viewer</p>
+      </div>
+    </div>
+    <button @click="sync()"
+      class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+             bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+      :class="{'opacity-60 pointer-events-none': syncing}">
+      <svg class="w-3.5 h-3.5" :class="{'animate-spin': syncing}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      <span x-text="syncing ? '同步中…' : '同步数据'"></span>
+    </button>
+  </div>
+</header>
+
+<!-- ── Stats bar ───────────────────────────────────────────────────────────── -->
+<div class="max-w-screen-2xl mx-auto px-6 py-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+  <template x-for="s in statCards" :key="s.label">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3">
+      <div class="text-2xl font-bold text-white" x-text="s.value"></div>
+      <div class="text-xs text-slate-400 mt-0.5" x-text="s.label"></div>
+    </div>
+  </template>
+</div>
+
+<!-- ── Filters ─────────────────────────────────────────────────────────────── -->
+<div class="max-w-screen-2xl mx-auto px-6 pb-4 flex flex-wrap gap-2 items-center">
+  <div class="relative">
+    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+    <input type="text" placeholder="搜索…" x-model.debounce.300ms="filterQ"
+      class="pl-8 pr-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
+             focus:outline-none focus:border-blue-500 w-44 text-slate-200 placeholder-slate-500"/>
+  </div>
+
+  <select x-model="filterAlgo"
+    class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
+           focus:outline-none focus:border-blue-500 text-slate-200">
+    <option value="">全部算法</option>
+    <template x-for="a in stats.algos||[]" :key="a">
+      <option :value="a" x-text="a"></option>
+    </template>
+  </select>
+
+  <select x-model="filterSpace"
+    class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
+           focus:outline-none focus:border-blue-500 text-slate-200">
+    <option value="">全部空间</option>
+    <template x-for="s in stats.spaces||[]" :key="s">
+      <option :value="s" x-text="s"></option>
+    </template>
+  </select>
+
+  <select x-model="filterGroup"
+    class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
+           focus:outline-none focus:border-blue-500 text-slate-200">
+    <option value="">全部实验组</option>
+    <template x-for="g in stats.groups||[]" :key="g">
+      <option :value="g" x-text="g"></option>
+    </template>
+  </select>
+
+  <span class="text-xs text-slate-500 ml-auto">
+    显示 <span class="text-white" x-text="filteredRuns.length"></span> /
+    <span x-text="runs.length"></span> 条
+  </span>
+</div>
+
+<!-- ── Runs table ──────────────────────────────────────────────────────────── -->
+<div class="max-w-screen-2xl mx-auto px-6 pb-10">
+  <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+
+    <!-- table header -->
+    <div class="grid text-xs font-semibold text-slate-400 uppercase tracking-wider
+                bg-slate-800/60 border-b border-slate-800 px-4 py-2.5"
+         style="grid-template-columns: 2fr 80px 50px 2fr 70px 70px 110px 100px 120px 36px">
+      <div>实验组 / Trial</div>
+      <div>算法</div>
+      <div class="text-center">Seed</div>
+      <div>设计空间</div>
+      <div class="text-right">预算</div>
+      <div class="text-right">Pareto</div>
+      <div class="text-right">HV</div>
+      <div class="text-right">时长</div>
+      <div class="text-right">开始时间</div>
+      <div></div>
+    </div>
+
+    <!-- loading -->
+    <div x-show="loading" class="flex justify-center items-center py-16 text-slate-500 text-sm">
+      <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+      </svg>
+      加载中…
+    </div>
+
+    <!-- empty -->
+    <div x-show="!loading && filteredRuns.length === 0"
+         class="py-16 text-center text-slate-500 text-sm">
+      暂无实验数据。请点击「同步数据」扫描 artifacts/dse/ 目录。
+    </div>
+
+    <!-- rows -->
+    <template x-for="run in filteredRuns" :key="run.id">
+      <div class="border-b border-slate-800/60 last:border-0 hover:bg-slate-800/40 transition-colors cursor-pointer"
+           @click="openRun(run)">
+        <div class="grid items-center px-4 py-3 text-xs"
+             style="grid-template-columns: 2fr 80px 50px 2fr 70px 70px 110px 100px 120px 36px">
+
+          <!-- group / trial dir -->
+          <div>
+            <div class="font-medium text-slate-100" x-text="run.run_group"></div>
+            <div class="text-slate-500 truncate max-w-xs mt-0.5 font-mono"
+                 x-text="trialName(run.trial_dir)"></div>
+          </div>
+
+          <!-- algo badge -->
+          <div>
+            <span class="px-2 py-0.5 rounded text-white text-xs font-medium"
+                  :class="'algo-' + run.algo" x-text="run.algo || '—'"></span>
+          </div>
+
+          <!-- seed -->
+          <div class="text-center text-slate-300" x-text="run.seed ?? '—'"></div>
+
+          <!-- space_profile + sim_config -->
+          <div>
+            <div class="flex items-center gap-1 flex-wrap">
+              <span class="text-slate-300" x-text="run.space_profile || '—'"></span>
+              <span x-show="run.sim_config_name"
+                    class="px-1.5 py-0.5 rounded text-xs bg-slate-700/60 text-slate-400 border border-slate-700/50 font-mono"
+                    x-text="run.sim_config_name"></span>
+              <span x-show="run.run_accuracy"
+                    class="px-1.5 py-0.5 rounded text-xs bg-green-900/50 text-green-400 border border-green-800/50">
+                ACC
+              </span>
+              <span x-show="run.enable_variation"
+                    class="px-1.5 py-0.5 rounded text-xs bg-amber-900/50 text-amber-400 border border-amber-800/50">
+                VAR
+              </span>
+              <span x-show="run.status === 'running'"
+                    class="px-1.5 py-0.5 rounded text-xs bg-blue-900/50 text-blue-400 border border-blue-800/50 animate-pulse">
+                LIVE
+              </span>
+            </div>
+          </div>
+
+          <!-- budget -->
+          <div class="text-right">
+            <span class="text-slate-300" x-text="run.budget || '—'"></span>
+            <span x-show="run.total_evaluated && run.total_evaluated !== run.budget"
+                  class="text-slate-500" x-text="'/' + run.total_evaluated"></span>
+          </div>
+
+          <!-- pareto size -->
+          <div class="text-right">
+            <span class="text-amber-400 font-semibold" x-text="run.pareto_size ?? '—'"></span>
+          </div>
+
+          <!-- hypervolume -->
+          <div class="text-right font-mono">
+            <span class="text-slate-300" x-text="fmtHV(run.hypervolume)"></span>
+          </div>
+
+          <!-- wall time -->
+          <div class="text-right text-slate-400" x-text="fmtDuration(run.wall_time_s)"></div>
+
+          <!-- started_at -->
+          <div class="text-right text-slate-500" x-text="fmtDate(run.started_at)"></div>
+
+          <!-- arrow -->
+          <div class="text-right text-slate-600">
+            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+
+
+<!-- ── Detail modal ────────────────────────────────────────────────────────── -->
+<div x-show="showModal" x-cloak
+     class="fixed inset-0 z-50 flex items-start justify-center pt-8 pb-8 px-4"
+     @keydown.escape.window="closeModal()">
+
+  <!-- backdrop -->
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeModal()"></div>
+
+  <!-- panel -->
+  <div class="relative z-10 w-full max-w-6xl bg-slate-900 border border-slate-700 rounded-2xl
+              shadow-2xl flex flex-col max-h-[90vh] fade-in" x-show="showModal">
+
+    <!-- modal header -->
+    <div class="flex items-start justify-between px-6 py-4 border-b border-slate-800 flex-shrink-0">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded text-white text-xs font-semibold"
+                :class="'algo-' + (selectedRun?.algo||'')"
+                x-text="selectedRun?.algo"></span>
+          <span class="text-slate-400 text-sm">seed <span class="text-white" x-text="selectedRun?.seed"></span></span>
+          <span class="text-slate-600">·</span>
+          <span class="text-slate-400 text-sm" x-text="selectedRun?.space_profile"></span>
+        </div>
+        <h2 class="text-base font-semibold text-white mt-1" x-text="selectedRun?.run_group"></h2>
+        <p class="text-xs text-slate-500 font-mono mt-0.5" x-text="selectedRun?.trial_dir"></p>
+      </div>
+      <button @click="closeModal()" class="text-slate-500 hover:text-white transition-colors mt-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- tabs -->
+    <div class="flex gap-1 px-6 pt-3 pb-0 border-b border-slate-800 flex-shrink-0">
+      <template x-for="tab in tabs" :key="tab.id">
+        <button @click="activeTab = tab.id"
+          class="px-4 py-2 text-xs font-medium rounded-t-lg border-b-2 transition-colors"
+          :class="activeTab===tab.id
+            ? 'border-blue-500 text-blue-400 bg-blue-500/10'
+            : 'border-transparent text-slate-400 hover:text-slate-200'">
+          <span x-text="tab.label"></span>
+          <span x-show="tab.id==='records' && records.length"
+                class="ml-1.5 px-1.5 py-0.5 rounded-full bg-slate-700 text-slate-300 text-xs"
+                x-text="records.length"></span>
+        </button>
+      </template>
+    </div>
+
+    <!-- tab content (scrollable) -->
+    <div class="overflow-y-auto flex-1 scrollbar-thin">
+
+      <!-- ── Tab: 概览 ─────────────────────────────────────────── -->
+      <div x-show="activeTab==='overview'" class="p-6 space-y-6">
+
+        <!-- best metrics -->
+        <div>
+          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">最优指标</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <template x-for="m in bestMetrics" :key="m.label">
+              <div class="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
+                <div class="text-xs text-slate-500 mb-1" x-text="m.label"></div>
+                <div class="text-lg font-bold font-mono" :class="m.color" x-text="m.value"></div>
+                <div x-show="m.sub" class="text-xs text-slate-500 mt-0.5" x-text="m.sub"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- run config grid -->
+        <div>
+          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">运行配置</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <template x-for="kv in runConfigKV" :key="kv.k">
+              <div class="bg-slate-800/40 border border-slate-800 rounded-lg px-3 py-2 flex justify-between gap-2">
+                <span class="text-slate-500 text-xs shrink-0" x-text="kv.k"></span>
+                <span class="text-slate-200 text-xs font-mono text-right truncate" x-text="kv.v"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- algo kwargs -->
+        <div x-show="algoKwargs.length">
+          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">算法参数</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <template x-for="kv in algoKwargs" :key="kv.k">
+              <div class="bg-slate-800/40 border border-slate-800 rounded-lg px-3 py-2 flex justify-between gap-2">
+                <span class="text-slate-500 text-xs" x-text="kv.k"></span>
+                <span class="text-slate-200 text-xs font-mono" x-text="kv.v"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Tab: 评估记录 ─────────────────────────────────────── -->
+      <div x-show="activeTab==='records'" class="p-6">
+
+        <!-- filter bar -->
+        <div class="flex gap-2 mb-4 items-center">
+          <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+            <input type="checkbox" x-model="showParetoOnly" class="rounded accent-amber-500"/>
+            仅显示 Pareto 点
+          </label>
+          <span class="ml-auto text-xs text-slate-500">
+            <span x-text="filteredRecords.length"></span> 条
+            <template x-if="records.some(r=>r.is_pareto)">
+              <span>（
+                <span class="text-amber-400" x-text="records.filter(r=>r.is_pareto).length"></span>
+                个 Pareto）
+              </span>
+            </template>
+          </span>
+        </div>
+
+        <!-- records table -->
+        <div class="overflow-x-auto scrollbar-thin rounded-xl border border-slate-800">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="bg-slate-800/80 text-slate-400 uppercase tracking-wider">
+                <th class="px-3 py-2.5 text-left font-semibold sticky left-0 bg-slate-800">#</th>
+                <th class="px-3 py-2.5 text-left font-semibold">Phase</th>
+                <th class="px-2 py-2.5 text-center font-semibold">P</th>
+                <!-- dynamic param columns -->
+                <template x-for="col in paramCols" :key="col">
+                  <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap" x-text="col"></th>
+                </template>
+                <!-- metrics -->
+                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Latency</th>
+                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Energy</th>
+                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Area</th>
+                <th class="px-3 py-2.5 text-right font-semibold">ACC</th>
+                <th class="px-3 py-2.5 text-right font-semibold">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="rec in filteredRecords" :key="rec.id">
+                <tr class="border-t border-slate-800/60 hover:bg-slate-800/40 transition-colors"
+                    :class="{'pareto-row': rec.is_pareto}">
+                  <td class="px-3 py-2 text-slate-500 font-mono sticky left-0 bg-slate-900"
+                      x-text="rec.eval_index"></td>
+                  <td class="px-3 py-2 text-slate-400 whitespace-nowrap" x-text="rec.phase"></td>
+                  <td class="px-2 py-2 text-center">
+                    <span x-show="rec.is_pareto" class="text-amber-400 text-base leading-none">★</span>
+                  </td>
+                  <!-- params -->
+                  <template x-for="col in paramCols" :key="col">
+                    <td class="px-3 py-2 font-mono text-slate-300 whitespace-nowrap"
+                        x-text="rec.params[col] ?? '—'"></td>
+                  </template>
+                  <!-- metrics -->
+                  <td class="px-3 py-2 text-right font-mono text-slate-300 whitespace-nowrap"
+                      x-text="fmtLatency(rec.latency_ns)"></td>
+                  <td class="px-3 py-2 text-right font-mono text-slate-300 whitespace-nowrap"
+                      x-text="fmtEnergy(rec.energy_nj)"></td>
+                  <td class="px-3 py-2 text-right font-mono text-slate-300 whitespace-nowrap"
+                      x-text="fmtArea(rec.area_um2)"></td>
+                  <td class="px-3 py-2 text-right font-mono"
+                      :class="rec.accuracy >= (selectedRun?.accuracy_target||0) ? 'text-green-400' : rec.accuracy ? 'text-red-400' : 'text-slate-600'"
+                      x-text="rec.accuracy != null ? (rec.accuracy*100).toFixed(2)+'%' : '—'"></td>
+                  <td class="px-3 py-2 text-right text-slate-500" x-text="rec.elapsed_s ? rec.elapsed_s.toFixed(1)+'s' : '—'"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Tab: 散点图 ───────────────────────────────────────── -->
+      <div x-show="activeTab==='scatter'" class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-xs text-slate-400 font-semibold mb-3">Latency vs Energy</h3>
+            <canvas id="chart-lat-en" height="260"></canvas>
+          </div>
+          <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-xs text-slate-400 font-semibold mb-3">Energy vs Area</h3>
+            <canvas id="chart-en-ar" height="260"></canvas>
+          </div>
+          <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-4 md:col-span-2">
+            <h3 class="text-xs text-slate-400 font-semibold mb-3">Latency vs Accuracy</h3>
+            <canvas id="chart-lat-acc" height="180"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end scrollable -->
+  </div><!-- end panel -->
+</div><!-- end modal -->
+
+
+<script>
+function dseApp() {
+  return {
+    runs: [], stats: {}, selectedRun: null, selectedRunDetail: null,
+    records: [], loading: false, syncing: false,
+    showModal: false, activeTab: 'overview',
+    filterQ: '', filterAlgo: '', filterSpace: '', filterGroup: '',
+    showParetoOnly: false,
+    tabs: [
+      { id: 'overview', label: '概览' },
+      { id: 'records',  label: '评估记录' },
+      { id: 'scatter',  label: '散点图' },
+    ],
+    _charts: {},
+
+    async init() {
+      this.loading = true
+      await Promise.all([this.loadStats(), this.loadRuns()])
+      this.loading = false
+    },
+
+    async loadStats() {
+      const r = await fetch('/api/stats')
+      this.stats = await r.json()
+    },
+
+    async loadRuns() {
+      const params = new URLSearchParams()
+      if (this.filterAlgo)  params.set('algo',  this.filterAlgo)
+      if (this.filterSpace) params.set('space', this.filterSpace)
+      if (this.filterGroup) params.set('group', this.filterGroup)
+      if (this.filterQ)     params.set('q',     this.filterQ)
+      const r = await fetch('/api/runs?' + params)
+      this.runs = await r.json()
+    },
+
+    async sync() {
+      this.syncing = true
+      const r = await fetch('/api/sync', { method: 'POST' })
+      const d = await r.json()
+      this.syncing = false
+      await Promise.all([this.loadStats(), this.loadRuns()])
+      if (d.imported > 0) alert(`✅ 导入 ${d.imported} 个新实验`)
+      else alert('已是最新，无新数据')
+    },
+
+    async openRun(run) {
+      this.selectedRun = run
+      this.activeTab = 'overview'
+      this.showParetoOnly = false
+      this.showModal = true
+      // Load detail
+      const [detailRes, recRes] = await Promise.all([
+        fetch(`/api/runs/${run.id}`),
+        fetch(`/api/runs/${run.id}/records`),
+      ])
+      this.selectedRunDetail = await detailRes.json()
+      this.records = await recRes.json()
+      // Draw charts after short delay (tab switch)
+      this.$nextTick(() => { if (this.activeTab === 'scatter') this.drawCharts() })
+    },
+
+    closeModal() {
+      this.showModal = false
+      this.selectedRun = null
+      this.records = []
+      Object.values(this._charts).forEach(c => c?.destroy())
+      this._charts = {}
+    },
+
+    // Watch tab change to draw charts
+    get activeTabWatcher() {
+      if (this.activeTab === 'scatter' && this.records.length) {
+        this.$nextTick(() => this.drawCharts())
+      }
+      return this.activeTab
+    },
+
+    drawCharts() {
+      const all = this.records.filter(r => r.latency_ns && r.energy_nj)
+      const pareto = all.filter(r => r.is_pareto)
+      const nonPareto = all.filter(r => !r.is_pareto)
+
+      const mkDataset = (recs, label, color, size) => ({
+        label, data: recs.map(r => ({ x: r.latency_ns/1e6, y: r.energy_nj/1e3, _r: r })),
+        backgroundColor: color, borderColor: color,
+        pointRadius: size, pointHoverRadius: size + 2,
+      })
+
+      const axisStyle = {
+        grid: { color: 'rgba(255,255,255,0.06)' },
+        ticks: { color: '#94a3b8', font: { size: 10 } },
+      }
+      const legendStyle = { labels: { color: '#94a3b8', font: { size: 10 } } }
+      const tooltipFmt = (ctx) => {
+        const r = ctx.raw._r
+        return [
+          `Latency: ${this.fmtLatency(r.latency_ns)}`,
+          `Energy:  ${this.fmtEnergy(r.energy_nj)}`,
+          r.accuracy != null ? `ACC: ${(r.accuracy*100).toFixed(2)}%` : null,
+          `#${r.eval_index} ${r.phase}`,
+        ].filter(Boolean)
+      }
+      const baseOpts = (xlabel, ylabel) => ({
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: legendStyle, tooltip: { callbacks: { afterBody: tooltipFmt } } },
+        scales: {
+          x: { ...axisStyle, title: { display: true, text: xlabel, color: '#64748b', font: { size: 10 } } },
+          y: { ...axisStyle, title: { display: true, text: ylabel, color: '#64748b', font: { size: 10 } } },
+        },
+      })
+
+      // Destroy old charts
+      Object.values(this._charts).forEach(c => c?.destroy())
+      this._charts = {}
+
+      const mk = (id, datasets, opts) => {
+        const el = document.getElementById(id)
+        if (!el) return
+        this._charts[id] = new Chart(el, { type: 'scatter', data: { datasets }, options: opts })
+      }
+
+      mk('chart-lat-en', [
+        mkDataset(nonPareto, '普通点', 'rgba(99,102,241,0.5)', 4),
+        mkDataset(pareto,    'Pareto', 'rgba(245,158,11,0.9)', 7),
+      ], baseOpts('Latency (ms)', 'Energy (µJ)'))
+
+      const all2 = this.records.filter(r => r.energy_nj && r.area_um2)
+      const p2 = all2.filter(r=>r.is_pareto), np2 = all2.filter(r=>!r.is_pareto)
+      const mkDataset2 = (recs, label, color, size) => ({
+        label, data: recs.map(r => ({ x: r.energy_nj/1e3, y: r.area_um2/1e6, _r: r })),
+        backgroundColor: color, borderColor: color,
+        pointRadius: size, pointHoverRadius: size + 2,
+      })
+      mk('chart-en-ar', [
+        mkDataset2(np2, '普通点', 'rgba(99,102,241,0.5)', 4),
+        mkDataset2(p2,  'Pareto', 'rgba(245,158,11,0.9)', 7),
+      ], { ...baseOpts('Energy (µJ)', 'Area (mm²)'),
+           plugins: { ...baseOpts('','').plugins,
+             tooltip: { callbacks: { afterBody: (ctx) => {
+               const r = ctx.raw._r
+               return [`Energy: ${this.fmtEnergy(r.energy_nj)}`,
+                       `Area:   ${this.fmtArea(r.area_um2)}`,
+                       `#${r.eval_index} ${r.phase}`]
+             }}}
+           }
+         })
+
+      const acc = this.records.filter(r => r.latency_ns && r.accuracy != null)
+      mk('chart-lat-acc', [{
+        label: '评估点',
+        data: acc.map(r => ({ x: r.latency_ns/1e6, y: r.accuracy*100, _r: r })),
+        backgroundColor: acc.map(r => r.is_pareto ? 'rgba(245,158,11,0.9)' : 'rgba(99,102,241,0.5)'),
+        pointRadius: acc.map(r => r.is_pareto ? 7 : 4),
+      }], { ...baseOpts('Latency (ms)', 'Accuracy (%)'),
+            plugins: { legend: { display: false },
+              tooltip: { callbacks: { afterBody: (ctx) => {
+                const r = ctx.raw._r
+                return [`ACC: ${(r.accuracy*100).toFixed(2)}%`,
+                        `Latency: ${this.fmtLatency(r.latency_ns)}`,
+                        `#${r.eval_index} ${r.phase}`]
+              }}}}
+          })
+    },
+
+    get filteredRuns() {
+      return this.runs
+    },
+
+    get filteredRecords() {
+      return this.showParetoOnly ? this.records.filter(r => r.is_pareto) : this.records
+    },
+
+    get paramCols() {
+      const cols = new Set()
+      for (const r of this.records) {
+        Object.keys(r.params || {}).forEach(k => cols.add(k))
+      }
+      // Preferred order
+      const preferred = ['rram_preset','xbar_size','adc_choice','dac_num',
+                         'xbar_polarity','sub_position','group_num','pe_num',
+                         'tile_connection','inter_tile_bw']
+      const ordered = preferred.filter(k => cols.has(k))
+      for (const k of cols) { if (!ordered.includes(k)) ordered.push(k) }
+      return ordered
+    },
+
+    get statCards() {
+      return [
+        { label: '实验运行数', value: this.stats.total_runs ?? '…' },
+        { label: '评估点（去重）', value: this.stats.total_measurements ?? '…' },
+        { label: 'Pareto 点数', value: this.stats.total_pareto ?? '…' },
+        { label: '唯一设计点', value: this.stats.total_design_points ?? '…' },
+      ]
+    },
+
+    get runConfigKV() {
+      const r = this.selectedRunDetail
+      if (!r) return []
+      const rc = r.run_config || {}
+      const fmt = v => v === true ? '✓' : v === false ? '✗' : String(v ?? '—')
+      return [
+        { k: 'nn',            v: rc.nn || r.nn },
+        { k: 'sim_config',    v: r.sim_config_name || r.sim_config_hash?.slice(0,8) || '—' },
+        { k: 'space_profile', v: r.space_profile },
+        { k: 'budget',        v: fmt(r.budget) },
+        { k: 'init_evals',    v: fmt(rc.init_evals) },
+        { k: 'run_accuracy',  v: fmt(rc.run_accuracy) },
+        { k: 'enable_saf',    v: fmt(rc.enable_saf) },
+        { k: 'enable_variation', v: fmt(rc.enable_variation) },
+        { k: 'accuracy_target',  v: r.accuracy_target != null ? (r.accuracy_target*100).toFixed(0)+'%' : '—' },
+        { k: 'device',        v: rc.device },
+        { k: 'wall_time',     v: this.fmtDuration(r.wall_time_s) },
+        { k: 'hypervolume',   v: this.fmtHV(r.hypervolume) },
+        { k: 'pareto_size',   v: fmt(r.pareto_size) },
+        { k: 'source_type',   v: r.source_type },
+        { k: 'started_at',    v: this.fmtDate(r.started_at) },
+      ]
+    },
+
+    get algoKwargs() {
+      const ak = this.selectedRunDetail?.run_config?.algo_kwargs || {}
+      return Object.entries(ak).map(([k,v]) => ({ k, v: String(v) }))
+    },
+
+    get bestMetrics() {
+      const recs = this.records
+      if (!recs.length) return []
+      const minBy = (arr, fn) => arr.reduce((a,b) => fn(a)<fn(b)?a:b, arr[0])
+      const maxBy = (arr, fn) => arr.reduce((a,b) => fn(a)>fn(b)?a:b, arr[0])
+      const lat = minBy(recs.filter(r=>r.latency_ns), r=>r.latency_ns)
+      const en  = minBy(recs.filter(r=>r.energy_nj),  r=>r.energy_nj)
+      const ar  = minBy(recs.filter(r=>r.area_um2),   r=>r.area_um2)
+      const acc = recs.some(r=>r.accuracy!=null)
+                  ? maxBy(recs.filter(r=>r.accuracy!=null), r=>r.accuracy)
+                  : null
+      return [
+        { label: 'Best Latency',  value: this.fmtLatency(lat?.latency_ns), color: 'text-blue-400',  sub: `#${lat?.eval_index}` },
+        { label: 'Best Energy',   value: this.fmtEnergy(en?.energy_nj),   color: 'text-purple-400', sub: `#${en?.eval_index}` },
+        { label: 'Best Area',     value: this.fmtArea(ar?.area_um2),      color: 'text-cyan-400',   sub: `#${ar?.eval_index}` },
+        { label: 'Best Accuracy', value: acc ? (acc.accuracy*100).toFixed(2)+'%' : '—',
+          color: 'text-green-400', sub: acc ? `#${acc.eval_index}` : null },
+      ]
+    },
+
+    // ── Formatters ──────────────────────────────────────────────────────────
+    fmtLatency(ns) {
+      if (ns == null) return '—'
+      if (ns >= 1e9)  return (ns/1e9).toFixed(2) + ' s'
+      if (ns >= 1e6)  return (ns/1e6).toFixed(2) + ' ms'
+      return (ns/1e3).toFixed(1) + ' µs'
+    },
+    fmtEnergy(nj) {
+      if (nj == null) return '—'
+      if (nj >= 1e6)  return (nj/1e6).toFixed(2) + ' mJ'
+      if (nj >= 1e3)  return (nj/1e3).toFixed(2) + ' µJ'
+      return nj.toFixed(1) + ' nJ'
+    },
+    fmtArea(um2) {
+      if (um2 == null) return '—'
+      if (um2 >= 1e12) return (um2/1e12).toFixed(2) + ' m²'
+      if (um2 >= 1e6)  return (um2/1e6).toFixed(2) + ' mm²'
+      if (um2 >= 1e3)  return (um2/1e3).toFixed(1) + ' ×10³ µm²'
+      return um2.toFixed(0) + ' µm²'
+    },
+    fmtHV(hv) {
+      if (hv == null) return '—'
+      if (hv === 0)   return '0'
+      const exp = Math.floor(Math.log10(Math.abs(hv)))
+      const man = hv / Math.pow(10, exp)
+      return man.toFixed(2) + 'e' + exp
+    },
+    fmtDuration(s) {
+      if (s == null) return '—'
+      if (s < 60) return s.toFixed(1) + 's'
+      if (s < 3600) return Math.floor(s/60) + 'm ' + Math.floor(s%60) + 's'
+      return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm'
+    },
+    fmtDate(iso) {
+      if (!iso) return '—'
+      try {
+        const d = new Date(iso)
+        return d.toLocaleDateString('zh-CN', { month:'2-digit', day:'2-digit' }) + ' ' +
+               d.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' })
+      } catch { return iso.slice(0,16) }
+    },
+    trialName(path) {
+      if (!path) return ''
+      const parts = path.replace(/\\/g,'/').split('/')
+      return parts.slice(-1)[0]
+    },
+  }
+}
+
+// Watch tab change for chart redraw
+document.addEventListener('alpine:init', () => {
+  Alpine.effect(() => {
+    // accessed inside openRun via nextTick
+  })
+})
+</script>
+
+<!-- Tab watcher: redraw charts when scatter tab opens -->
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('dseApp', dseApp)
+})
+</script>
+</body>
+</html>

@@ -62,6 +62,9 @@ def run(cfg: RunConfig) -> DSERunResult:
     random.shuffle(idxs)
     chosen = idxs[:n_iter]
 
+    from dse.db_writer import DSEDbWriter
+    writer = DSEDbWriter(cfg.db_path, cfg, cfg.trial_dir) if cfg.db_path else None
+
     records: List[DSERecord] = []
     pbar = try_make_tqdm(n_iter, tag)
     for k, idx in enumerate(chosen, start=1):
@@ -84,6 +87,13 @@ def run(cfg: RunConfig) -> DSERunResult:
             )
         finally:
             os.remove(temp_path)
+
+        eval_index = len(records) + 1
+        if writer:
+            try:
+                writer.record_eval(res, eval_index=eval_index, phase="random")
+            except Exception as _e:
+                print(f"{tag} [db] write failed (non-fatal): {_e}")
 
         rec = DSERecord(
             algo="random",
@@ -117,6 +127,16 @@ def run(cfg: RunConfig) -> DSERunResult:
 
     wall_time_s = time.time() - t_start
     finished_at = datetime.now(timezone.utc).isoformat()
+
+    if writer:
+        try:
+            pareto_eval_indices = [records[i].eval_index for i in nd_idx]
+            writer.update_pareto(pareto_eval_indices)
+            writer.finalize(None, None, wall_time_s, finished_at)
+        except Exception as _e:
+            print(f"{tag} [db] finalize failed (non-fatal): {_e}")
+        finally:
+            writer.close()
     n_feasible = sum(
         1 for r in records
         if accuracy_target is None or (r.accuracy is not None and r.accuracy >= float(accuracy_target))

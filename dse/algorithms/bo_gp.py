@@ -119,6 +119,9 @@ def run(cfg: RunConfig) -> DSERunResult:
     total_steps = n_iter + (max(1, min(topk_accuracy, n_iter)) if two_stage else 0)
     pbar = try_make_tqdm(total_steps, tag)
 
+    from dse.db_writer import DSEDbWriter
+    writer = DSEDbWriter(cfg.db_path, cfg, cfg.trial_dir) if cfg.db_path else None
+
     chosen: List[int] = []
     records: List[DSERecord] = []
 
@@ -151,6 +154,11 @@ def run(cfg: RunConfig) -> DSERunResult:
             scal += accuracy_penalty * (accuracy_target - res.accuracy)
 
         eval_idx = len(records) + 1
+        if writer:
+            try:
+                writer.record_eval(res, eval_index=eval_idx, phase=phase)
+            except Exception as _e:
+                print(f"{tag} [db] write failed (non-fatal): {_e}")
         rec = DSERecord(
             algo="bo_gp",
             seed=cfg.seed,
@@ -250,10 +258,16 @@ def run(cfg: RunConfig) -> DSERunResult:
                 acc_penalty = accuracy_penalty * (accuracy_target - res2.accuracy)
             final_scal += acc_penalty
 
+            stage2_eval_idx = len(records) + 1
+            if writer:
+                try:
+                    writer.record_eval(res2, eval_index=stage2_eval_idx, phase="stage2")
+                except Exception as _e:
+                    print(f"{tag} [db] write failed (non-fatal): {_e}")
             stage2_rec = DSERecord(
                 algo="bo_gp",
                 seed=cfg.seed,
-                eval_index=len(records) + 1,
+                eval_index=stage2_eval_idx,
                 phase="stage2",
                 latency_ns=res2.latency_ns,
                 energy_nj=res2.energy_nj,
@@ -289,6 +303,16 @@ def run(cfg: RunConfig) -> DSERunResult:
     if pbar is not None:
         pbar.close()
     print(f"{tag} Done. evaluated={len(records)} pareto={len(nd_idx)} best_obj={best_obj:.4f} wall={wall_time_s:.1f}s")
+
+    if writer:
+        try:
+            pareto_eval_indices = [records[i].eval_index for i in nd_idx]
+            writer.update_pareto(pareto_eval_indices)
+            writer.finalize(None, None, wall_time_s, finished_at)
+        except Exception as _e:
+            print(f"{tag} [db] finalize failed (non-fatal): {_e}")
+        finally:
+            writer.close()
 
     return DSERunResult(
         run_config=cfg,

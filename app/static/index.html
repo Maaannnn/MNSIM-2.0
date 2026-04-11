@@ -9,7 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
   [x-cloak] { display: none !important; }
-  body { font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+    transition: background-color .2s ease, color .2s ease;
+  }
   .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
   .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
@@ -21,6 +24,53 @@
   .pareto-row   { background: rgba(245, 158, 11, 0.08) !important; }
   .fade-in { animation: fadeIn .2s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
+
+  body[data-theme="light"] {
+    background:
+      radial-gradient(circle at top left, rgba(191, 219, 254, 0.55), transparent 36%),
+      radial-gradient(circle at top right, rgba(219, 234, 254, 0.85), transparent 34%),
+      linear-gradient(180deg, #f8fbff 0%, #edf5ff 100%);
+    color: #16325c;
+  }
+  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-track { background: #dbeafe; }
+  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb { background: #93c5fd; }
+  body[data-theme="light"] .bg-slate-950 { background: transparent !important; }
+  body[data-theme="light"] .bg-slate-950\/95 { background: rgba(248, 251, 255, 0.94) !important; }
+  body[data-theme="light"] .bg-slate-900,
+  body[data-theme="light"] .bg-slate-900\/70,
+  body[data-theme="light"] .bg-slate-900\/60,
+  body[data-theme="light"] .bg-slate-900\/50,
+  body[data-theme="light"] .bg-slate-900\/40 {
+    background: rgba(255, 255, 255, 0.86) !important;
+  }
+  body[data-theme="light"] .bg-slate-800,
+  body[data-theme="light"] .bg-slate-800\/80,
+  body[data-theme="light"] .bg-slate-800\/60,
+  body[data-theme="light"] .bg-slate-800\/40,
+  body[data-theme="light"] .bg-slate-800\/30 {
+    background: rgba(227, 238, 255, 0.9) !important;
+  }
+  body[data-theme="light"] .border-slate-800,
+  body[data-theme="light"] .border-slate-800\/60,
+  body[data-theme="light"] .border-slate-700,
+  body[data-theme="light"] .border-slate-700\/50 {
+    border-color: #c7dbff !important;
+  }
+  body[data-theme="light"] .text-white { color: #0f2d59 !important; }
+  body[data-theme="light"] .text-slate-200,
+  body[data-theme="light"] .text-slate-300 { color: #24446f !important; }
+  body[data-theme="light"] .text-slate-400 { color: #43618e !important; }
+  body[data-theme="light"] .text-slate-500 { color: #5b77a3 !important; }
+  body[data-theme="light"] .text-slate-600 { color: #7991b6 !important; }
+  body[data-theme="light"] .hover\:bg-slate-800\/40:hover,
+  body[data-theme="light"] .hover\:bg-slate-700:hover,
+  body[data-theme="light"] .hover\:bg-slate-800:hover {
+    background: rgba(191, 219, 254, 0.72) !important;
+  }
+  body[data-theme="light"] .placeholder-slate-500::placeholder { color: #7b91b5 !important; }
+  body[data-theme="light"] .algo-random { background: #3b82f6; }
+  body[data-theme="light"] .algo-matrixcsv { background: #0f766e; }
+  body[data-theme="light"] .pareto-row { background: rgba(59, 130, 246, 0.10) !important; }
 </style>
 <script>
 tailwind.config = {
@@ -31,7 +81,7 @@ tailwind.config = {
 </script>
 </head>
 
-<body class="bg-slate-950 text-slate-200 min-h-screen" x-data="dseApp()" x-init="init()">
+<body class="bg-slate-950 text-slate-200 min-h-screen" x-data="dseApp()" x-init="init()" :data-theme="theme">
 
 <!-- ── Header ──────────────────────────────────────────────────────────────── -->
 <header class="sticky top-0 z-40 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
@@ -43,16 +93,27 @@ tailwind.config = {
         <p class="text-xs text-slate-500 mt-0.5">设计空间探索查看器</p>
       </div>
     </div>
-    <button @click="sync()"
-      class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
-             bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
-      :class="{'opacity-60 pointer-events-none': syncing}">
-      <svg class="w-3.5 h-3.5" :class="{'animate-spin': syncing}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-      </svg>
-      <span x-text="syncing ? '同步中…' : '同步数据'"></span>
-    </button>
+    <div class="flex items-center gap-2">
+      <button @click="toggleTheme()"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+               bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 3v2m8-2v2M3 8h2m14 0h2M5.5 16.5l1.5-1.5m10 1.5L15.5 15M12 7a5 5 0 100 10 5 5 0 000-10z"/>
+        </svg>
+        <span x-text="theme === 'light' ? '切到深色' : '切到浅色'"></span>
+      </button>
+      <button @click="sync()"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium
+               bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+        :class="{'opacity-60 pointer-events-none': syncing}">
+        <svg class="w-3.5 h-3.5" :class="{'animate-spin': syncing}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span x-text="syncing ? '同步中…' : '同步数据'"></span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -72,12 +133,12 @@ tailwind.config = {
     <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
     </svg>
-    <input type="text" placeholder="搜索…" x-model.debounce.300ms="filterQ"
+    <input type="text" placeholder="搜索…" x-model.debounce.300ms="filterQ" @input.debounce.350ms="queueGlobalAnalysisReload()"
       class="pl-8 pr-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
              focus:outline-none focus:border-blue-500 w-44 text-slate-200 placeholder-slate-500"/>
   </div>
 
-  <select x-model="filterAlgo"
+  <select x-model="filterAlgo" @change="queueGlobalAnalysisReload()"
     class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
            focus:outline-none focus:border-blue-500 text-slate-200">
     <option value="">全部算法</option>
@@ -86,7 +147,7 @@ tailwind.config = {
     </template>
   </select>
 
-  <select x-model="filterSpace"
+  <select x-model="filterSpace" @change="queueGlobalAnalysisReload()"
     class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
            focus:outline-none focus:border-blue-500 text-slate-200">
     <option value="">全部空间</option>
@@ -95,7 +156,7 @@ tailwind.config = {
     </template>
   </select>
 
-  <select x-model="filterGroup"
+  <select x-model="filterGroup" @change="queueGlobalAnalysisReload()"
     class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
            focus:outline-none focus:border-blue-500 text-slate-200">
     <option value="">全部实验组</option>
@@ -110,8 +171,388 @@ tailwind.config = {
   </span>
 </div>
 
+<!-- ── Main view tabs ──────────────────────────────────────────────────────── -->
+<div class="max-w-screen-2xl mx-auto px-6 pb-4 flex flex-wrap gap-2 items-center">
+  <button @click="setMainView('runs')"
+    class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+    :class="mainView === 'runs'
+      ? 'bg-blue-500/10 text-blue-400 border-blue-500/40'
+      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200 hover:bg-slate-700'">
+    实验列表
+  </button>
+  <button @click="setMainView('analysis')"
+    class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+    :class="mainView === 'analysis'
+      ? 'bg-blue-500/10 text-blue-400 border-blue-500/40'
+      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200 hover:bg-slate-700'">
+    全局分析
+  </button>
+  <button @click="setMainView('database')"
+    class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+    :class="mainView === 'database'
+      ? 'bg-blue-500/10 text-blue-400 border-blue-500/40'
+      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200 hover:bg-slate-700'">
+    数据库表
+  </button>
+</div>
+
+<!-- ── Global analysis ─────────────────────────────────────────────────────── -->
+<div x-show="mainView==='analysis'" class="max-w-screen-2xl mx-auto px-6 pb-8">
+  <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+    <div class="px-4 py-4 border-b border-slate-800 flex flex-wrap items-center gap-2">
+      <div>
+        <h2 class="text-sm font-semibold text-white">全局分析</h2>
+        <p class="text-xs text-slate-500 mt-0.5">
+          基于数据库，对当前筛选命中的多个实验统一分析
+        </p>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <div class="text-[11px] text-slate-500" x-text="globalAnalysisScopeText"></div>
+        <button @click="loadGlobalAnalysis()"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors">
+          刷新分析
+        </button>
+      </div>
+    </div>
+
+    <div x-show="globalAnalysisLoading" class="flex justify-center items-center py-14 text-slate-500 text-sm">
+      <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+      </svg>
+      全局分析加载中…
+    </div>
+
+    <div x-show="!globalAnalysisLoading && !globalAnalysis" class="py-14 text-center text-slate-500 text-sm">
+      当前筛选下没有可分析的数据。
+    </div>
+
+    <div x-show="!globalAnalysisLoading && globalAnalysis" class="p-6 space-y-8">
+      <div>
+        <h1 class="text-3xl font-bold text-white">MNSIM DSE 采样结果分析</h1>
+        <div class="text-sm text-slate-500 mt-2">
+          数据来源：SQLite 数据库视图，而不是 CSV 文件；当前范围：<span x-text="globalAnalysisScopeText"></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <template x-for="card in globalAnalysisSummaryCards" :key="card.zh">
+          <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+            <div class="text-xs text-slate-400" x-text="card.zh"></div>
+            <div class="text-[11px] text-slate-500 mt-1" x-text="card.en"></div>
+            <div class="text-3xl font-bold text-white mt-2" x-text="card.value"></div>
+            <div class="text-[11px] text-slate-500 mt-2" x-show="card.sub" x-text="card.sub"></div>
+          </div>
+        </template>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-4">摘要</div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+            <div class="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs text-blue-300">
+              <span x-text="'当前阶段：' + globalRecommendationStage"></span>
+            </div>
+            <div class="text-sm font-semibold text-white mt-3">当前结果说明什么</div>
+            <ul class="mt-3 space-y-2 text-sm text-slate-300 list-disc pl-5">
+              <template x-for="(item, idx) in globalHighlights" :key="'highlight-' + idx">
+                <li x-text="item"></li>
+              </template>
+            </ul>
+          </div>
+          <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+            <div class="text-sm font-semibold text-white">建议下一步实验</div>
+            <ul class="mt-3 space-y-2 text-sm text-slate-300 list-disc pl-5">
+              <template x-for="(item, idx) in globalActions" :key="'action-' + idx">
+                <li x-text="item"></li>
+              </template>
+            </ul>
+          </div>
+        </div>
+        <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4 mt-4">
+          <div class="text-sm font-semibold text-white">风险提示</div>
+          <ul class="mt-3 space-y-2 text-sm text-slate-300 list-disc pl-5">
+            <template x-for="(item, idx) in globalCautions" :key="'caution-' + idx">
+              <li x-text="item"></li>
+            </template>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-2">Rank Top-3 推荐配置</div>
+        <div class="text-sm text-slate-500 mb-4">
+          这里展示的是具体配置点，不是分组统计。点击卡片会跳到对应实验记录。
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <template x-for="(row, idx) in globalTopRankConfigs" :key="'rank-card-' + row.record_id">
+            <button @click="openGlobalAnalysisRecord(row)"
+              class="text-left rounded-2xl border border-slate-800 bg-gradient-to-b from-white/5 to-slate-800/20 p-4 hover:bg-slate-800/40 transition-colors">
+              <div class="flex items-center justify-between gap-3 mb-3">
+                <div class="text-sm font-extrabold" :class="idx===0 ? 'text-blue-400' : idx===1 ? 'text-fuchsia-400' : 'text-pink-400'"
+                     x-text="globalRankBadge(idx)"></div>
+                <div class="text-xs text-slate-500 font-mono" x-text="(row.run_group || '—') + ' · #' + row.eval_index"></div>
+              </div>
+              <div class="text-sm font-semibold text-white leading-6" x-text="globalRankReason(row, idx)"></div>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <template x-for="item in analysisParamSummary(row.params).slice(0,5)" :key="'rank-chip-' + row.record_id + '-' + item.key">
+                  <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-1 text-xs text-slate-300">
+                    <span x-text="item.label.en + ' ' + item.value"></span>
+                  </span>
+                </template>
+              </div>
+              <div class="grid grid-cols-[80px_1fr] gap-x-3 gap-y-2 text-sm mt-4">
+                <div class="text-slate-500">时延</div><div class="text-slate-200 font-mono" x-text="fmtLatency(row.latency_ns)"></div>
+                <div class="text-slate-500">能耗</div><div class="text-slate-200 font-mono" x-text="fmtEnergy(row.energy_nj)"></div>
+                <div class="text-slate-500">面积</div><div class="text-slate-200 font-mono" x-text="fmtArea(row.area_um2)"></div>
+                <div class="text-slate-500">精度</div><div class="font-mono" :class="row.feasible ? 'text-green-400' : 'text-red-400'" x-text="row.accuracy != null ? fmtPercent(row.accuracy, 2) : '—'"></div>
+              </div>
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-4">实验设定</div>
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+            <div class="text-sm font-semibold text-white mb-3">实验背景</div>
+            <div class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
+              <div class="text-slate-500">分析模式</div><div class="text-slate-200">全局数据库分析</div>
+              <div class="text-slate-500">命中实验</div><div class="text-slate-200 font-mono" x-text="globalAnalysis?.summary?.matched_runs ?? 0"></div>
+              <div class="text-slate-500">算法覆盖</div><div class="text-slate-200" x-text="globalScopeValues('algo')"></div>
+              <div class="text-slate-500">设计空间</div><div class="text-slate-200" x-text="globalScopeValues('space_profile')"></div>
+              <div class="text-slate-500">实验组</div><div class="text-slate-200" x-text="globalScopeValues('run_group')"></div>
+            </div>
+          </div>
+          <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+            <div class="text-sm font-semibold text-white mb-3">运行条件</div>
+            <div class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
+              <div class="text-slate-500">搜索词</div><div class="text-slate-200" x-text="filterQ || '—'"></div>
+              <div class="text-slate-500">算法筛选</div><div class="text-slate-200" x-text="filterAlgo || '全部'"></div>
+              <div class="text-slate-500">空间筛选</div><div class="text-slate-200" x-text="filterSpace || '全部'"></div>
+              <div class="text-slate-500">实验组筛选</div><div class="text-slate-200" x-text="filterGroup || '全部'"></div>
+              <div class="text-slate-500">可行判定</div><div class="text-slate-200">accuracy >= 每条记录所属 run 的 accuracy_target</div>
+            </div>
+          </div>
+          <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+            <div class="text-sm font-semibold text-white mb-3">评估口径</div>
+            <div class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
+              <div class="text-slate-500">数据来源</div><div class="text-slate-200">SQLite / opt_runs + run_evaluations + measurements + design_points</div>
+              <div class="text-slate-500">样本单位</div><div class="text-slate-200">run_evaluations</div>
+              <div class="text-slate-500">去重单位</div><div class="text-slate-200">measurements / design_points</div>
+              <div class="text-slate-500">全局 Pareto</div><div class="text-slate-200">当前筛选范围内重算</div>
+              <div class="text-slate-500">CSV 依赖</div><div class="text-slate-200">已丢弃</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-4">PPA 散点图</div>
+        <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
+              <div class="text-sm font-semibold text-white">时延-能耗散点</div>
+              <div class="text-[11px] text-slate-500 mt-1">Latency vs Energy</div>
+              <canvas id="global-chart-lat-en" height="250" class="mt-3"></canvas>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
+              <div class="text-sm font-semibold text-white">时延-面积散点</div>
+              <div class="text-[11px] text-slate-500 mt-1">Latency vs Area</div>
+              <canvas id="global-chart-lat-ar" height="250" class="mt-3"></canvas>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
+            <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
+              <div class="text-sm font-semibold text-white">能耗-面积散点</div>
+              <div class="text-[11px] text-slate-500 mt-1">Energy vs Area</div>
+              <canvas id="global-chart-en-ar" height="250" class="mt-3"></canvas>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
+              <div class="text-sm font-semibold text-white">时延-精度散点</div>
+              <div class="text-[11px] text-slate-500 mt-1">Latency vs Accuracy</div>
+              <canvas id="global-chart-lat-acc" height="250" class="mt-3"></canvas>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-4 text-xs">
+            <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-slate-300">浅色点 = 精度不达标</span>
+            <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-slate-300">黑边点 = 全局 Pareto</span>
+            <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-slate-300">颜色 = RRAM preset</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-4">最好结果速览</div>
+        <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+          <div class="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
+            <div class="text-slate-500">最小时延</div><div class="text-slate-200" x-text="globalBestText('latency')"></div>
+            <div class="text-slate-500">最小能耗</div><div class="text-slate-200" x-text="globalBestText('energy')"></div>
+            <div class="text-slate-500">最小面积</div><div class="text-slate-200" x-text="globalBestText('area')"></div>
+            <div class="text-slate-500">最高精度</div><div class="text-slate-200" x-text="globalBestText('accuracy')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-4">怎么读这页</div>
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+          <template x-for="(step, idx) in globalGuideSteps" :key="'guide-' + idx">
+            <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+              <div class="text-xs font-bold text-blue-400" x-text="'STEP ' + (idx + 1)"></div>
+              <div class="text-sm font-semibold text-white mt-2" x-text="step.title"></div>
+              <div class="text-sm text-slate-400 mt-2 leading-6" x-text="step.desc"></div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-4">名词说明</div>
+        <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
+          <div class="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm">
+            <div class="text-slate-500">feasible（可行）</div><div class="text-slate-200">表示该设计点满足精度约束，即 accuracy >= accuracy_target。</div>
+            <div class="text-slate-500">global Pareto</div><div class="text-slate-200">表示该设计点在当前筛选范围内，不会被其他点同时在时延、能耗、面积三项上完全压制。</div>
+            <div class="text-slate-500">时延</div><div class="text-slate-200">单位是 ns。</div>
+            <div class="text-slate-500">能耗</div><div class="text-slate-200">单位是 nJ。</div>
+            <div class="text-slate-500">面积</div><div class="text-slate-200">单位是 μm²。</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-4">最终推荐的具体配置</div>
+        <div class="rounded-2xl border border-slate-800 overflow-hidden">
+          <div class="overflow-x-auto scrollbar-thin">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="bg-slate-800/80 text-slate-400 uppercase tracking-wider">
+                  <th class="px-3 py-2.5 text-left font-semibold">#</th>
+                  <th class="px-3 py-2.5 text-left font-semibold">实验</th>
+                  <th class="px-3 py-2.5 text-left font-semibold">参数</th>
+                  <th class="px-3 py-2.5 text-right font-semibold">时延</th>
+                  <th class="px-3 py-2.5 text-right font-semibold">能耗</th>
+                  <th class="px-3 py-2.5 text-right font-semibold">面积</th>
+                  <th class="px-3 py-2.5 text-right font-semibold">精度</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="(row, idx) in (globalAnalysis?.top_configs || [])" :key="'global-top-' + row.record_id">
+                  <tr class="border-t border-slate-800/60 hover:bg-slate-800/40 transition-colors cursor-pointer"
+                      @click="openGlobalAnalysisRecord(row)">
+                    <td class="px-3 py-3 text-slate-500 font-mono align-top" x-text="idx + 1"></td>
+                    <td class="px-3 py-3 align-top">
+                      <div class="text-slate-200" x-text="row.run_group || '—'"></div>
+                      <div class="text-[11px] text-slate-500 mt-1">
+                        <span x-text="row.algo || '—'"></span>
+                        <span class="mx-1">·</span>
+                        <span x-text="'seed ' + (row.seed ?? '—')"></span>
+                        <span class="mx-1">·</span>
+                        <span class="font-mono" x-text="'#' + row.eval_index"></span>
+                      </div>
+                    </td>
+                    <td class="px-3 py-3 align-top">
+                      <div class="flex flex-wrap gap-1.5">
+                        <template x-for="item in analysisParamSummary(row.params)" :key="'global-full-' + row.record_id + '-' + item.key">
+                          <span class="inline-flex flex-col rounded-lg border border-slate-700 bg-slate-800/60 px-2 py-1">
+                            <span class="text-[10px] text-slate-500" x-text="item.label.zh"></span>
+                            <span class="font-mono text-slate-200" x-text="item.value"></span>
+                          </span>
+                        </template>
+                      </div>
+                    </td>
+                    <td class="px-3 py-3 text-right font-mono text-slate-300 align-top" x-text="fmtLatency(row.latency_ns)"></td>
+                    <td class="px-3 py-3 text-right font-mono text-slate-300 align-top" x-text="fmtEnergy(row.energy_nj)"></td>
+                    <td class="px-3 py-3 text-right font-mono text-slate-300 align-top" x-text="fmtArea(row.area_um2)"></td>
+                    <td class="px-3 py-3 text-right font-mono align-top"
+                        :class="row.feasible ? 'text-green-400' : row.accuracy != null ? 'text-red-400' : 'text-slate-600'"
+                        x-text="row.accuracy != null ? fmtPercent(row.accuracy, 2) : '—'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-lg font-semibold text-white mb-4">分组统计摘要</div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <template x-for="section in globalPrimaryGroupSections" :key="'global-primary-' + section.key">
+            <div class="rounded-2xl border border-slate-800 bg-slate-800/30 overflow-hidden">
+              <div class="px-4 py-3 border-b border-slate-800">
+                <div class="text-sm font-semibold text-blue-300" x-text="section.label_zh"></div>
+                <div class="text-[11px] text-slate-500 mt-1" x-text="section.label_en"></div>
+              </div>
+              <div class="overflow-x-auto scrollbar-thin">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="bg-slate-800/60 text-slate-400">
+                      <th class="px-3 py-2 text-left font-semibold">值</th>
+                      <th class="px-3 py-2 text-right font-semibold">样本</th>
+                      <th class="px-3 py-2 text-right font-semibold">可行率</th>
+                      <th class="px-3 py-2 text-right font-semibold">Pareto</th>
+                      <th class="px-3 py-2 text-right font-semibold">最小时延</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="row in section.rows.slice(0, 10)" :key="'global-primary-row-' + section.key + '-' + row.group_value">
+                      <tr class="border-t border-slate-800/60">
+                        <td class="px-3 py-2 font-mono text-slate-200" x-text="row.group_value"></td>
+                        <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="row.samples"></td>
+                        <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="fmtPercent(row.feasible_rate)"></td>
+                        <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="row.global_pareto_samples"></td>
+                        <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="fmtLatency(row.best_latency_ns)"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </template>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-800/30 overflow-hidden mt-4">
+          <div class="px-4 py-3 border-b border-slate-800">
+            <div class="text-sm font-semibold text-blue-300">全部分组摘要</div>
+            <div class="text-[11px] text-slate-500 mt-1">All Group Summary</div>
+          </div>
+          <div class="overflow-x-auto scrollbar-thin">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="bg-slate-800/60 text-slate-400">
+                  <th class="px-3 py-2 text-left font-semibold">分组</th>
+                  <th class="px-3 py-2 text-left font-semibold">值</th>
+                  <th class="px-3 py-2 text-right font-semibold">样本</th>
+                  <th class="px-3 py-2 text-right font-semibold">可行率</th>
+                  <th class="px-3 py-2 text-right font-semibold">Pareto</th>
+                  <th class="px-3 py-2 text-right font-semibold">最小时延</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="section in (globalAnalysis?.group_sections || [])" :key="'all-section-' + section.key">
+                  <template x-for="row in section.rows.slice(0, 8)" :key="'all-row-' + section.key + '-' + row.group_value">
+                    <tr class="border-t border-slate-800/60">
+                      <td class="px-3 py-2 text-slate-300" x-text="section.label_zh"></td>
+                      <td class="px-3 py-2 font-mono text-slate-200" x-text="row.group_value"></td>
+                      <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="row.samples"></td>
+                      <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="fmtPercent(row.feasible_rate)"></td>
+                      <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="row.global_pareto_samples"></td>
+                      <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="fmtLatency(row.best_latency_ns)"></td>
+                    </tr>
+                  </template>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Runs table ──────────────────────────────────────────────────────────── -->
-<div class="max-w-screen-2xl mx-auto px-6 pb-10">
+<div x-show="mainView==='runs'" class="max-w-screen-2xl mx-auto px-6 pb-10">
   <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
 
     <!-- table header -->
@@ -180,7 +621,7 @@ tailwind.config = {
                 ACC
               </span>
               <span x-show="run.enable_variation"
-                    class="px-1.5 py-0.5 rounded text-xs bg-amber-900/50 text-amber-400 border border-amber-800/50">
+                    class="px-1.5 py-0.5 rounded text-xs bg-sky-900/40 text-sky-300 border border-sky-800/50">
                 VAR
               </span>
               <span x-show="run.status === 'running'"
@@ -199,7 +640,7 @@ tailwind.config = {
 
           <!-- pareto size -->
           <div class="text-right">
-            <span class="text-amber-400 font-semibold" x-text="run.pareto_size ?? '—'"></span>
+            <span class="text-blue-400 font-semibold" x-text="run.pareto_size ?? '—'"></span>
           </div>
 
           <!-- hypervolume -->
@@ -226,7 +667,7 @@ tailwind.config = {
 </div>
 
 <!-- ── DB tables ───────────────────────────────────────────────────────────── -->
-<div class="max-w-screen-2xl mx-auto px-6 pb-10">
+<div x-show="mainView==='database'" class="max-w-screen-2xl mx-auto px-6 pb-10">
   <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
     <div class="px-4 py-4 border-b border-slate-800 flex flex-wrap items-center gap-2">
       <div class="mr-2">
@@ -510,13 +951,170 @@ tailwind.config = {
 
       </div>
 
+      <!-- ── Tab: 分析 ───────────────────────────────────────── -->
+      <div x-show="activeTab==='analysis'" class="p-6 space-y-6">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="text-xs text-slate-400">
+            当前分析完全基于数据库。
+            样本单位是 `run_evaluations`，去重统计来自 `measurements` 和 `design_points`。
+          </div>
+          <div class="text-[11px] text-slate-500">
+            Database-backed only. No CSV analysis path is used here.
+          </div>
+        </div>
+
+        <div x-show="analysisLoading" class="flex items-center justify-center py-12 text-slate-500 text-sm">
+          <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+          分析结果加载中…
+        </div>
+
+        <div x-show="!analysisLoading && !selectedRunAnalysis" class="py-12 text-center text-slate-500 text-sm">
+          当前实验还没有数据库分析结果。
+        </div>
+
+        <div x-show="!analysisLoading && selectedRunAnalysis" class="space-y-6">
+          <div>
+            <div class="mb-3">
+              <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">分析摘要</h3>
+              <div class="text-[11px] text-slate-500 mt-1">Analysis Summary</div>
+            </div>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <template x-for="card in analysisSummaryCards" :key="card.zh">
+                <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-3">
+                  <div class="text-xs text-slate-400" x-text="card.zh"></div>
+                  <div class="text-[11px] text-slate-500 mt-1" x-text="card.en"></div>
+                  <div class="text-lg font-bold font-mono text-white mt-2" x-text="card.value"></div>
+                  <div class="text-[11px] text-slate-500 mt-1" x-show="card.sub" x-text="card.sub"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-slate-800 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-800">
+              <div class="text-xs font-semibold text-slate-300">重点配置</div>
+              <div class="text-[11px] text-slate-500 mt-1">Top Configs</div>
+            </div>
+            <div class="overflow-x-auto scrollbar-thin">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="bg-slate-800/80 text-slate-400 uppercase tracking-wider">
+                    <th class="px-3 py-2.5 text-left font-semibold">#</th>
+                    <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">
+                      <div class="text-slate-300">记录</div>
+                      <div class="normal-case tracking-normal text-[10px] text-slate-500">Record</div>
+                    </th>
+                    <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">
+                      <div class="text-slate-300">参数</div>
+                      <div class="normal-case tracking-normal text-[10px] text-slate-500">Parameters</div>
+                    </th>
+                    <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">
+                      <div class="text-slate-300">时延</div>
+                      <div class="normal-case tracking-normal text-[10px] text-slate-500">Latency</div>
+                    </th>
+                    <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">
+                      <div class="text-slate-300">能耗</div>
+                      <div class="normal-case tracking-normal text-[10px] text-slate-500">Energy</div>
+                    </th>
+                    <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">
+                      <div class="text-slate-300">面积</div>
+                      <div class="normal-case tracking-normal text-[10px] text-slate-500">Area</div>
+                    </th>
+                    <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">
+                      <div class="text-slate-300">精度</div>
+                      <div class="normal-case tracking-normal text-[10px] text-slate-500">Accuracy</div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(row, idx) in (selectedRunAnalysis?.top_configs || [])" :key="row.record_id">
+                    <tr class="border-t border-slate-800/60 hover:bg-slate-800/40 transition-colors cursor-pointer"
+                        @click="openAnalysisRecord(row.record_id)">
+                      <td class="px-3 py-3 text-slate-500 font-mono align-top" x-text="idx + 1"></td>
+                      <td class="px-3 py-3 align-top">
+                        <div class="font-mono text-slate-200" x-text="'#' + row.eval_index"></div>
+                        <div class="text-[11px] text-slate-500 mt-1" x-text="row.phase"></div>
+                        <div class="flex flex-wrap gap-1 mt-2">
+                          <span x-show="row.feasible" class="px-1.5 py-0.5 rounded bg-green-900/40 text-green-300 border border-green-800/50 text-[10px]">可行</span>
+                          <span x-show="row.global_pareto" class="px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 border border-blue-800/50 text-[10px]">全局 Pareto</span>
+                        </div>
+                      </td>
+                      <td class="px-3 py-3 align-top">
+                        <div class="flex flex-wrap gap-1.5">
+                          <template x-for="item in analysisParamSummary(row.params)" :key="row.record_id + '-' + item.key">
+                            <span class="inline-flex flex-col rounded-lg border border-slate-700 bg-slate-800/60 px-2 py-1">
+                              <span class="text-[10px] text-slate-500" x-text="item.label.zh"></span>
+                              <span class="font-mono text-slate-200" x-text="item.value"></span>
+                            </span>
+                          </template>
+                        </div>
+                      </td>
+                      <td class="px-3 py-3 text-right font-mono text-slate-300 align-top" x-text="fmtLatency(row.latency_ns)"></td>
+                      <td class="px-3 py-3 text-right font-mono text-slate-300 align-top" x-text="fmtEnergy(row.energy_nj)"></td>
+                      <td class="px-3 py-3 text-right font-mono text-slate-300 align-top" x-text="fmtArea(row.area_um2)"></td>
+                      <td class="px-3 py-3 text-right font-mono align-top"
+                          :class="row.feasible ? 'text-green-400' : row.accuracy != null ? 'text-red-400' : 'text-slate-600'"
+                          x-text="row.accuracy != null ? fmtPercent(row.accuracy, 2) : '—'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <div class="mb-3">
+              <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">分组摘要</h3>
+              <div class="text-[11px] text-slate-500 mt-1">Group Summary</div>
+            </div>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <template x-for="section in (selectedRunAnalysis?.group_sections || [])" :key="section.key">
+                <div class="rounded-xl border border-slate-800 bg-slate-800/30 overflow-hidden">
+                  <div class="px-4 py-3 border-b border-slate-800">
+                    <div class="text-xs font-semibold text-blue-300" x-text="section.label_zh"></div>
+                    <div class="text-[11px] text-slate-500 mt-1" x-text="section.label_en"></div>
+                  </div>
+                  <div class="overflow-x-auto scrollbar-thin">
+                    <table class="w-full text-xs">
+                      <thead>
+                        <tr class="bg-slate-800/60 text-slate-400">
+                          <th class="px-3 py-2 text-left font-semibold">值</th>
+                          <th class="px-3 py-2 text-right font-semibold">样本</th>
+                          <th class="px-3 py-2 text-right font-semibold">可行率</th>
+                          <th class="px-3 py-2 text-right font-semibold">Pareto</th>
+                          <th class="px-3 py-2 text-right font-semibold">最小时延</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-for="row in section.rows" :key="section.key + '-' + row.group_value">
+                          <tr class="border-t border-slate-800/60">
+                            <td class="px-3 py-2 font-mono text-slate-200" x-text="row.group_value"></td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="row.samples"></td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="fmtPercent(row.feasible_rate)"></td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="row.global_pareto_samples"></td>
+                            <td class="px-3 py-2 text-right font-mono text-slate-300" x-text="fmtLatency(row.best_latency_ns)"></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Tab: 评估记录 ─────────────────────────────────────── -->
       <div x-show="activeTab==='records'" class="p-6">
 
         <!-- filter bar -->
         <div class="flex gap-2 mb-4 items-center">
           <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
-            <input type="checkbox" x-model="showParetoOnly" class="rounded accent-amber-500"/>
+            <input type="checkbox" x-model="showParetoOnly" class="rounded accent-blue-500"/>
             仅显示 Pareto 点
           </label>
           <span class="text-xs text-slate-500">
@@ -529,7 +1127,7 @@ tailwind.config = {
             <span x-text="filteredRecords.length"></span> 条
             <template x-if="records.some(r=>r.is_pareto)">
               <span>（
-                <span class="text-amber-400" x-text="records.filter(r=>r.is_pareto).length"></span>
+                <span class="text-blue-400" x-text="records.filter(r=>r.is_pareto).length"></span>
                 个 Pareto）
               </span>
             </template>
@@ -586,7 +1184,7 @@ tailwind.config = {
                       x-text="rec.eval_index"></td>
                   <td class="px-3 py-2 text-slate-400 whitespace-nowrap" x-text="rec.phase"></td>
                   <td class="px-2 py-2 text-center">
-                    <span x-show="rec.is_pareto" class="text-amber-400 text-base leading-none">★</span>
+                    <span x-show="rec.is_pareto" class="text-blue-400 text-base leading-none">★</span>
                   </td>
                   <!-- params -->
                   <template x-for="col in paramCols" :key="col">
@@ -766,26 +1364,34 @@ tailwind.config = {
 <script>
 function dseApp() {
   return {
+    theme: 'light',
+    mainView: 'runs',
     runs: [], stats: {}, selectedRun: null, selectedRunDetail: null,
     records: [], loading: false, syncing: false,
+    globalAnalysis: null, globalAnalysisLoading: false, globalAnalysisDirty: true, _globalAnalysisTimer: null,
     tableCatalog: [], tableColumns: [], tableRows: [], tableLoading: false,
+    tableCatalogLoaded: false,
     tableBrowser: { selected: 'opt_runs', q: '', limit: 50, offset: 0, total: 0 },
     showModal: false, activeTab: 'overview',
     filterQ: '', filterAlgo: '', filterSpace: '', filterGroup: '',
     showParetoOnly: false,
     selectedRecord: null, selectedEffectiveConfig: null, effectiveConfigLoading: false,
+    selectedRunAnalysis: null, analysisLoading: false,
     _effectiveConfigCache: {},
     tabs: [
       { id: 'overview', label: '概览' },
+      { id: 'analysis', label: '分析' },
       { id: 'records',  label: '评估记录' },
       { id: 'config',   label: '生效配置' },
       { id: 'scatter',  label: '散点图' },
     ],
     _charts: {},
+    _globalCharts: {},
 
     async init() {
+      this.theme = localStorage.getItem('mnsim-dse-theme') || 'light'
       this.loading = true
-      await Promise.all([this.loadStats(), this.loadRuns(), this.loadTables()])
+      await Promise.all([this.loadStats(), this.loadRuns()])
       this.loading = false
     },
 
@@ -799,9 +1405,49 @@ function dseApp() {
       this.runs = await r.json()
     },
 
+    buildRunFilterParams() {
+      const params = new URLSearchParams()
+      const q = this.filterQ.trim()
+      if (q) params.set('q', q)
+      if (this.filterAlgo) params.set('algo', this.filterAlgo)
+      if (this.filterSpace) params.set('space', this.filterSpace)
+      if (this.filterGroup) params.set('group', this.filterGroup)
+      return params
+    },
+
+    queueGlobalAnalysisReload() {
+      this.globalAnalysisDirty = true
+      if (this.mainView !== 'analysis') return
+      clearTimeout(this._globalAnalysisTimer)
+      this._globalAnalysisTimer = setTimeout(() => this.loadGlobalAnalysis(), 250)
+    },
+
+    async loadGlobalAnalysis() {
+      this.globalAnalysisLoading = true
+      try {
+        const r = await fetch('/api/analysis/global?' + this.buildRunFilterParams().toString())
+        this.globalAnalysis = await r.json()
+        this.globalAnalysisDirty = false
+        this.$nextTick(() => this.drawGlobalCharts())
+      } finally {
+        this.globalAnalysisLoading = false
+      }
+    },
+
+    async setMainView(view) {
+      this.mainView = view
+      if (view === 'analysis' && (this.globalAnalysisDirty || !this.globalAnalysis)) {
+        await this.loadGlobalAnalysis()
+      }
+      if (view === 'database' && !this.tableCatalogLoaded) {
+        await this.loadTables()
+      }
+    },
+
     async loadTables() {
       const r = await fetch('/api/db/tables')
       this.tableCatalog = await r.json()
+      this.tableCatalogLoaded = true
       if (!this.tableCatalog.length) {
         this.tableColumns = []
         this.tableRows = []
@@ -856,9 +1502,47 @@ function dseApp() {
       await this.loadEffectiveConfig(rec)
     },
 
+    async openAnalysisRecord(recordId) {
+      const rec = this.records.find(item => item.record_id === recordId)
+      if (!rec) return
+      await this.selectRecord(rec, true)
+    },
+
+    async openGlobalAnalysisRecord(row) {
+      const run = this.runs.find(item => item.id === row.run_id)
+      if (!run) return
+      await this.openRun(run)
+      await this.openAnalysisRecord(row.record_id)
+    },
+
     setActiveTab(tabId) {
       this.activeTab = tabId
+      if (tabId === 'analysis' && this.selectedRun && !this.selectedRunAnalysis && !this.analysisLoading) {
+        this.ensureRunAnalysis()
+      }
       if (tabId === 'scatter' && this.records.length) {
+        this.$nextTick(() => this.drawCharts())
+      }
+    },
+
+    async ensureRunAnalysis() {
+      if (!this.selectedRun || this.selectedRunAnalysis || this.analysisLoading) return
+      this.analysisLoading = true
+      try {
+        const r = await fetch(`/api/runs/${this.selectedRun.id}/analysis`)
+        this.selectedRunAnalysis = await r.json()
+      } finally {
+        this.analysisLoading = false
+      }
+    },
+
+    toggleTheme() {
+      this.theme = this.theme === 'light' ? 'dark' : 'light'
+      localStorage.setItem('mnsim-dse-theme', this.theme)
+      if (this.mainView === 'analysis' && this.globalAnalysis) {
+        this.$nextTick(() => this.drawGlobalCharts())
+      }
+      if (this.activeTab === 'scatter' && this.records.length) {
         this.$nextTick(() => this.drawCharts())
       }
     },
@@ -868,7 +1552,10 @@ function dseApp() {
       const r = await fetch('/api/sync', { method: 'POST' })
       const d = await r.json()
       this.syncing = false
-      await Promise.all([this.loadStats(), this.loadRuns(), this.loadTables()])
+      await Promise.all([this.loadStats(), this.loadRuns()])
+      if (this.tableCatalogLoaded) await this.loadTables()
+      this.globalAnalysisDirty = true
+      if (this.mainView === 'analysis') await this.loadGlobalAnalysis()
       if (d.imported > 0) alert(`✅ 导入 ${d.imported} 个新实验`)
       else alert('已是最新，无新数据')
     },
@@ -878,6 +1565,8 @@ function dseApp() {
       this.activeTab = 'overview'
       this.showParetoOnly = false
       this.showModal = true
+      this.analysisLoading = false
+      this.selectedRunAnalysis = null
       // Load detail
       const [detailRes, recRes] = await Promise.all([
         fetch(`/api/runs/${run.id}`),
@@ -900,14 +1589,110 @@ function dseApp() {
       this.records = []
       this.selectedRecord = null
       this.selectedEffectiveConfig = null
+      this.selectedRunAnalysis = null
+      this.analysisLoading = false
       Object.values(this._charts).forEach(c => c?.destroy())
       this._charts = {}
+    },
+
+    drawGlobalCharts() {
+      const rows = this.globalAnalysis?.plot_rows || []
+      const isLight = this.theme === 'light'
+      const axisColor = isLight ? '#4b6690' : '#94a3b8'
+      const titleColor = isLight ? '#5b77a3' : '#64748b'
+      const gridColor = isLight ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.06)'
+      const presetColors = {
+        P0: '#2563eb',
+        P1: '#0f766e',
+        P2: '#7c3aed',
+        P3: '#db2777',
+        P4: '#ea580c',
+      }
+      const colorOf = row => presetColors[row.rram_preset] || (isLight ? '#3b82f6' : '#60a5fa')
+      const bgColorOf = row => {
+        const base = colorOf(row)
+        const alpha = row.feasible ? (isLight ? 'cc' : 'd9') : (isLight ? '4d' : '40')
+        return `${base}${alpha}`
+      }
+      const borderColorOf = row => row.global_pareto ? '#111827' : colorOf(row)
+      const borderWidthOf = row => row.global_pareto ? 1.5 : 0.5
+      const radiusOf = row => row.global_pareto ? 5.5 : 4
+      const axisStyle = {
+        grid: { color: gridColor },
+        ticks: { color: axisColor, font: { size: 10 } },
+      }
+      const tooltipFor = row => ([
+        `preset: ${row.rram_preset || '—'}`,
+        `xbar: ${row.xbar_size || '—'}`,
+        `ADC: ${row.adc_choice || '—'}`,
+        `DAC: ${row.dac_num || '—'}`,
+        `PE: ${row.pe_num || '—'}`,
+        `时延 / Latency: ${this.fmtLatency(row.latency_ns)}`,
+        `能耗 / Energy: ${this.fmtEnergy(row.energy_nj)}`,
+        `面积 / Area: ${this.fmtArea(row.area_um2)}`,
+        row.accuracy != null ? `精度 / ACC: ${this.fmtPercent(row.accuracy, 2)}` : null,
+        `${row.global_pareto ? '全局 Pareto' : '非 Pareto'} · ${row.feasible ? '可行' : '不可行'}`,
+        `${row.run_group || '—'} · #${row.eval_index ?? '—'} ${row.phase || ''}`.trim(),
+      ].filter(Boolean))
+      const baseOpts = (xlabel, ylabel) => ({
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterBody: ctx => tooltipFor(ctx.raw._r),
+            },
+          },
+        },
+        scales: {
+          x: { ...axisStyle, title: { display: true, text: xlabel, color: titleColor, font: { size: 10 } } },
+          y: { ...axisStyle, title: { display: true, text: ylabel, color: titleColor, font: { size: 10 } } },
+        },
+      })
+      const mkDataset = (items, xMap, yMap) => ({
+        label: '评估点',
+        data: items.map(row => ({ x: xMap(row), y: yMap(row), _r: row })),
+        backgroundColor: items.map(bgColorOf),
+        borderColor: items.map(borderColorOf),
+        borderWidth: items.map(borderWidthOf),
+        pointRadius: items.map(radiusOf),
+        pointHoverRadius: items.map(row => radiusOf(row) + 1.5),
+      })
+      const mk = (id, items, xMap, yMap, opts) => {
+        const el = document.getElementById(id)
+        if (!el) return
+        this._globalCharts[id] = new Chart(el, {
+          type: 'scatter',
+          data: { datasets: [mkDataset(items, xMap, yMap)] },
+          options: opts,
+        })
+      }
+
+      Object.values(this._globalCharts).forEach(c => c?.destroy())
+      this._globalCharts = {}
+
+      const latEn = rows.filter(row => row.latency_ns != null && row.energy_nj != null)
+      const latAr = rows.filter(row => row.latency_ns != null && row.area_um2 != null)
+      const enAr = rows.filter(row => row.energy_nj != null && row.area_um2 != null)
+      const latAcc = rows.filter(row => row.latency_ns != null && row.accuracy != null)
+
+      mk('global-chart-lat-en', latEn, row => row.latency_ns / 1e6, row => row.energy_nj / 1e3, baseOpts('时延 / Latency (ms)', '能耗 / Energy (µJ)'))
+      mk('global-chart-lat-ar', latAr, row => row.latency_ns / 1e6, row => row.area_um2 / 1e6, baseOpts('时延 / Latency (ms)', '面积 / Area (mm²)'))
+      mk('global-chart-en-ar', enAr, row => row.energy_nj / 1e3, row => row.area_um2 / 1e6, baseOpts('能耗 / Energy (µJ)', '面积 / Area (mm²)'))
+      mk('global-chart-lat-acc', latAcc, row => row.latency_ns / 1e6, row => row.accuracy * 100, baseOpts('时延 / Latency (ms)', '精度 / Accuracy (%)'))
     },
 
     drawCharts() {
       const all = this.records.filter(r => r.latency_ns && r.energy_nj)
       const pareto = all.filter(r => r.is_pareto)
       const nonPareto = all.filter(r => !r.is_pareto)
+      const isLight = this.theme === 'light'
+      const axisColor = isLight ? '#4b6690' : '#94a3b8'
+      const titleColor = isLight ? '#5b77a3' : '#64748b'
+      const gridColor = isLight ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.06)'
+      const normalPoint = isLight ? 'rgba(59,130,246,0.62)' : 'rgba(99,102,241,0.5)'
+      const paretoPoint = isLight ? 'rgba(14,116,240,0.92)' : 'rgba(96,165,250,0.9)'
 
       const mkDataset = (recs, label, color, size) => ({
         label, data: recs.map(r => ({ x: r.latency_ns/1e6, y: r.energy_nj/1e3, _r: r })),
@@ -916,10 +1701,10 @@ function dseApp() {
       })
 
       const axisStyle = {
-        grid: { color: 'rgba(255,255,255,0.06)' },
-        ticks: { color: '#94a3b8', font: { size: 10 } },
+        grid: { color: gridColor },
+        ticks: { color: axisColor, font: { size: 10 } },
       }
-      const legendStyle = { labels: { color: '#94a3b8', font: { size: 10 } } }
+      const legendStyle = { labels: { color: axisColor, font: { size: 10 } } }
       const tooltipFmt = (ctx) => {
         const r = ctx.raw._r
         return [
@@ -933,8 +1718,8 @@ function dseApp() {
         responsive: true, maintainAspectRatio: true,
         plugins: { legend: legendStyle, tooltip: { callbacks: { afterBody: tooltipFmt } } },
         scales: {
-          x: { ...axisStyle, title: { display: true, text: xlabel, color: '#64748b', font: { size: 10 } } },
-          y: { ...axisStyle, title: { display: true, text: ylabel, color: '#64748b', font: { size: 10 } } },
+          x: { ...axisStyle, title: { display: true, text: xlabel, color: titleColor, font: { size: 10 } } },
+          y: { ...axisStyle, title: { display: true, text: ylabel, color: titleColor, font: { size: 10 } } },
         },
       })
 
@@ -949,8 +1734,8 @@ function dseApp() {
       }
 
       mk('chart-lat-en', [
-        mkDataset(nonPareto, '普通点', 'rgba(99,102,241,0.5)', 4),
-        mkDataset(pareto,    'Pareto', 'rgba(245,158,11,0.9)', 7),
+        mkDataset(nonPareto, '普通点', normalPoint, 4),
+        mkDataset(pareto,    'Pareto', paretoPoint, 7),
       ], baseOpts('时延 / Latency (ms)', '能耗 / Energy (µJ)'))
 
       const all2 = this.records.filter(r => r.energy_nj && r.area_um2)
@@ -961,8 +1746,8 @@ function dseApp() {
         pointRadius: size, pointHoverRadius: size + 2,
       })
       mk('chart-en-ar', [
-        mkDataset2(np2, '普通点', 'rgba(99,102,241,0.5)', 4),
-        mkDataset2(p2,  'Pareto', 'rgba(245,158,11,0.9)', 7),
+        mkDataset2(np2, '普通点', normalPoint, 4),
+        mkDataset2(p2,  'Pareto', paretoPoint, 7),
       ], { ...baseOpts('能耗 / Energy (µJ)', '面积 / Area (mm²)'),
            plugins: { ...baseOpts('','').plugins,
              tooltip: { callbacks: { afterBody: (ctx) => {
@@ -978,7 +1763,7 @@ function dseApp() {
       mk('chart-lat-acc', [{
         label: '评估点',
         data: acc.map(r => ({ x: r.latency_ns/1e6, y: r.accuracy*100, _r: r })),
-        backgroundColor: acc.map(r => r.is_pareto ? 'rgba(245,158,11,0.9)' : 'rgba(99,102,241,0.5)'),
+        backgroundColor: acc.map(r => r.is_pareto ? paretoPoint : normalPoint),
         pointRadius: acc.map(r => r.is_pareto ? 7 : 4),
       }], { ...baseOpts('时延 / Latency (ms)', '精度 / Accuracy (%)'),
             plugins: { legend: { display: false },
@@ -1036,6 +1821,172 @@ function dseApp() {
       ]
     },
 
+    get globalAnalysisScopeText() {
+      const scope = this.globalAnalysis?.scope
+      if (!scope) return '当前筛选'
+      return `命中 ${scope.matched_runs ?? 0} 个实验`
+    },
+
+    get globalAnalysisSummaryCards() {
+      const summary = this.globalAnalysis?.summary
+      if (!summary) return []
+      return [
+        { zh: '实验数', en: 'Matched Runs', value: summary.matched_runs ?? 0, sub: 'opt_runs' },
+        { zh: '样本数', en: 'Samples', value: summary.samples ?? 0, sub: 'run_evaluations' },
+        { zh: '可行样本', en: 'Feasible Samples', value: summary.feasible_samples ?? 0, sub: this.fmtPercent(summary.feasible_rate ?? 0) },
+        { zh: '全局 Pareto', en: 'Global Pareto', value: summary.global_pareto_samples ?? 0, sub: '当前筛选范围' },
+        { zh: '唯一设计点', en: 'Unique Design Points', value: summary.unique_design_points ?? 0, sub: 'design_points' },
+        { zh: '最小时延', en: 'Best Latency', value: this.fmtLatency(summary.best_latency_ns), sub: summary.best_latency_eval_index ? `#${summary.best_latency_eval_index}` : null },
+        { zh: '最低能耗', en: 'Best Energy', value: this.fmtEnergy(summary.best_energy_nj), sub: summary.best_energy_eval_index ? `#${summary.best_energy_eval_index}` : null },
+        { zh: '最高精度', en: 'Best Accuracy', value: summary.best_accuracy != null ? this.fmtPercent(summary.best_accuracy, 2) : '—', sub: summary.best_accuracy_eval_index ? `#${summary.best_accuracy_eval_index}` : null },
+      ]
+    },
+
+    get globalRecommendationStage() {
+      const summary = this.globalAnalysis?.summary
+      if (!summary || !summary.samples) return '样本不足，暂不能判断'
+      const rate = Number(summary.feasible_rate || 0)
+      const pareto = Number(summary.global_pareto_samples || 0)
+      if (rate >= 0.7 && pareto >= 3) return '进入正式搜索（已有稳定候选）'
+      if (rate >= 0.4) return '进入收束验证（空间可继续缩小）'
+      if (rate > 0) return '继续筛选空间（可行域仍偏窄）'
+      return '重新检查配置（当前未出现可行点）'
+    },
+
+    get globalHighlights() {
+      const summary = this.globalAnalysis?.summary
+      const scope = this.globalAnalysis?.scope
+      const top = this.globalTopRankConfigs[0]
+      if (!summary) return []
+      const items = [
+        `当前筛选命中 ${summary.matched_runs ?? 0} 个实验、${summary.samples ?? 0} 个评估样本，数据库口径下可行率为 ${this.fmtPercent(summary.feasible_rate ?? 0)}。`,
+        `当前范围内共有 ${summary.global_pareto_samples ?? 0} 个全局 Pareto 点，可作为下一轮重点对比候选。`,
+      ]
+      if (top) {
+        const parts = this.analysisParamSummary(top.params).slice(0, 4).map(item => `${item.label.en}=${item.value}`)
+        items.push(`当前综合排序第一的候选点来自 ${(top.run_group || '未分组实验')}，核心参数为 ${parts.join(' / ') || '—'}。`)
+      }
+      if ((scope?.runs || []).length > 1) {
+        items.push(`当前分析已跨多个 run 做统一重算，Pareto 与排名结论不再受单次实验视角限制。`)
+      }
+      return items
+    },
+
+    get globalActions() {
+      const summary = this.globalAnalysis?.summary
+      if (!summary) return []
+      const actions = []
+      const rate = Number(summary.feasible_rate || 0)
+      if (rate <= 0) {
+        actions.push('优先回到实验配置，检查精度门槛、器件预设和关键结构参数，先跑出至少一个可行点。')
+        actions.push('确认 run 的 accuracy_target 是否过高，以及当前参数空间是否被限制得过窄。')
+        return actions
+      }
+      if (rate < 0.4) {
+        actions.push('先收缩设计空间，把当前已经出现可行点的参数组合单独拉出来做定向扫描。')
+        actions.push('减少明显失效的参数档位，避免后续搜索继续把预算浪费在不可行区域。')
+      } else {
+        actions.push('以 Top-3 候选点为中心，围绕关键变量做小范围精细搜索，而不是重新铺开全空间。')
+        actions.push('把当前全局 Pareto 点导向论文候选集，重点比较 latency / energy / area 的取舍。')
+      }
+      actions.push('若要验证结论稳定性，建议固定主结构参数，只变动一到两个核心维度重新跑实验。')
+      return actions
+    },
+
+    get globalCautions() {
+      const summary = this.globalAnalysis?.summary
+      const scope = this.globalAnalysis?.scope
+      if (!summary) return []
+      const items = [
+        '当前页面使用数据库实时聚合结果，不再依赖 CSV；因此数值以 opt_runs、run_evaluations、measurements、design_points 的联表结果为准。',
+        '“Top-3 推荐配置”是具体评估记录，不是分组均值；同一组参数在不同 run 中仍可能因为上下文、阶段或种子不同而出现差异。',
+      ]
+      if ((scope?.runs || []).length === 1) {
+        items.push('当前实际上只命中 1 个实验，虽然页面叫“全局分析”，但结论仍更接近单次 run 视角。')
+      } else {
+        items.push('当前结果跨多个实验统一排序，若筛选条件过宽，不同实验目标混在一起会稀释单一实验结论。')
+      }
+      if ((summary.global_pareto_samples || 0) <= 1) {
+        items.push('当前 Pareto 点数量很少，说明可行解边界还不稳定，不建议过早下最终结论。')
+      }
+      return items
+    },
+
+    get globalTopRankConfigs() {
+      return (this.globalAnalysis?.top_configs || []).slice(0, 3)
+    },
+
+    globalRankBadge(idx) {
+      return ['Rank-1', 'Rank-2', 'Rank-3'][idx] || `Rank-${idx + 1}`
+    },
+
+    globalRankReason(row, idx) {
+      const summary = this.globalAnalysis?.summary || {}
+      const reasons = []
+      if (idx === 0) reasons.push('综合平衡分最佳')
+      if (row?.global_pareto) reasons.push('位于全局 Pareto 前沿')
+      if (row?.feasible) reasons.push('满足精度门槛')
+      if (summary.best_latency_eval_index === row?.eval_index && summary.best_latency_ns === row?.latency_ns) reasons.push('时延最优')
+      if (summary.best_energy_eval_index === row?.eval_index && summary.best_energy_nj === row?.energy_nj) reasons.push('能耗最优')
+      if (summary.best_area_eval_index === row?.eval_index && summary.best_area_um2 === row?.area_um2) reasons.push('面积最优')
+      if (summary.best_accuracy_eval_index === row?.eval_index && summary.best_accuracy === row?.accuracy) reasons.push('精度最高')
+      return reasons.slice(0, 3).join(' / ') || '综合表现稳定，适合作为下一轮重点候选。'
+    },
+
+    globalScopeValues(field) {
+      const runs = this.globalAnalysis?.scope?.runs || []
+      if (!runs.length) return '—'
+      const values = [...new Set(runs.map(run => run?.[field]).filter(v => v !== null && v !== undefined && String(v) !== ''))]
+      if (!values.length) return '—'
+      if (values.length <= 3) return values.join(' / ')
+      return `${values.slice(0, 3).join(' / ')} 等 ${values.length} 项`
+    },
+
+    globalBestText(metric) {
+      const summary = this.globalAnalysis?.summary
+      const top = this.globalTopRankConfigs
+      if (!summary) return '—'
+      if (metric === 'latency') {
+        return summary.best_latency_ns != null
+          ? `${this.fmtLatency(summary.best_latency_ns)}${summary.best_latency_eval_index ? ` · #${summary.best_latency_eval_index}` : ''}`
+          : '—'
+      }
+      if (metric === 'energy') {
+        return summary.best_energy_nj != null
+          ? `${this.fmtEnergy(summary.best_energy_nj)}${summary.best_energy_eval_index ? ` · #${summary.best_energy_eval_index}` : ''}`
+          : '—'
+      }
+      if (metric === 'area') {
+        return summary.best_area_um2 != null
+          ? `${this.fmtArea(summary.best_area_um2)}${summary.best_area_eval_index ? ` · #${summary.best_area_eval_index}` : ''}`
+          : '—'
+      }
+      if (metric === 'accuracy') {
+        return summary.best_accuracy != null
+          ? `${this.fmtPercent(summary.best_accuracy, 2)}${summary.best_accuracy_eval_index ? ` · #${summary.best_accuracy_eval_index}` : ''}`
+          : '—'
+      }
+      return top.length ? `#${top[0].eval_index}` : '—'
+    },
+
+    get globalGuideSteps() {
+      return [
+        { title: '先看摘要', desc: '先确认当前筛选命中多少实验、可行率是否足够，再判断现在是继续摸底还是进入正式收束。' },
+        { title: '再看 Top-3', desc: 'Top-3 展示的是具体记录点，适合直接回跳到实验详情里检查原始指标与生效配置。' },
+        { title: '然后看分组统计', desc: '分组摘要用于看哪些参数档位整体更稳，避免只盯住单个偶然最优点。' },
+        { title: '最后做定向复跑', desc: '把当前领先的参数组合作为中心，缩小范围做复跑，比重新全量搜索更高效。' },
+      ]
+    },
+
+    get globalPrimaryGroupSections() {
+      const sections = this.globalAnalysis?.group_sections || []
+      const preferred = ['rram_preset', 'xbar_size', 'adc_choice', 'pe_num']
+      const ordered = preferred
+        .map(key => sections.find(section => section.key === key))
+        .filter(Boolean)
+      return ordered.length ? ordered : sections.slice(0, 4)
+    },
+
     get runConfigKV() {
       const r = this.selectedRunDetail
       if (!r) return []
@@ -1088,6 +2039,31 @@ function dseApp() {
       ]
     },
 
+    get analysisSummaryCards() {
+      const summary = this.selectedRunAnalysis?.summary
+      if (!summary) return []
+      return [
+        { zh: '样本数', en: 'Samples', value: summary.samples ?? 0, sub: 'run_evaluations' },
+        { zh: '可行样本', en: 'Feasible Samples', value: summary.feasible_samples ?? 0, sub: this.fmtPercent(summary.feasible_rate ?? 0) },
+        { zh: '全局 Pareto', en: 'Global Pareto', value: summary.global_pareto_samples ?? 0, sub: '当前 run 内重算' },
+        { zh: '唯一设计点', en: 'Unique Design Points', value: summary.unique_design_points ?? 0, sub: 'design_points' },
+        { zh: '唯一测量', en: 'Unique Measurements', value: summary.unique_measurements ?? 0, sub: 'measurements' },
+        { zh: '最小时延', en: 'Best Latency', value: this.fmtLatency(summary.best_latency_ns), sub: summary.best_latency_eval_index ? `#${summary.best_latency_eval_index}` : null },
+        { zh: '最低能耗', en: 'Best Energy', value: this.fmtEnergy(summary.best_energy_nj), sub: summary.best_energy_eval_index ? `#${summary.best_energy_eval_index}` : null },
+        { zh: '最高精度', en: 'Best Accuracy', value: summary.best_accuracy != null ? this.fmtPercent(summary.best_accuracy, 2) : '—', sub: summary.best_accuracy_eval_index ? `#${summary.best_accuracy_eval_index}` : null },
+      ]
+    },
+
+    analysisParamSummary(params) {
+      if (!params) return []
+      const preferred = ['rram_preset','xbar_size','adc_choice','dac_num','xbar_polarity','sub_position','group_num','pe_num','tile_connection','inter_tile_bw']
+      const keys = preferred.filter(key => Object.prototype.hasOwnProperty.call(params, key))
+      for (const key of Object.keys(params)) {
+        if (!keys.includes(key)) keys.push(key)
+      }
+      return keys.map(key => ({ key, value: params[key], label: this.paramLabel(key) }))
+    },
+
     // ── Formatters ──────────────────────────────────────────────────────────
     fmtLatency(ns) {
       if (ns == null) return '—'
@@ -1120,6 +2096,10 @@ function dseApp() {
       if (s < 60) return s.toFixed(1) + 's'
       if (s < 3600) return Math.floor(s/60) + 'm ' + Math.floor(s%60) + 's'
       return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm'
+    },
+    fmtPercent(v, digits = 1) {
+      if (v == null) return '—'
+      return (v * 100).toFixed(digits) + '%'
     },
     fmtDate(iso) {
       if (!iso) return '—'

@@ -40,7 +40,7 @@ tailwind.config = {
       <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-sm font-bold">M</div>
       <div>
         <h1 class="text-sm font-semibold text-white leading-none">MNSIM DSE 实验记录</h1>
-        <p class="text-xs text-slate-500 mt-0.5">Design Space Exploration Viewer</p>
+        <p class="text-xs text-slate-500 mt-0.5">设计空间探索查看器</p>
       </div>
     </div>
     <button @click="sync()"
@@ -57,7 +57,7 @@ tailwind.config = {
 </header>
 
 <!-- ── Stats bar ───────────────────────────────────────────────────────────── -->
-<div class="max-w-screen-2xl mx-auto px-6 py-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+<div class="max-w-screen-2xl mx-auto px-6 py-4 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
   <template x-for="s in statCards" :key="s.label">
     <div class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3">
       <div class="text-2xl font-bold text-white" x-text="s.value"></div>
@@ -120,11 +120,11 @@ tailwind.config = {
          style="grid-template-columns: 2fr 80px 50px 2fr 70px 70px 110px 100px 120px 36px">
       <div>实验组 / Trial</div>
       <div>算法</div>
-      <div class="text-center">Seed</div>
+      <div class="text-center">种子</div>
       <div>设计空间</div>
       <div class="text-right">预算</div>
-      <div class="text-right">Pareto</div>
-      <div class="text-right">HV</div>
+      <div class="text-right">Pareto点</div>
+      <div class="text-right">HV(超体积)</div>
       <div class="text-right">时长</div>
       <div class="text-right">开始时间</div>
       <div></div>
@@ -225,6 +225,177 @@ tailwind.config = {
   </div>
 </div>
 
+<!-- ── DB tables ───────────────────────────────────────────────────────────── -->
+<div class="max-w-screen-2xl mx-auto px-6 pb-10">
+  <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+    <div class="px-4 py-4 border-b border-slate-800 flex flex-wrap items-center gap-2">
+      <div class="mr-2">
+        <h2 class="text-sm font-semibold text-white">数据库表查询</h2>
+        <p class="text-xs text-slate-500 mt-0.5"
+           x-text="selectedTableMeta ? selectedTableMetaZh : '直接查看 SQLite 里的具体表'"></p>
+      </div>
+
+      <select x-model="tableBrowser.selected" @change="loadTableRows(true)"
+        class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
+               focus:outline-none focus:border-blue-500 text-slate-200 font-mono">
+        <template x-for="meta in tableCatalog" :key="meta.name">
+          <option :value="meta.name" x-text="tableDisplayName(meta.name)"></option>
+        </template>
+      </select>
+
+      <input type="text" placeholder="搜索表内容…" x-model="tableBrowser.q"
+        @input.debounce.300ms="loadTableRows(true)"
+        class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
+               focus:outline-none focus:border-blue-500 text-slate-200 placeholder-slate-500 w-52"/>
+
+      <select x-model.number="tableBrowser.limit" @change="loadTableRows(true)"
+        class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700
+               focus:outline-none focus:border-blue-500 text-slate-200">
+        <option :value="20">20 行</option>
+        <option :value="50">50 行</option>
+        <option :value="100">100 行</option>
+        <option :value="200">200 行</option>
+      </select>
+
+      <button @click="loadTableRows()"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors">
+        刷新表
+      </button>
+
+      <span class="ml-auto text-xs text-slate-500">
+        <span class="text-white font-mono" x-text="selectedTableMeta?.count ?? 0"></span> 行
+        <span class="mx-1">·</span>
+        当前显示
+        <span class="text-white font-mono" x-text="tablePageText"></span>
+      </span>
+    </div>
+
+    <div class="px-4 py-3 border-b border-slate-800 flex flex-wrap gap-2">
+      <template x-for="meta in tableCatalog" :key="meta.name">
+        <button
+          @click="tableBrowser.selected = meta.name; loadTableRows(true)"
+          class="px-2.5 py-1 rounded-lg text-xs border transition-colors font-mono"
+          :class="tableBrowser.selected === meta.name
+            ? 'bg-blue-500/10 text-blue-400 border-blue-500/40'
+            : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'">
+          <span x-text="tableDisplayName(meta.name)"></span>
+          <span class="ml-1 text-slate-500" x-text="meta.count"></span>
+        </button>
+      </template>
+    </div>
+
+    <div x-show="tableLoading" class="flex justify-center items-center py-12 text-slate-500 text-sm">
+      <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+      </svg>
+      表数据加载中…
+    </div>
+
+    <div x-show="!tableLoading && tableRows.length === 0" class="py-12 text-center text-slate-500 text-sm">
+      当前表没有匹配数据。
+    </div>
+
+    <div x-show="!tableLoading && selectedTableIsSimConfigs && tableRows.length" class="p-4 space-y-4">
+      <template x-for="row in tableRows" :key="row.id">
+        <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40">
+          <div class="px-4 py-3 border-b border-slate-800 flex flex-wrap items-center gap-3">
+            <div>
+              <div class="text-sm font-semibold text-white" x-text="row.name || 'SimConfig'"></div>
+              <div class="text-xs text-slate-500 font-mono">
+                <span x-text="tableColumnLabel('content_hash') + ': '"></span>
+                <span x-text="row.content_hash"></span>
+              </div>
+            </div>
+            <div class="ml-auto text-xs text-slate-500">
+              <span x-text="tableColumnLabel('created_at') + ': '"></span>
+              <span x-text="fmtDate(row.created_at)"></span>
+            </div>
+          </div>
+
+          <div class="p-4 space-y-4">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <template x-for="section in parseSimConfig(row.content)" :key="section.name">
+                <div class="rounded-xl border border-slate-800 bg-slate-900/70 overflow-hidden">
+                  <div class="px-3 py-2 border-b border-slate-800">
+                    <div class="text-xs font-semibold text-blue-300" x-text="sectionLabel(section.name).en"></div>
+                    <div class="text-[11px] text-slate-500 mt-1" x-text="sectionLabel(section.name).zh"></div>
+                  </div>
+                  <div class="divide-y divide-slate-800/70">
+                    <template x-for="(item, itemIdx) in section.items" :key="section.name + '-' + itemIdx">
+                      <div class="px-3 py-2.5">
+                        <template x-if="item.kind === 'kv'">
+                          <div class="grid grid-cols-[minmax(120px,1fr)_minmax(120px,1fr)] gap-3 text-xs">
+                            <div>
+                              <div class="text-slate-300 font-mono" x-text="item.key"></div>
+                              <div class="text-[11px] text-slate-500" x-text="tableColumnLabel(item.key, true)"></div>
+                            </div>
+                            <div class="font-mono text-slate-200 break-all" x-text="item.value"></div>
+                            <div class="col-span-2 text-[11px] text-slate-500" x-show="item.comment" x-text="item.comment"></div>
+                          </div>
+                        </template>
+                        <template x-if="item.kind === 'comment'">
+                          <div class="text-[11px] text-slate-500" x-text="item.comment"></div>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <div>
+              <div class="text-xs font-semibold text-slate-400 mb-1">原始文本</div>
+              <div class="text-[11px] text-slate-500 mb-2">Raw Content</div>
+              <pre class="text-[11px] leading-5 p-4 rounded-xl border border-slate-800 bg-slate-950/70 text-slate-300 overflow-x-auto whitespace-pre-wrap"
+                   x-text="row.content || '—'"></pre>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div x-show="!tableLoading && !selectedTableIsSimConfigs && tableRows.length" class="overflow-x-auto scrollbar-thin">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-slate-800/80 text-slate-400 uppercase tracking-wider">
+            <template x-for="col in tableColumns" :key="col">
+              <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">
+                <div class="font-mono text-slate-300" x-text="col"></div>
+                <div class="normal-case tracking-normal text-[10px] text-slate-500" x-text="tableColumnLabel(col, true)"></div>
+              </th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, idx) in tableRows" :key="tableRowKey(row, idx)">
+            <tr class="border-t border-slate-800/60 hover:bg-slate-800/40 transition-colors align-top">
+              <template x-for="col in tableColumns" :key="col">
+                <td class="px-3 py-2 font-mono text-slate-300 whitespace-pre-wrap break-all"
+                    :title="fmtCell(row[col])"
+                    x-text="fmtCell(row[col])"></td>
+              </template>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="px-4 py-3 border-t border-slate-800 flex items-center justify-end gap-2">
+      <button @click="tablePrevPage()"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        :disabled="tableBrowser.offset === 0 || tableLoading">
+        上一页
+      </button>
+      <button @click="tableNextPage()"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        :disabled="tableLoading || (tableBrowser.offset + tableBrowser.limit >= tableBrowser.total)">
+        下一页
+      </button>
+    </div>
+  </div>
+</div>
+
 
 <!-- ── Detail modal ────────────────────────────────────────────────────────── -->
 <div x-show="showModal" x-cloak
@@ -245,7 +416,7 @@ tailwind.config = {
           <span class="px-2 py-0.5 rounded text-white text-xs font-semibold"
                 :class="'algo-' + (selectedRun?.algo||'')"
                 x-text="selectedRun?.algo"></span>
-          <span class="text-slate-400 text-sm">seed <span class="text-white" x-text="selectedRun?.seed"></span></span>
+          <span class="text-slate-400 text-sm">种子 <span class="text-white" x-text="selectedRun?.seed"></span></span>
           <span class="text-slate-600">·</span>
           <span class="text-slate-400 text-sm" x-text="selectedRun?.space_profile"></span>
         </div>
@@ -262,7 +433,7 @@ tailwind.config = {
     <!-- tabs -->
     <div class="flex gap-1 px-6 pt-3 pb-0 border-b border-slate-800 flex-shrink-0">
       <template x-for="tab in tabs" :key="tab.id">
-        <button @click="activeTab = tab.id"
+        <button @click="setActiveTab(tab.id)"
           class="px-4 py-2 text-xs font-medium rounded-t-lg border-b-2 transition-colors"
           :class="activeTab===tab.id
             ? 'border-blue-500 text-blue-400 bg-blue-500/10'
@@ -283,11 +454,15 @@ tailwind.config = {
 
         <!-- best metrics -->
         <div>
-          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">最优指标</h3>
+          <div class="mb-3">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">最优指标</h3>
+            <div class="text-[11px] text-slate-500 mt-1">Best Metrics</div>
+          </div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <template x-for="m in bestMetrics" :key="m.label">
+            <template x-for="m in bestMetrics" :key="m.zh">
               <div class="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
-                <div class="text-xs text-slate-500 mb-1" x-text="m.label"></div>
+                <div class="text-xs text-slate-400 mb-1" x-text="m.zh"></div>
+                <div class="text-[11px] text-slate-500 mb-1" x-text="m.en"></div>
                 <div class="text-lg font-bold font-mono" :class="m.color" x-text="m.value"></div>
                 <div x-show="m.sub" class="text-xs text-slate-500 mt-0.5" x-text="m.sub"></div>
               </div>
@@ -297,11 +472,17 @@ tailwind.config = {
 
         <!-- run config grid -->
         <div>
-          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">运行配置</h3>
+          <div class="mb-3">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">运行配置</h3>
+            <div class="text-[11px] text-slate-500 mt-1">Run Configuration</div>
+          </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            <template x-for="kv in runConfigKV" :key="kv.k">
+            <template x-for="kv in runConfigKV" :key="kv.zh">
               <div class="bg-slate-800/40 border border-slate-800 rounded-lg px-3 py-2 flex justify-between gap-2">
-                <span class="text-slate-500 text-xs shrink-0" x-text="kv.k"></span>
+                <span class="shrink-0">
+                  <div class="text-slate-400 text-xs" x-text="kv.zh"></div>
+                  <div class="text-slate-500 text-[11px]" x-text="kv.en"></div>
+                </span>
                 <span class="text-slate-200 text-xs font-mono text-right truncate" x-text="kv.v"></span>
               </div>
             </template>
@@ -310,11 +491,17 @@ tailwind.config = {
 
         <!-- algo kwargs -->
         <div x-show="algoKwargs.length">
-          <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">算法参数</h3>
+          <div class="mb-3">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">算法参数</h3>
+            <div class="text-[11px] text-slate-500 mt-1">Algorithm Parameters</div>
+          </div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <template x-for="kv in algoKwargs" :key="kv.k">
               <div class="bg-slate-800/40 border border-slate-800 rounded-lg px-3 py-2 flex justify-between gap-2">
-                <span class="text-slate-500 text-xs" x-text="kv.k"></span>
+                <span>
+                  <div class="text-slate-400 text-xs" x-text="kv.zh"></div>
+                  <div class="text-slate-500 text-[11px]" x-text="kv.en"></div>
+                </span>
                 <span class="text-slate-200 text-xs font-mono" x-text="kv.v"></span>
               </div>
             </template>
@@ -332,6 +519,12 @@ tailwind.config = {
             <input type="checkbox" x-model="showParetoOnly" class="rounded accent-amber-500"/>
             仅显示 Pareto 点
           </label>
+          <span class="text-xs text-slate-500">
+            当前展示 `run_evaluations` 原始记录，不按 `measurements` 去重
+          </span>
+          <span class="text-xs text-slate-500">
+            点击行会跳到“生效配置”，查看该次评估最终生效的配置
+          </span>
           <span class="ml-auto text-xs text-slate-500">
             <span x-text="filteredRecords.length"></span> 条
             <template x-if="records.some(r=>r.is_pareto)">
@@ -349,24 +542,46 @@ tailwind.config = {
             <thead>
               <tr class="bg-slate-800/80 text-slate-400 uppercase tracking-wider">
                 <th class="px-3 py-2.5 text-left font-semibold sticky left-0 bg-slate-800">#</th>
-                <th class="px-3 py-2.5 text-left font-semibold">Phase</th>
+                <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">
+                  <div class="text-slate-300">阶段</div>
+                  <div class="normal-case tracking-normal text-[10px] text-slate-500">Phase</div>
+                </th>
                 <th class="px-2 py-2.5 text-center font-semibold">P</th>
                 <!-- dynamic param columns -->
                 <template x-for="col in paramCols" :key="col">
-                  <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap" x-text="col"></th>
+                  <th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">
+                    <div class="font-mono text-slate-300" x-text="paramLabel(col).zh"></div>
+                    <div class="normal-case tracking-normal text-[10px] text-slate-500" x-text="paramLabel(col).en"></div>
+                  </th>
                 </template>
                 <!-- metrics -->
-                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Latency</th>
-                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Energy</th>
-                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Area</th>
-                <th class="px-3 py-2.5 text-right font-semibold">ACC</th>
-                <th class="px-3 py-2.5 text-right font-semibold">Time</th>
+                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">
+                  <div class="text-slate-300">时延</div>
+                  <div class="normal-case tracking-normal text-[10px] text-slate-500">Latency</div>
+                </th>
+                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">
+                  <div class="text-slate-300">能耗</div>
+                  <div class="normal-case tracking-normal text-[10px] text-slate-500">Energy</div>
+                </th>
+                <th class="px-3 py-2.5 text-right font-semibold whitespace-nowrap">
+                  <div class="text-slate-300">面积</div>
+                  <div class="normal-case tracking-normal text-[10px] text-slate-500">Area</div>
+                </th>
+                <th class="px-3 py-2.5 text-right font-semibold">
+                  <div class="text-slate-300">精度</div>
+                  <div class="normal-case tracking-normal text-[10px] text-slate-500">Accuracy</div>
+                </th>
+                <th class="px-3 py-2.5 text-right font-semibold">
+                  <div class="text-slate-300">耗时</div>
+                  <div class="normal-case tracking-normal text-[10px] text-slate-500">Elapsed</div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              <template x-for="rec in filteredRecords" :key="rec.id">
-                <tr class="border-t border-slate-800/60 hover:bg-slate-800/40 transition-colors"
-                    :class="{'pareto-row': rec.is_pareto}">
+              <template x-for="rec in filteredRecords" :key="rec.record_id">
+                <tr class="border-t border-slate-800/60 hover:bg-slate-800/40 transition-colors cursor-pointer"
+                    :class="{'pareto-row': rec.is_pareto, 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/30': selectedRecord?.record_id === rec.record_id}"
+                    @click="selectRecord(rec, true)">
                   <td class="px-3 py-2 text-slate-500 font-mono sticky left-0 bg-slate-900"
                       x-text="rec.eval_index"></td>
                   <td class="px-3 py-2 text-slate-400 whitespace-nowrap" x-text="rec.phase"></td>
@@ -396,19 +611,148 @@ tailwind.config = {
         </div>
       </div>
 
+      <!-- ── Tab: 生效配置 ───────────────────────────────────── -->
+      <div x-show="activeTab==='config'" class="p-6 space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="text-xs text-slate-400">
+            基础配置相同不代表每次评估相同。
+            每条记录都会在 base `sim_config` 上叠加当前 design point 参数。
+          </div>
+          <div class="ml-auto text-xs text-slate-500" x-show="selectedRecord">
+            <span class="font-mono text-white" x-text="'#' + (selectedRecord?.eval_index ?? '—')"></span>
+            <span class="mx-1">·</span>
+            <span x-text="selectedRecord?.phase || '—'"></span>
+          </div>
+        </div>
+
+        <div x-show="effectiveConfigLoading" class="flex items-center justify-center py-12 text-slate-500 text-sm">
+          <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+          生效配置加载中…
+        </div>
+
+        <div x-show="!effectiveConfigLoading && !selectedEffectiveConfig"
+             class="py-12 text-center text-slate-500 text-sm">
+          请先在“评估记录”里选择一条记录。
+        </div>
+
+        <div x-show="!effectiveConfigLoading && selectedEffectiveConfig" class="space-y-4">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="rounded-xl border border-slate-800 bg-slate-800/40 p-4">
+              <div class="text-xs text-slate-400 mb-1">记录</div>
+              <div class="text-[11px] text-slate-500 mb-2">Record</div>
+              <div class="space-y-1 text-xs">
+                <div><span class="text-slate-500">记录ID</span> <span class="font-mono text-slate-200" x-text="selectedEffectiveConfig?.record_id"></span></div>
+                <div><span class="text-slate-500">评估序号</span> <span class="font-mono text-slate-200" x-text="selectedEffectiveConfig?.eval_index"></span></div>
+                <div><span class="text-slate-500">阶段</span> <span class="font-mono text-slate-200" x-text="selectedEffectiveConfig?.phase"></span></div>
+                <div><span class="text-slate-500">设计点ID</span> <span class="font-mono text-slate-200" x-text="selectedEffectiveConfig?.design_point_id"></span></div>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-slate-800 bg-slate-800/40 p-4">
+              <div class="text-xs text-slate-400 mb-1">基础配置</div>
+              <div class="text-[11px] text-slate-500 mb-2">Base SimConfig</div>
+              <div class="space-y-1 text-xs">
+                <div><span class="text-slate-500">名称</span> <span class="font-mono text-slate-200" x-text="selectedEffectiveConfig?.sim_config_name"></span></div>
+                <div><span class="text-slate-500">配置ID</span> <span class="font-mono text-slate-200" x-text="selectedEffectiveConfig?.sim_config_id"></span></div>
+                <div><span class="text-slate-500">内容哈希</span> <span class="font-mono text-slate-200 break-all" x-text="selectedEffectiveConfig?.content_hash"></span></div>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-slate-800 bg-slate-800/40 p-4">
+              <div class="text-xs text-slate-400 mb-1">覆盖项</div>
+              <div class="text-[11px] text-slate-500 mb-2">Overrides</div>
+              <div class="text-2xl font-semibold text-white" x-text="selectedEffectiveConfig?.effective_config?.overrides?.length ?? 0"></div>
+              <div class="text-xs text-slate-500 mt-1">同一个基础配置，通过设计点覆盖后形成每次评估的最终配置</div>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-slate-800 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-800">
+              <div class="text-xs font-semibold text-slate-300">参数覆盖明细</div>
+              <div class="text-[11px] text-slate-500 mt-1">Applied Overrides</div>
+            </div>
+            <div class="overflow-x-auto scrollbar-thin">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="bg-slate-800/80 text-slate-400 uppercase tracking-wider">
+                    <th class="px-3 py-2.5 text-left font-semibold">维度</th>
+                    <th class="px-3 py-2.5 text-left font-semibold">Section.Key</th>
+                    <th class="px-3 py-2.5 text-left font-semibold">旧值</th>
+                    <th class="px-3 py-2.5 text-left font-semibold">新值</th>
+                    <th class="px-3 py-2.5 text-left font-semibold">来源</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(ov, idx) in (selectedEffectiveConfig?.effective_config?.overrides || [])" :key="idx">
+                    <tr class="border-t border-slate-800/60">
+                      <td class="px-3 py-2 font-mono text-slate-200" x-text="ov.dim"></td>
+                      <td class="px-3 py-2 font-mono text-slate-300" x-text="ov.section + '.' + ov.key"></td>
+                      <td class="px-3 py-2 font-mono text-slate-500 break-all" x-text="ov.old_value ?? '—'"></td>
+                      <td class="px-3 py-2 font-mono text-green-300 break-all" x-text="ov.new_value"></td>
+                      <td class="px-3 py-2 text-slate-400" x-text="ov.source === 'design_point' ? '设计点覆盖' : ov.source === 'rram_preset' ? 'RRAM预设' : ov.source === 'xbar_size_guard' ? '尺寸约束修正' : ov.source"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <template x-for="section in (selectedEffectiveConfig?.effective_config?.sections || [])" :key="section.name">
+              <div class="rounded-xl border border-slate-800 bg-slate-800/30 overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-800">
+                  <div class="text-xs font-semibold text-blue-300" x-text="sectionLabel(section.name).en"></div>
+                  <div class="text-[11px] text-slate-500 mt-1" x-text="sectionLabel(section.name).zh"></div>
+                </div>
+                <div class="divide-y divide-slate-800/60">
+                  <template x-for="(item, idx) in section.items" :key="section.name + '-' + idx">
+                    <div class="px-4 py-2.5 grid grid-cols-[minmax(140px,1fr)_minmax(120px,2fr)] gap-3 text-xs">
+                      <div>
+                        <div class="font-mono text-slate-300" x-text="item.key"></div>
+                        <div class="text-[11px] text-slate-500" x-text="tableColumnLabel(item.key, true)"></div>
+                      </div>
+                      <div class="font-mono text-slate-200 break-all" x-text="item.value"></div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div>
+            <div class="text-xs font-semibold text-slate-400 mb-1">最终配置原文</div>
+            <div class="text-[11px] text-slate-500 mb-2">Raw Effective INI，保留原始英文键名</div>
+            <pre class="text-[11px] leading-5 p-4 rounded-xl border border-slate-800 bg-slate-950/70 text-slate-300 overflow-x-auto whitespace-pre-wrap"
+                 x-text="selectedEffectiveConfig?.effective_config?.content || '—'"></pre>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Tab: 散点图 ───────────────────────────────────────── -->
       <div x-show="activeTab==='scatter'" class="p-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-4">
-            <h3 class="text-xs text-slate-400 font-semibold mb-3">Latency vs Energy</h3>
+            <div class="mb-3">
+              <h3 class="text-xs text-slate-400 font-semibold">时延 vs 能耗</h3>
+              <div class="text-[11px] text-slate-500 mt-1">Latency vs Energy</div>
+            </div>
             <canvas id="chart-lat-en" height="260"></canvas>
           </div>
           <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-4">
-            <h3 class="text-xs text-slate-400 font-semibold mb-3">Energy vs Area</h3>
+            <div class="mb-3">
+              <h3 class="text-xs text-slate-400 font-semibold">能耗 vs 面积</h3>
+              <div class="text-[11px] text-slate-500 mt-1">Energy vs Area</div>
+            </div>
             <canvas id="chart-en-ar" height="260"></canvas>
           </div>
           <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-4 md:col-span-2">
-            <h3 class="text-xs text-slate-400 font-semibold mb-3">Latency vs Accuracy</h3>
+            <div class="mb-3">
+              <h3 class="text-xs text-slate-400 font-semibold">时延 vs 精度</h3>
+              <div class="text-[11px] text-slate-500 mt-1">Latency vs Accuracy</div>
+            </div>
             <canvas id="chart-lat-acc" height="180"></canvas>
           </div>
         </div>
@@ -424,19 +768,24 @@ function dseApp() {
   return {
     runs: [], stats: {}, selectedRun: null, selectedRunDetail: null,
     records: [], loading: false, syncing: false,
+    tableCatalog: [], tableColumns: [], tableRows: [], tableLoading: false,
+    tableBrowser: { selected: 'opt_runs', q: '', limit: 50, offset: 0, total: 0 },
     showModal: false, activeTab: 'overview',
     filterQ: '', filterAlgo: '', filterSpace: '', filterGroup: '',
     showParetoOnly: false,
+    selectedRecord: null, selectedEffectiveConfig: null, effectiveConfigLoading: false,
+    _effectiveConfigCache: {},
     tabs: [
       { id: 'overview', label: '概览' },
       { id: 'records',  label: '评估记录' },
+      { id: 'config',   label: '生效配置' },
       { id: 'scatter',  label: '散点图' },
     ],
     _charts: {},
 
     async init() {
       this.loading = true
-      await Promise.all([this.loadStats(), this.loadRuns()])
+      await Promise.all([this.loadStats(), this.loadRuns(), this.loadTables()])
       this.loading = false
     },
 
@@ -446,13 +795,72 @@ function dseApp() {
     },
 
     async loadRuns() {
-      const params = new URLSearchParams()
-      if (this.filterAlgo)  params.set('algo',  this.filterAlgo)
-      if (this.filterSpace) params.set('space', this.filterSpace)
-      if (this.filterGroup) params.set('group', this.filterGroup)
-      if (this.filterQ)     params.set('q',     this.filterQ)
-      const r = await fetch('/api/runs?' + params)
+      const r = await fetch('/api/runs')
       this.runs = await r.json()
+    },
+
+    async loadTables() {
+      const r = await fetch('/api/db/tables')
+      this.tableCatalog = await r.json()
+      if (!this.tableCatalog.length) {
+        this.tableColumns = []
+        this.tableRows = []
+        this.tableBrowser.total = 0
+        return
+      }
+      if (!this.tableCatalog.some(t => t.name === this.tableBrowser.selected)) {
+        this.tableBrowser.selected = this.tableCatalog[0].name
+      }
+      await this.loadTableRows(true)
+    },
+
+    async loadTableRows(reset = false) {
+      if (!this.tableBrowser.selected) return
+      if (reset) this.tableBrowser.offset = 0
+      this.tableLoading = true
+      const params = new URLSearchParams({
+        limit: String(this.tableBrowser.limit),
+        offset: String(this.tableBrowser.offset),
+      })
+      const q = this.tableBrowser.q.trim()
+      if (q) params.set('q', q)
+      const r = await fetch(`/api/db/tables/${this.tableBrowser.selected}?` + params)
+      const d = await r.json()
+      this.tableColumns = d.columns || []
+      this.tableRows = d.rows || []
+      this.tableBrowser.total = d.total || 0
+      this.tableLoading = false
+    },
+
+    async loadEffectiveConfig(rec) {
+      if (!rec?.record_id) return
+      this.selectedRecord = rec
+      if (this._effectiveConfigCache[rec.record_id]) {
+        this.selectedEffectiveConfig = this._effectiveConfigCache[rec.record_id]
+        return
+      }
+      this.selectedEffectiveConfig = null
+      this.effectiveConfigLoading = true
+      try {
+        const r = await fetch(`/api/records/${rec.record_id}/effective_config`)
+        const d = await r.json()
+        this._effectiveConfigCache[rec.record_id] = d
+        this.selectedEffectiveConfig = d
+      } finally {
+        this.effectiveConfigLoading = false
+      }
+    },
+
+    async selectRecord(rec, switchTab = false) {
+      if (switchTab) this.setActiveTab('config')
+      await this.loadEffectiveConfig(rec)
+    },
+
+    setActiveTab(tabId) {
+      this.activeTab = tabId
+      if (tabId === 'scatter' && this.records.length) {
+        this.$nextTick(() => this.drawCharts())
+      }
     },
 
     async sync() {
@@ -460,7 +868,7 @@ function dseApp() {
       const r = await fetch('/api/sync', { method: 'POST' })
       const d = await r.json()
       this.syncing = false
-      await Promise.all([this.loadStats(), this.loadRuns()])
+      await Promise.all([this.loadStats(), this.loadRuns(), this.loadTables()])
       if (d.imported > 0) alert(`✅ 导入 ${d.imported} 个新实验`)
       else alert('已是最新，无新数据')
     },
@@ -477,6 +885,11 @@ function dseApp() {
       ])
       this.selectedRunDetail = await detailRes.json()
       this.records = await recRes.json()
+      this.selectedRecord = this.records[0] || null
+      this.selectedEffectiveConfig = null
+      if (this.selectedRecord) {
+        await this.loadEffectiveConfig(this.selectedRecord)
+      }
       // Draw charts after short delay (tab switch)
       this.$nextTick(() => { if (this.activeTab === 'scatter') this.drawCharts() })
     },
@@ -485,16 +898,10 @@ function dseApp() {
       this.showModal = false
       this.selectedRun = null
       this.records = []
+      this.selectedRecord = null
+      this.selectedEffectiveConfig = null
       Object.values(this._charts).forEach(c => c?.destroy())
       this._charts = {}
-    },
-
-    // Watch tab change to draw charts
-    get activeTabWatcher() {
-      if (this.activeTab === 'scatter' && this.records.length) {
-        this.$nextTick(() => this.drawCharts())
-      }
-      return this.activeTab
     },
 
     drawCharts() {
@@ -516,9 +923,9 @@ function dseApp() {
       const tooltipFmt = (ctx) => {
         const r = ctx.raw._r
         return [
-          `Latency: ${this.fmtLatency(r.latency_ns)}`,
-          `Energy:  ${this.fmtEnergy(r.energy_nj)}`,
-          r.accuracy != null ? `ACC: ${(r.accuracy*100).toFixed(2)}%` : null,
+          `时延 / Latency: ${this.fmtLatency(r.latency_ns)}`,
+          `能耗 / Energy: ${this.fmtEnergy(r.energy_nj)}`,
+          r.accuracy != null ? `精度 / ACC: ${(r.accuracy*100).toFixed(2)}%` : null,
           `#${r.eval_index} ${r.phase}`,
         ].filter(Boolean)
       }
@@ -544,7 +951,7 @@ function dseApp() {
       mk('chart-lat-en', [
         mkDataset(nonPareto, '普通点', 'rgba(99,102,241,0.5)', 4),
         mkDataset(pareto,    'Pareto', 'rgba(245,158,11,0.9)', 7),
-      ], baseOpts('Latency (ms)', 'Energy (µJ)'))
+      ], baseOpts('时延 / Latency (ms)', '能耗 / Energy (µJ)'))
 
       const all2 = this.records.filter(r => r.energy_nj && r.area_um2)
       const p2 = all2.filter(r=>r.is_pareto), np2 = all2.filter(r=>!r.is_pareto)
@@ -556,12 +963,12 @@ function dseApp() {
       mk('chart-en-ar', [
         mkDataset2(np2, '普通点', 'rgba(99,102,241,0.5)', 4),
         mkDataset2(p2,  'Pareto', 'rgba(245,158,11,0.9)', 7),
-      ], { ...baseOpts('Energy (µJ)', 'Area (mm²)'),
+      ], { ...baseOpts('能耗 / Energy (µJ)', '面积 / Area (mm²)'),
            plugins: { ...baseOpts('','').plugins,
              tooltip: { callbacks: { afterBody: (ctx) => {
                const r = ctx.raw._r
-               return [`Energy: ${this.fmtEnergy(r.energy_nj)}`,
-                       `Area:   ${this.fmtArea(r.area_um2)}`,
+               return [`能耗 / Energy: ${this.fmtEnergy(r.energy_nj)}`,
+                       `面积 / Area: ${this.fmtArea(r.area_um2)}`,
                        `#${r.eval_index} ${r.phase}`]
              }}}
            }
@@ -573,19 +980,32 @@ function dseApp() {
         data: acc.map(r => ({ x: r.latency_ns/1e6, y: r.accuracy*100, _r: r })),
         backgroundColor: acc.map(r => r.is_pareto ? 'rgba(245,158,11,0.9)' : 'rgba(99,102,241,0.5)'),
         pointRadius: acc.map(r => r.is_pareto ? 7 : 4),
-      }], { ...baseOpts('Latency (ms)', 'Accuracy (%)'),
+      }], { ...baseOpts('时延 / Latency (ms)', '精度 / Accuracy (%)'),
             plugins: { legend: { display: false },
               tooltip: { callbacks: { afterBody: (ctx) => {
                 const r = ctx.raw._r
-                return [`ACC: ${(r.accuracy*100).toFixed(2)}%`,
-                        `Latency: ${this.fmtLatency(r.latency_ns)}`,
+                return [`精度 / ACC: ${(r.accuracy*100).toFixed(2)}%`,
+                        `时延 / Latency: ${this.fmtLatency(r.latency_ns)}`,
                         `#${r.eval_index} ${r.phase}`]
               }}}}
           })
     },
 
     get filteredRuns() {
-      return this.runs
+      const q = this.filterQ.trim().toLowerCase()
+      return this.runs.filter(run => {
+        if (this.filterAlgo && run.algo !== this.filterAlgo) return false
+        if (this.filterSpace && run.space_profile !== this.filterSpace) return false
+        if (this.filterGroup && run.run_group !== this.filterGroup) return false
+        if (!q) return true
+        return [
+          run.algo,
+          run.run_group,
+          run.space_profile,
+          run.trial_dir,
+          run.sim_config_name,
+        ].some(v => String(v || '').toLowerCase().includes(q))
+      })
     },
 
     get filteredRecords() {
@@ -609,6 +1029,7 @@ function dseApp() {
     get statCards() {
       return [
         { label: '实验运行数', value: this.stats.total_runs ?? '…' },
+        { label: '评估记录（原始）', value: this.stats.total_records ?? '…' },
         { label: '评估点（去重）', value: this.stats.total_measurements ?? '…' },
         { label: 'Pareto 点数', value: this.stats.total_pareto ?? '…' },
         { label: '唯一设计点', value: this.stats.total_design_points ?? '…' },
@@ -621,27 +1042,30 @@ function dseApp() {
       const rc = r.run_config || {}
       const fmt = v => v === true ? '✓' : v === false ? '✗' : String(v ?? '—')
       return [
-        { k: 'nn',            v: rc.nn || r.nn },
-        { k: 'sim_config',    v: r.sim_config_name || r.sim_config_hash?.slice(0,8) || '—' },
-        { k: 'space_profile', v: r.space_profile },
-        { k: 'budget',        v: fmt(r.budget) },
-        { k: 'init_evals',    v: fmt(rc.init_evals) },
-        { k: 'run_accuracy',  v: fmt(rc.run_accuracy) },
-        { k: 'enable_saf',    v: fmt(rc.enable_saf) },
-        { k: 'enable_variation', v: fmt(rc.enable_variation) },
-        { k: 'accuracy_target',  v: r.accuracy_target != null ? (r.accuracy_target*100).toFixed(0)+'%' : '—' },
-        { k: 'device',        v: rc.device },
-        { k: 'wall_time',     v: this.fmtDuration(r.wall_time_s) },
-        { k: 'hypervolume',   v: this.fmtHV(r.hypervolume) },
-        { k: 'pareto_size',   v: fmt(r.pareto_size) },
-        { k: 'source_type',   v: r.source_type },
-        { k: 'started_at',    v: this.fmtDate(r.started_at) },
+        { zh: '网络', en: 'NN', v: rc.nn || r.nn },
+        { zh: '基础配置', en: 'SimConfig', v: r.sim_config_name || r.sim_config_hash?.slice(0,8) || '—' },
+        { zh: '设计空间', en: 'Space', v: r.space_profile },
+        { zh: '预算', en: 'Budget', v: fmt(r.budget) },
+        { zh: '初始评估', en: 'Init Evals', v: fmt(rc.init_evals) },
+        { zh: '运行精度', en: 'Run Accuracy', v: fmt(rc.run_accuracy) },
+        { zh: '启用SAF', en: 'Enable SAF', v: fmt(rc.enable_saf) },
+        { zh: '启用波动', en: 'Variation', v: fmt(rc.enable_variation) },
+        { zh: '精度目标', en: 'ACC Target', v: r.accuracy_target != null ? (r.accuracy_target*100).toFixed(0)+'%' : '—' },
+        { zh: '设备', en: 'Device', v: rc.device },
+        { zh: '总耗时', en: 'Wall Time', v: this.fmtDuration(r.wall_time_s) },
+        { zh: '超体积', en: 'Hypervolume', v: this.fmtHV(r.hypervolume) },
+        { zh: 'Pareto 数量', en: 'Pareto Size', v: fmt(r.pareto_size) },
+        { zh: '来源', en: 'Source', v: r.source_type },
+        { zh: '开始时间', en: 'Started', v: this.fmtDate(r.started_at) },
       ]
     },
 
     get algoKwargs() {
       const ak = this.selectedRunDetail?.run_config?.algo_kwargs || {}
-      return Object.entries(ak).map(([k,v]) => ({ k, v: String(v) }))
+      return Object.entries(ak).map(([k,v]) => {
+        const labels = this.algoParamLabel(k)
+        return { zh: labels.zh, en: labels.en, v: String(v), k }
+      })
     },
 
     get bestMetrics() {
@@ -656,10 +1080,10 @@ function dseApp() {
                   ? maxBy(recs.filter(r=>r.accuracy!=null), r=>r.accuracy)
                   : null
       return [
-        { label: 'Best Latency',  value: this.fmtLatency(lat?.latency_ns), color: 'text-blue-400',  sub: `#${lat?.eval_index}` },
-        { label: 'Best Energy',   value: this.fmtEnergy(en?.energy_nj),   color: 'text-purple-400', sub: `#${en?.eval_index}` },
-        { label: 'Best Area',     value: this.fmtArea(ar?.area_um2),      color: 'text-cyan-400',   sub: `#${ar?.eval_index}` },
-        { label: 'Best Accuracy', value: acc ? (acc.accuracy*100).toFixed(2)+'%' : '—',
+        { zh: '最小时延', en: 'Best Latency',  value: this.fmtLatency(lat?.latency_ns), color: 'text-blue-400',  sub: `#${lat?.eval_index}` },
+        { zh: '最低能耗', en: 'Best Energy',   value: this.fmtEnergy(en?.energy_nj),   color: 'text-purple-400', sub: `#${en?.eval_index}` },
+        { zh: '最小面积', en: 'Best Area',     value: this.fmtArea(ar?.area_um2),      color: 'text-cyan-400',   sub: `#${ar?.eval_index}` },
+        { zh: '最高精度', en: 'Best Accuracy', value: acc ? (acc.accuracy*100).toFixed(2)+'%' : '—',
           color: 'text-green-400', sub: acc ? `#${acc.eval_index}` : null },
       ]
     },
@@ -709,6 +1133,293 @@ function dseApp() {
       if (!path) return ''
       const parts = path.replace(/\\/g,'/').split('/')
       return parts.slice(-1)[0]
+    },
+    get selectedTableMeta() {
+      return this.tableCatalog.find(t => t.name === this.tableBrowser.selected) || null
+    },
+    get selectedTableMetaZh() {
+      const meta = this.selectedTableMeta
+      if (!meta) return ''
+      const desc = this.tableDescriptions()[meta.name]
+      return desc ? `${desc.zh} / ${desc.en}` : meta.name
+    },
+    get selectedTableIsSimConfigs() {
+      return this.tableBrowser.selected === 'sim_configs'
+    },
+    get tablePageText() {
+      if (!this.tableBrowser.total) return '0 / 0'
+      const start = this.tableBrowser.offset + 1
+      const end = Math.min(this.tableBrowser.offset + this.tableBrowser.limit, this.tableBrowser.total)
+      return `${start}-${end} / ${this.tableBrowser.total}`
+    },
+    tableDescriptions() {
+      return {
+        opt_runs: { zh: '实验运行表', en: 'Optimization Runs' },
+        run_evaluations: { zh: '评估记录表', en: 'Run Evaluations' },
+        measurements: { zh: '去重测量表', en: 'Measurements' },
+        design_points: { zh: '设计点表', en: 'Design Points' },
+        eval_contexts: { zh: '评估上下文表', en: 'Evaluation Contexts' },
+        sim_configs: { zh: '仿真配置表，展开显示配置内容', en: 'Simulation Configs with expanded content' },
+      }
+    },
+    dimensionDescriptions() {
+      return {
+        rram_preset: { zh: 'RRAM 预设', en: 'RRAM Preset' },
+        xbar_size: { zh: '交叉阵列尺寸', en: 'Crossbar Size' },
+        adc_choice: { zh: 'ADC 选择', en: 'ADC Choice' },
+        dac_num: { zh: 'DAC 数量', en: 'DAC Number' },
+        xbar_polarity: { zh: '阵列极性', en: 'Crossbar Polarity' },
+        sub_position: { zh: '子阵位置', en: 'Sub Position' },
+        group_num: { zh: '组数', en: 'Group Number' },
+        pe_num: { zh: 'PE 数量', en: 'PE Number' },
+        tile_connection: { zh: 'Tile 连接方式', en: 'Tile Connection' },
+        inter_tile_bw: { zh: 'Tile 间带宽', en: 'Inter-Tile Bandwidth' },
+      }
+    },
+    sectionDescriptions() {
+      return {
+        General: { zh: '通用配置', en: 'General' },
+        'Device level': { zh: '器件层', en: 'Device level' },
+        'Crossbar level': { zh: '交叉阵列层', en: 'Crossbar level' },
+        'Interface level': { zh: '接口层', en: 'Interface level' },
+        'Process element level': { zh: '处理单元层', en: 'Process element level' },
+        'Tile level': { zh: 'Tile 层', en: 'Tile level' },
+        'Architecture level': { zh: '架构层', en: 'Architecture level' },
+        'Network level': { zh: '网络层', en: 'Network level' },
+        'Accuracy level': { zh: '精度层', en: 'Accuracy level' },
+        'NoC level': { zh: '片上网络层', en: 'NoC level' },
+        'Buffer level': { zh: '缓冲层', en: 'Buffer level' },
+        'ADC level': { zh: 'ADC 层', en: 'ADC level' },
+        'DAC level': { zh: 'DAC 层', en: 'DAC level' },
+        'Digital module': { zh: '数字模块', en: 'Digital module' },
+        'Algorithm Configuration': { zh: '算法配置', en: 'Algorithm Configuration' },
+      }
+    },
+    algoParamDescriptions() {
+      return {
+        accuracy_target: { zh: '精度目标', en: 'Accuracy Target' },
+        population: { zh: '种群大小', en: 'Population' },
+        evals_per_gen: { zh: '每代评估数', en: 'Evaluations per Generation' },
+        w_latency: { zh: '时延权重', en: 'Latency Weight' },
+        w_energy: { zh: '能耗权重', en: 'Energy Weight' },
+        w_area: { zh: '面积权重', en: 'Area Weight' },
+        two_stage: { zh: '两阶段评估', en: 'Two-stage Evaluation' },
+        topk_accuracy: { zh: '复评 Top-K', en: 'Top-K Accuracy Recheck' },
+        accuracy_penalty: { zh: '精度惩罚', en: 'Accuracy Penalty' },
+      }
+    },
+    paramLabel(name) {
+      return this.dimensionDescriptions()[name] || { zh: name, en: name }
+    },
+    sectionLabel(name) {
+      return this.sectionDescriptions()[name] || { zh: name, en: name }
+    },
+    algoParamLabel(name) {
+      return this.algoParamDescriptions()[name] || { zh: name, en: name }
+    },
+    columnDescriptions() {
+      return {
+        id: { zh: '主键', en: 'Primary Key' },
+        trial_dir: { zh: '运行目录', en: 'Trial Directory' },
+        run_group: { zh: '实验组', en: 'Run Group' },
+        source_type: { zh: '来源类型', en: 'Source Type' },
+        algo: { zh: '算法', en: 'Algorithm' },
+        seed: { zh: '随机种子', en: 'Seed' },
+        space_profile: { zh: '设计空间', en: 'Space Profile' },
+        eval_context_id: { zh: '评估上下文ID', en: 'Eval Context ID' },
+        accuracy_target: { zh: '精度目标', en: 'Accuracy Target' },
+        budget: { zh: '预算', en: 'Budget' },
+        status: { zh: '状态', en: 'Status' },
+        total_evaluated: { zh: '总评估数', en: 'Total Evaluated' },
+        pareto_size: { zh: 'Pareto 数量', en: 'Pareto Size' },
+        hypervolume: { zh: '超体积', en: 'Hypervolume' },
+        hv_reference_point: { zh: 'HV 参考点', en: 'HV Reference Point' },
+        wall_time_s: { zh: '总耗时(秒)', en: 'Wall Time (s)' },
+        started_at: { zh: '开始时间', en: 'Started At' },
+        finished_at: { zh: '结束时间', en: 'Finished At' },
+        run_config_json: { zh: '运行配置JSON', en: 'Run Config JSON' },
+        imported_at: { zh: '导入时间', en: 'Imported At' },
+        run_id: { zh: '运行ID', en: 'Run ID' },
+        measurement_id: { zh: '测量ID', en: 'Measurement ID' },
+        eval_index: { zh: '评估序号', en: 'Evaluation Index' },
+        phase: { zh: '阶段', en: 'Phase' },
+        is_pareto: { zh: '是否 Pareto', en: 'Is Pareto' },
+        design_point_id: { zh: '设计点ID', en: 'Design Point ID' },
+        latency_ns: { zh: '时延(ns)', en: 'Latency (ns)' },
+        energy_nj: { zh: '能耗(nJ)', en: 'Energy (nJ)' },
+        area_um2: { zh: '面积(um^2)', en: 'Area (um^2)' },
+        power_w: { zh: '功耗(W)', en: 'Power (W)' },
+        accuracy: { zh: '精度', en: 'Accuracy' },
+        elapsed_s: { zh: '单点评估耗时(秒)', en: 'Elapsed (s)' },
+        measured_at: { zh: '测量时间', en: 'Measured At' },
+        params_hash: { zh: '参数哈希', en: 'Params Hash' },
+        params_json: { zh: '参数JSON', en: 'Params JSON' },
+        context_hash: { zh: '上下文哈希', en: 'Context Hash' },
+        sim_config_id: { zh: '配置ID', en: 'Sim Config ID' },
+        nn: { zh: '网络', en: 'Network' },
+        dataset_module: { zh: '数据集模块', en: 'Dataset Module' },
+        weights_path: { zh: '权重路径', en: 'Weights Path' },
+        run_accuracy: { zh: '运行精度', en: 'Run Accuracy' },
+        enable_saf: { zh: '启用 SAF', en: 'Enable SAF' },
+        enable_variation: { zh: '启用波动', en: 'Enable Variation' },
+        enable_rratio: { zh: '启用电阻比', en: 'Enable RRatio' },
+        fixed_qrange: { zh: '固定量化范围', en: 'Fixed QRange' },
+        name: { zh: '名称', en: 'Name' },
+        content_hash: { zh: '内容哈希', en: 'Content Hash' },
+        content: { zh: '配置内容', en: 'Content' },
+        created_at: { zh: '创建时间', en: 'Created At' },
+        Device_Tech: { zh: '器件工艺节点', en: 'Device Tech' },
+        Device_Type: { zh: '器件类型', en: 'Device Type' },
+        Device_Area: { zh: '器件面积', en: 'Device Area' },
+        Device_SAF: { zh: '器件失效率', en: 'Device SAF' },
+        Read_Level: { zh: '读取电平', en: 'Read Level' },
+        Read_Voltage: { zh: '读取电压', en: 'Read Voltage' },
+        Write_Level: { zh: '写入电平', en: 'Write Level' },
+        Write_Voltage: { zh: '写入电压', en: 'Write Voltage' },
+        Read_Latency: { zh: '读取时延', en: 'Read Latency' },
+        Write_Latency: { zh: '写入时延', en: 'Write Latency' },
+        Device_Level: { zh: '器件电平数', en: 'Device Level Count' },
+        Device_Resistance: { zh: '器件电阻', en: 'Device Resistance' },
+        Device_Variation: { zh: '器件波动', en: 'Device Variation' },
+        Xbar_Size: { zh: '交叉阵列尺寸', en: 'Crossbar Size' },
+        Subarray_Size: { zh: '子阵尺寸', en: 'Subarray Size' },
+        Cell_Type: { zh: '存储单元类型', en: 'Cell Type' },
+        Transistor_Tech: { zh: '晶体管工艺节点', en: 'Transistor Technology' },
+        Wire_Resistance: { zh: '连线电阻', en: 'Wire Resistance' },
+        Wire_Capacity: { zh: '连线电容', en: 'Wire Capacitance' },
+        Load_Resistance: { zh: '负载电阻', en: 'Load Resistance' },
+        Area_Calculation: { zh: '面积计算模式', en: 'Area Calculation' },
+        PIM_Type: { zh: 'PIM 类型', en: 'PIM Type' },
+        ADC_Choice: { zh: 'ADC 选择', en: 'ADC Choice' },
+        ADC_Num: { zh: 'ADC 数量', en: 'ADC Number' },
+        DAC_Num: { zh: 'DAC 数量', en: 'DAC Number' },
+        PE_inBuf_Size: { zh: 'PE 输入缓冲大小', en: 'PE Input Buffer Size' },
+        PE_inBuf_Area: { zh: 'PE 输入缓冲面积', en: 'PE Input Buffer Area' },
+        Tile_outBuf_Size: { zh: 'Tile 输出缓冲大小', en: 'Tile Output Buffer Size' },
+        Tile_outBuf_Area: { zh: 'Tile 输出缓冲面积', en: 'Tile Output Buffer Area' },
+        DFU_Buf_Size: { zh: 'DFU 缓冲大小', en: 'DFU Buffer Size' },
+        DFU_Buf_Area: { zh: 'DFU 缓冲面积', en: 'DFU Buffer Area' },
+        Digital_Frequency: { zh: '数字频率', en: 'Digital Frequency' },
+        Adder_Tech: { zh: '加法器工艺', en: 'Adder Technology' },
+        Adder_Area: { zh: '加法器面积', en: 'Adder Area' },
+        Adder_Power: { zh: '加法器功耗', en: 'Adder Power' },
+        Multiplier_Tech: { zh: '乘法器工艺', en: 'Multiplier Technology' },
+        Multiplier_Area: { zh: '乘法器面积', en: 'Multiplier Area' },
+        Multiplier_Power: { zh: '乘法器功耗', en: 'Multiplier Power' },
+        ShiftReg_Tech: { zh: '移位寄存器工艺', en: 'Shift Register Technology' },
+        ShiftReg_Area: { zh: '移位寄存器面积', en: 'Shift Register Area' },
+        ShiftReg_Power: { zh: '移位寄存器功耗', en: 'Shift Register Power' },
+        Reg_Tech: { zh: '寄存器工艺', en: 'Register Technology' },
+        Reg_Area: { zh: '寄存器面积', en: 'Register Area' },
+        Reg_Power: { zh: '寄存器功耗', en: 'Register Power' },
+        JointModule_Tech: { zh: '联合模块工艺', en: 'Joint Module Technology' },
+        JointModule_Area: { zh: '联合模块面积', en: 'Joint Module Area' },
+        JointModule_Power: { zh: '联合模块功耗', en: 'Joint Module Power' },
+        Xbar_Polarity: { zh: '阵列极性', en: 'Crossbar Polarity' },
+        Sub_Position: { zh: '子阵位置', en: 'Sub Position' },
+        Group_Num: { zh: '组数', en: 'Group Number' },
+        PE_Num: { zh: 'PE 数量', en: 'PE Number' },
+        Pooling_shape: { zh: '池化窗口形状', en: 'Pooling Shape' },
+        Pooling_unit_num: { zh: '池化单元数量', en: 'Pooling Unit Number' },
+        Pooling_Tech: { zh: '池化单元工艺', en: 'Pooling Technology' },
+        Pooling_area: { zh: '池化单元面积', en: 'Pooling Area' },
+        Tile_Adder_Num: { zh: 'Tile 加法器数量', en: 'Tile Adder Number' },
+        Tile_Adder_Level: { zh: 'Tile 加法器级数', en: 'Tile Adder Level' },
+        Tile_ShiftReg_Num: { zh: 'Tile 移位寄存器数量', en: 'Tile Shift Register Number' },
+        Tile_ShiftReg_Level: { zh: 'Tile 移位寄存器级数', en: 'Tile Shift Register Level' },
+        Tile_Connection: { zh: 'Tile 连接方式', en: 'Tile Connection' },
+        Inter_Tile_Bandwidth: { zh: 'Tile 间带宽', en: 'Inter-Tile Bandwidth' },
+        Intra_Tile_Bandwidth: { zh: 'Tile 内带宽', en: 'Intra-Tile Bandwidth' },
+        Buffer_Choice: { zh: '缓冲类型选择', en: 'Buffer Choice' },
+        Buffer_Technology: { zh: '缓冲工艺', en: 'Buffer Technology' },
+        Buffer_ReadPower: { zh: '缓冲读功耗', en: 'Buffer Read Power' },
+        Buffer_WritePower: { zh: '缓冲写功耗', en: 'Buffer Write Power' },
+        Buffer_Bitwidth: { zh: '缓冲位宽', en: 'Buffer Bitwidth' },
+        LUT_Capacity: { zh: '查找表容量', en: 'LUT Capacity' },
+        LUT_Area: { zh: '查找表面积', en: 'LUT Area' },
+        LUT_Power: { zh: '查找表功耗', en: 'LUT Power' },
+        LUT_Bandwidth: { zh: '查找表带宽', en: 'LUT Bandwidth' },
+        Read_Power: { zh: '读功耗', en: 'Read Power' },
+        Write_Power: { zh: '写功耗', en: 'Write Power' },
+        Read_Energy: { zh: '读能耗', en: 'Read Energy' },
+        Write_Energy: { zh: '写能耗', en: 'Write Energy' },
+        Leakage_Power: { zh: '漏电功耗', en: 'Leakage Power' },
+        ADC_Precision: { zh: 'ADC 精度', en: 'ADC Precision' },
+        DAC_Precision: { zh: 'DAC 精度', en: 'DAC Precision' },
+        PE_group: { zh: 'PE 分组', en: 'PE Group' },
+        Tile_Num: { zh: 'Tile 数量', en: 'Tile Number' },
+        Buffer_Size: { zh: '缓冲大小', en: 'Buffer Size' },
+        Weight_Polarity: { zh: '权重极性', en: 'Weight Polarity' },
+        Simulation_Level: { zh: '仿真层级', en: 'Simulation Level' },
+        NoC_enable: { zh: '启用NoC', en: 'Enable NoC' },
+      }
+    },
+    tableDisplayName(name) {
+      const desc = this.tableDescriptions()[name]
+      return desc ? `${desc.zh} / ${desc.en}` : name
+    },
+    tableColumnLabel(name, brief = false) {
+      const desc = this.columnDescriptions()[name]
+      if (!desc) return brief ? name : `${name} / ${name}`
+      return brief ? desc.zh : `${desc.zh} / ${desc.en}`
+    },
+    tableRowKey(row, idx) {
+      return row.id ?? `${this.tableBrowser.selected}-${this.tableBrowser.offset + idx}`
+    },
+    fmtCell(value) {
+      if (value == null || value === '') return '—'
+      if (typeof value === 'object') return JSON.stringify(value)
+      return String(value)
+    },
+    parseSimConfig(content) {
+      const text = String(content || '')
+      if (!text.trim()) return []
+      const lines = text.replace(/\r\n/g, '\n').split('\n')
+      const sections = []
+      let current = { name: 'General', items: [] }
+      sections.push(current)
+      let pendingComment = ''
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim()
+        if (!line) continue
+        if (line.startsWith('[') && line.endsWith(']')) {
+          current = { name: line.slice(1, -1), items: [] }
+          sections.push(current)
+          pendingComment = ''
+          continue
+        }
+        if (line.startsWith('#') || line.startsWith(';')) {
+          pendingComment = pendingComment ? `${pendingComment} ${line}` : line
+          current.items.push({ kind: 'comment', comment: line })
+          continue
+        }
+        const eq = rawLine.indexOf('=')
+        if (eq >= 0) {
+          const key = rawLine.slice(0, eq).trim()
+          const value = rawLine.slice(eq + 1).trim()
+          current.items.push({
+            kind: 'kv',
+            key,
+            value,
+            comment: pendingComment,
+          })
+          pendingComment = ''
+          continue
+        }
+        current.items.push({ kind: 'comment', comment: rawLine.trim() })
+      }
+      return sections.filter(section => section.items.length)
+    },
+    tablePrevPage() {
+      if (this.tableBrowser.offset === 0) return
+      this.tableBrowser.offset = Math.max(0, this.tableBrowser.offset - this.tableBrowser.limit)
+      this.loadTableRows()
+    },
+    tableNextPage() {
+      if (this.tableBrowser.offset + this.tableBrowser.limit >= this.tableBrowser.total) return
+      this.tableBrowser.offset += this.tableBrowser.limit
+      this.loadTableRows()
     },
   }
 }

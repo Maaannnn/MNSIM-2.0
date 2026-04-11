@@ -9,6 +9,8 @@ Usage:
 from __future__ import annotations
 
 import csv
+import configparser as cp
+import io
 import json
 import os
 import sqlite3
@@ -70,6 +72,141 @@ def _safe_float(v) -> Optional[float]:
         return float(v) if v not in (None, "", "None") else None
     except Exception:
         return None
+
+
+_TABLE_BROWSER_TABLES = (
+    "opt_runs",
+    "run_evaluations",
+    "measurements",
+    "design_points",
+    "eval_contexts",
+    "sim_configs",
+)
+
+_DIM_TO_INI = {
+    "adc_choice": ("Interface level", "ADC_Choice"),
+    "dac_num": ("Process element level", "DAC_Num"),
+    "xbar_polarity": ("Process element level", "Xbar_Polarity"),
+    "sub_position": ("Process element level", "Sub_Position"),
+    "group_num": ("Process element level", "Group_Num"),
+    "pe_num": ("Tile level", "PE_Num"),
+    "tile_connection": ("Architecture level", "Tile_Connection"),
+    "inter_tile_bw": ("Tile level", "Inter_Tile_Bandwidth"),
+}
+
+_RRAM_PRESETS = {
+    "P0": {
+        "Device level": {
+            "Device_Resistance": "1e6,1e4",
+            "Device_Variation": "0.5",
+            "Device_SAF": "0.01,0.01",
+        },
+    },
+    "P1": {
+        "Device level": {
+            "Device_Resistance": "1e6,2e4",
+            "Device_Variation": "1.0",
+            "Device_SAF": "0.05,0.05",
+        },
+    },
+    "P2": {
+        "Device level": {
+            "Device_Resistance": "1e6,2e4",
+            "Device_Variation": "3.0",
+            "Device_SAF": "0.05,0.05",
+        },
+    },
+    "P3": {
+        "Device level": {
+            "Device_Resistance": "1e6,2e4",
+            "Device_Variation": "1.5",
+            "Device_SAF": "0.5,0.5",
+        },
+    },
+    "P4": {
+        "Device level": {
+            "Device_Resistance": "5e5,5e4",
+            "Device_Variation": "5.0",
+            "Device_SAF": "1.0,1.0",
+        },
+    },
+}
+
+
+def _table_columns(db: sqlite3.Connection, table_name: str) -> List[str]:
+    return [r["name"] for r in db.execute(f"PRAGMA table_info({table_name})").fetchall()]
+
+
+def _make_parser_from_content(content: str) -> cp.ConfigParser:
+    parser = cp.ConfigParser()
+    parser.optionxform = str
+    parser.read_string(content or "")
+    return parser
+
+
+def _to_ini_value(v: Any) -> str:
+    if isinstance(v, (list, tuple)):
+        return ",".join(str(x) for x in v)
+    s = str(v)
+    if "x" in s and all(p.strip("-").isdigit() for p in s.split("x")):
+        return ",".join(part.strip() for part in s.split("x"))
+    return s
+
+
+def _derive_effective_config(base_content: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    parser = _make_parser_from_content(base_content)
+    overrides: List[Dict[str, Any]] = []
+
+    def apply_override(section: str, key: str, new_value: Any, source: str, dim: str) -> None:
+        if not parser.has_section(section):
+            parser.add_section(section)
+        old_value = parser.get(section, key, fallback=None)
+        parser.set(section, key, str(new_value))
+        overrides.append({
+            "dim": dim,
+            "section": section,
+            "key": key,
+            "old_value": old_value,
+            "new_value": str(new_value),
+            "source": source,
+        })
+
+    for dim, value in params.items():
+        if dim == "rram_preset":
+            preset = _RRAM_PRESETS.get(str(value), {})
+            for section, kv in preset.items():
+                for key, new_value in kv.items():
+                    apply_override(section, key, new_value, "rram_preset", dim)
+            continue
+
+        if dim == "xbar_size":
+            ini_value = _to_ini_value(value)
+            apply_override("Crossbar level", "Xbar_Size", ini_value, "design_point", dim)
+            try:
+                row = int(str(value).split("x")[0]) if "x" in str(value) else int(str(value).split(",")[0])
+                cur_sub = int(parser.get("Crossbar level", "Subarray_Size", fallback=str(row)))
+                apply_override("Crossbar level", "Subarray_Size", min(cur_sub, row), "xbar_size_guard", dim)
+            except Exception:
+                pass
+            continue
+
+        target = _DIM_TO_INI.get(dim)
+        if target:
+            section, key = target
+            apply_override(section, key, _to_ini_value(value), "design_point", dim)
+
+    buf = io.StringIO()
+    parser.write(buf)
+    sections = []
+    for section in parser.sections():
+        items = [{"key": k, "value": v} for k, v in parser.items(section)]
+        sections.append({"name": section, "items": items})
+
+    return {
+        "content": buf.getvalue(),
+        "sections": sections,
+        "overrides": overrides,
+    }
 
 
 # ── Import / Sync ─────────────────────────────────────────────────────────────
@@ -359,7 +496,9 @@ def api_run_records(run_id):
     db = get_db()
     pareto_only = request.args.get("pareto") == "1"
     sql = """
-        SELECT re.eval_index, re.phase, re.is_pareto,
+        SELECT re.id AS record_id,
+               re.run_id,
+               re.eval_index, re.phase, re.is_pareto,
                m.latency_ns, m.energy_nj, m.area_um2, m.power_w,
                m.accuracy, m.elapsed_s, m.measured_at,
                dp.params_json,
@@ -380,6 +519,99 @@ def api_run_records(run_id):
         r["params"] = json.loads(r.pop("params_json") or "{}")
         result.append(r)
     return jsonify(result)
+
+
+@app.route("/api/records/<int:record_id>/effective_config")
+def api_record_effective_config(record_id: int):
+    db = get_db()
+    row = db.execute("""
+        SELECT re.id AS record_id,
+               re.run_id,
+               re.eval_index,
+               re.phase,
+               re.is_pareto,
+               r.space_profile,
+               sc.id AS sim_config_id,
+               sc.name AS sim_config_name,
+               sc.content_hash,
+               sc.content AS base_config_content,
+               dp.id AS design_point_id,
+               dp.params_json
+        FROM run_evaluations re
+        JOIN opt_runs r        ON re.run_id = r.id
+        JOIN measurements m    ON re.measurement_id = m.id
+        JOIN design_points dp  ON m.design_point_id = dp.id
+        JOIN eval_contexts ec  ON r.eval_context_id = ec.id
+        JOIN sim_configs sc    ON ec.sim_config_id = sc.id
+        WHERE re.id = ?
+    """, (record_id,)).fetchone()
+    if not row:
+        return jsonify({"error": "not found"}), 404
+
+    data = dict(row)
+    params = json.loads(data.pop("params_json") or "{}")
+    effective = _derive_effective_config(data.pop("base_config_content") or "", params)
+
+    return jsonify({
+        **data,
+        "params": params,
+        "effective_config": effective,
+    })
+
+
+@app.route("/api/db/tables")
+def api_db_tables():
+    db = get_db()
+    result = []
+    for table_name in _TABLE_BROWSER_TABLES:
+        columns = _table_columns(db, table_name)
+        count = db.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+        result.append({
+            "name": table_name,
+            "count": count,
+            "columns": columns,
+        })
+    return jsonify(result)
+
+
+@app.route("/api/db/tables/<table_name>")
+def api_db_table_rows(table_name: str):
+    if table_name not in _TABLE_BROWSER_TABLES:
+        return jsonify({"error": "table not found"}), 404
+
+    db = get_db()
+    columns = _table_columns(db, table_name)
+    limit = min(max(int(request.args.get("limit", 50) or 50), 1), 200)
+    offset = max(int(request.args.get("offset", 0) or 0), 0)
+    q = request.args.get("q", "").strip()
+
+    where_sql = ""
+    params: List[Any] = []
+    if q and columns:
+        where_sql = " WHERE (" + " OR ".join(
+            f"CAST({col} AS TEXT) LIKE ?" for col in columns
+        ) + ")"
+        params = [f"%{q}%"] * len(columns)
+
+    total = db.execute(
+        f"SELECT COUNT(*) FROM {table_name}{where_sql}",
+        params,
+    ).fetchone()[0]
+
+    order_sql = "id DESC" if "id" in columns else "rowid DESC"
+    rows = db.execute(
+        f"SELECT * FROM {table_name}{where_sql} ORDER BY {order_sql} LIMIT ? OFFSET ?",
+        params + [limit, offset],
+    ).fetchall()
+
+    return jsonify({
+        "table": table_name,
+        "columns": columns,
+        "rows": [dict(r) for r in rows],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    })
 
 
 @app.route("/api/design_points")

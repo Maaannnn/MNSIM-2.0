@@ -1,0 +1,97 @@
+{
+  "algo": "random",
+  "track": "multi",
+  "seed": 42,
+  "budget": 24,
+  "total_evaluated": 24,
+  "pareto_size": 3,
+  "hypervolume": null,
+  "hv_reference_point": null,
+  "wall_time_s": 75376.16703176498,
+  "started_at": "2026-04-10T07:45:19.828737+00:00",
+  "finished_at": "2026-04-11T04:41:35.995790+00:00",
+  "run_config": {
+    "nn": "vgg8",
+    "weights_path": "cifar10_vgg8_params.pth",
+    "base_config_path": "SimConfig.ini",
+    "run_accuracy": true,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "device": "mps",
+    "dataset_module": "MNSIM.Interface.cifar10",
+    "max_acc_batches": 4,
+    "space_profile": "rram_guidance_v4",
+    "algo_kwargs": {
+      "accuracy_target": 0.88
+    }
+  },
+  "best_by_objective": {
+    "latency_ns": {
+      "value": 4230255.898565065,
+      "eval_index": 23,
+      "config": {
+        "rram_preset": "P3",
+        "xbar_size": "128x128",
+        "adc_choice": "6",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "0",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "40"
+      }
+    },
+    "energy_nj": {
+      "value": 1248300.8586948751,
+      "eval_index": 3,
+      "config": {
+        "rram_preset": "P2",
+        "xbar_size": "512x512",
+        "adc_choice": "4",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "40"
+      }
+    },
+    "area_um2": {
+      "value": 893297223.1245514,
+      "eval_index": 7,
+      "config": {
+        "rram_preset": "P3",
+        "xbar_size": "512x512",
+        "adc_choice": "4",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "0",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "3",
+        "inter_tile_bw": "40"
+      }
+    },
+    "accuracy": {
+      "value": 0.9345703125,
+      "eval_index": 13,
+      "config": {
+        "rram_preset": "P0",
+        "xbar_size": "512x512",
+        "adc_choice": "4",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "4x4",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    }
+  },
+  "single_track_best": null
+}

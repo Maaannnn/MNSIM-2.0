@@ -19,3 +19,4 @@ __pycache__/
 /MNSIM/Interface/solver_configs
 /MNSIM/Interface/outputs
 /MNSIM/Interface/nohup.out
+.venv/

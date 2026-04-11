@@ -133,7 +133,7 @@ class TrainTestInterface(object):
             print(f'load weights from {weights_file}')
             cache_key = (os.path.abspath(weights_file), str(self.device))
             if cache_key not in _WEIGHTS_CACHE:
-                _WEIGHTS_CACHE[cache_key] = torch.load(weights_file, map_location=self.device)
+                _WEIGHTS_CACHE[cache_key] = torch.load(weights_file, map_location=self.device, weights_only=True)
             self.net.load_change_weights(_WEIGHTS_CACHE[cache_key])
     def origin_evaluate(self, method = 'SINGLE_FIX_TEST', adc_action = 'SCALE'):
         if self.test_loader == None:

@@ -88,6 +88,9 @@ def run(cfg: RunConfig) -> DSERunResult:
     print(f"{tag} space={n_total} budget={n_iter} init={n_init}")
     pbar = try_make_tqdm(n_iter, tag)
 
+    from dse.db_writer import DSEDbWriter
+    writer = DSEDbWriter(cfg.db_path, cfg, cfg.trial_dir) if cfg.db_path else None
+
     chosen: List[int] = []
     records: List[DSERecord] = []
     Y_list: List[Tuple[float, ...]] = []
@@ -116,13 +119,20 @@ def run(cfg: RunConfig) -> DSERunResult:
         finally:
             os.remove(temp_path)
 
+        eval_index = len(records) + 1
+        if writer:
+            try:
+                writer.record_eval(res, eval_index=eval_index, phase="init")
+            except Exception as _e:
+                print(f"{tag} [db] write failed (non-fatal): {_e}")
+
         chosen.append(idx)
         Y_list.append(selection_objective_vector(res.obj_vector(), res.accuracy, accuracy_target))
         records.append(
             DSERecord(
                 algo="mobo",
                 seed=cfg.seed,
-                eval_index=len(records) + 1,
+                eval_index=eval_index,
                 phase="init",
                 latency_ns=res.latency_ns,
                 energy_nj=res.energy_nj,
@@ -195,6 +205,13 @@ def run(cfg: RunConfig) -> DSERunResult:
         finally:
             os.remove(temp_path)
 
+        eval_index = len(records) + 1
+        if writer:
+            try:
+                writer.record_eval(res, eval_index=eval_index, phase="mobo")
+            except Exception as _e:
+                print(f"{tag} [db] write failed (non-fatal): {_e}")
+
         chosen.append(next_idx)
         chosen_set.add(next_idx)
         Y_list.append(selection_objective_vector(res.obj_vector(), res.accuracy, accuracy_target))
@@ -203,7 +220,7 @@ def run(cfg: RunConfig) -> DSERunResult:
             DSERecord(
                 algo="mobo",
                 seed=cfg.seed,
-                eval_index=len(records) + 1,
+                eval_index=eval_index,
                 phase="mobo",
                 latency_ns=res.latency_ns,
                 energy_nj=res.energy_nj,
@@ -243,6 +260,16 @@ def run(cfg: RunConfig) -> DSERunResult:
         if accuracy_target is None or (r.accuracy is not None and r.accuracy >= float(accuracy_target))
     )
     print(f"{tag} Done. evaluated={len(records)} feasible={n_feasible} pareto={len(nd_idx)} wall={wall_time_s:.1f}s")
+
+    if writer:
+        try:
+            pareto_eval_indices = [records[i].eval_index for i in nd_idx]
+            writer.update_pareto(pareto_eval_indices)
+            writer.finalize(None, None, wall_time_s, finished_at)
+        except Exception as _e:
+            print(f"{tag} [db] finalize failed (non-fatal): {_e}")
+        finally:
+            writer.close()
 
     return DSERunResult(
         run_config=cfg,

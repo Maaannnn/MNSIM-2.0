@@ -70,6 +70,10 @@ class RunConfig:
     # NSGA-II: population, evals_per_gen
     # MOBO: (no extras)
 
+    # Live DB writing (optional).  Set by run_dse._run_trial before calling run().
+    db_path:   str = ""   # path to shared SQLite DB; empty = disabled
+    trial_dir: str = ""   # absolute path of this trial's output directory
+
     @property
     def track(self) -> str:
         return ALGO_TRACK.get(self.algo, "multi")

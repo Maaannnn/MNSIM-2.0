@@ -34,8 +34,8 @@ NN_NAME="${NN_NAME:-vgg8}"
 WEIGHTS_PATH="${WEIGHTS_PATH:-cifar10_vgg8_params.pth}"
 BASE_CONFIG_PATH="${BASE_CONFIG_PATH:-SimConfig.ini}"
 
-GUIDANCE_OUTPUT_ROOT="${GUIDANCE_OUTPUT_ROOT:-artifacts/dse/search_runs/rram_guidance_v4_gpu${GUIDANCE_GPU}}"
-FORMAL_OUTPUT_ROOT="${FORMAL_OUTPUT_ROOT:-artifacts/dse/search_runs/rram_formal_v3_gpu${FORMAL_GPU}}"
+GUIDANCE_OUTPUT_ROOT="${GUIDANCE_OUTPUT_ROOT:-artifacts/dse/search_runs/exp02_guidance_v4}"
+FORMAL_OUTPUT_ROOT="${FORMAL_OUTPUT_ROOT:-artifacts/dse/search_runs/exp01_formal_v3}"
 
 GUIDANCE_LOG="${GUIDANCE_LOG:-${GUIDANCE_OUTPUT_ROOT}.log}"
 FORMAL_LOG="${FORMAL_LOG:-${FORMAL_OUTPUT_ROOT}.log}"

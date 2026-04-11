@@ -2127,8 +2127,14 @@ def _build_html(
 """
 
 
-def analyze(input_path: Path, output_dir: Path, accuracy_target: Optional[float], topk: int) -> Dict[str, Any]:
-    rows, source_desc = _resolve_input(input_path)
+def _analyze_rows(
+    rows: List[Dict[str, Any]],
+    source_desc: str,
+    output_dir: Path,
+    accuracy_target: Optional[float],
+    topk: int,
+) -> Dict[str, Any]:
+    """Core analysis logic — shared by analyze() and multi-source merge."""
     for row in rows:
         row["feasible"] = _is_feasible(row, accuracy_target)
     pareto_idxs = set(_global_pareto_indices(rows))
@@ -2150,7 +2156,7 @@ def analyze(input_path: Path, output_dir: Path, accuracy_target: Optional[float]
     with open(output_dir / "index.html", "w", encoding="utf-8") as f:
         f.write(_build_html(summary, top_configs, group_summary, rows, output_dir, compensation_report))
 
-    result = {
+    result: Dict[str, Any] = {
         "summary_path": str(output_dir / "summary.json"),
         "top_configs_path": str(output_dir / "top_configs.csv"),
         "group_summary_path": str(output_dir / "group_summary.csv"),
@@ -2166,22 +2172,53 @@ def analyze(input_path: Path, output_dir: Path, accuracy_target: Optional[float]
     return result
 
 
+def analyze(input_path: Path, output_dir: Path, accuracy_target: Optional[float], topk: int) -> Dict[str, Any]:
+    rows, source_desc = _resolve_input(input_path)
+    return _analyze_rows(rows, source_desc, output_dir, accuracy_target, topk)
+
+
+def _resolve_merged_inputs(paths: List[Path]) -> Tuple[List[Dict[str, Any]], str]:
+    """Load and merge rows from multiple input paths (for joint analysis)."""
+    all_rows: List[Dict[str, Any]] = []
+    descs: List[str] = []
+    for p in paths:
+        rows, desc = _resolve_input(p)
+        for row in rows:
+            row.setdefault("source_dir", str(p))
+        all_rows.extend(rows)
+        descs.append(desc)
+    return all_rows, " + ".join(descs)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Analyze MNSIM DSE sampling outputs and generate HTML dashboard.")
-    parser.add_argument("--input", required=True, help="dataset_history.csv, dataset root, run root, or trial dir")
-    parser.add_argument("--output-dir", default=None, help="where analysis files are written (default: <input>/analysis)")
+    parser.add_argument(
+        "--input", required=True, nargs="+",
+        help=(
+            "One or more: dataset_history.csv, dataset root, run root, or trial dir. "
+            "Multiple paths are merged for joint analysis."
+        ),
+    )
+    parser.add_argument("--output-dir", default=None, help="where analysis files are written (default: first <input>/analysis)")
     parser.add_argument("--accuracy-target", type=float, default=None, help="override minimum accuracy threshold")
     parser.add_argument("--topk", type=int, default=20, help="number of recommended configs to export")
-    parser.add_argument("--update-latest", action="store_true", help="Deprecated. Analysis now writes to a single fixed reports/analysis directory.")
+    parser.add_argument("--update-latest", action="store_true", help="Deprecated.")
     args = parser.parse_args()
 
-    input_path = Path(args.input).expanduser().resolve()
+    input_paths = [Path(p).expanduser().resolve() for p in args.input]
+
     if args.output_dir:
         output_dir = Path(args.output_dir).expanduser().resolve()
     else:
-        output_dir, _ = _prepare_default_output_dir(input_path)
+        output_dir, _ = _prepare_default_output_dir(input_paths[0])
 
-    result = analyze(input_path, output_dir, args.accuracy_target, args.topk)
+    if len(input_paths) == 1:
+        result = analyze(input_paths[0], output_dir, args.accuracy_target, args.topk)
+    else:
+        # Multi-source merge: load and concatenate rows, then run unified analysis
+        merged_rows, source_desc = _resolve_merged_inputs(input_paths)
+        print(f"[analysis] merged {len(input_paths)} sources ({len(merged_rows)} rows total): {source_desc}")
+        result = _analyze_rows(merged_rows, source_desc, output_dir, args.accuracy_target, args.topk)
     print("[analysis] Done.")
     print(f"[analysis] samples          : {result['samples']}")
     print(f"[analysis] feasible         : {result['feasible_samples']}")

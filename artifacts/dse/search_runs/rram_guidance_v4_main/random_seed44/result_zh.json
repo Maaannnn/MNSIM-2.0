@@ -1,0 +1,92 @@
+{
+  "算法": "random",
+  "优化轨道": "多目标",
+  "随机种子": 44,
+  "预算评估次数": 24,
+  "总评估次数": 24,
+  "帕累托解数量": 4,
+  "超体积": null,
+  "HV参考点": null,
+  "墙钟时间_s": 26152.909821033478,
+  "开始时间_UTC": "2026-04-11T04:25:53.978834+00:00",
+  "结束时间_UTC": "2026-04-11T11:41:46.888679+00:00",
+  "运行配置": {
+    "网络": "vgg8",
+    "权重路径": "cifar10_vgg8_params.pth",
+    "基础配置": "SimConfig.ini",
+    "启用精度仿真": true,
+    "设备": "mps",
+    "精度评估批次数上限": 4,
+    "设计空间配置": "rram_guidance_v4",
+    "算法参数": {
+      "accuracy_target": 0.88
+    }
+  },
+  "各目标最优": {
+    "延迟_ns": {
+      "数值": 3884383.145814948,
+      "评估序号": 18,
+      "配置": {
+        "rram_preset": "P3",
+        "xbar_size": "128x128",
+        "adc_choice": "4",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "能耗_nJ": {
+      "数值": 1248300.8586948751,
+      "评估序号": 24,
+      "配置": {
+        "rram_preset": "P3",
+        "xbar_size": "512x512",
+        "adc_choice": "6",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "面积_um2": {
+      "数值": 893297223.1245514,
+      "评估序号": 20,
+      "配置": {
+        "rram_preset": "P3",
+        "xbar_size": "512x512",
+        "adc_choice": "4",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "0",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "40"
+      }
+    },
+    "精度": {
+      "数值": 0.9375,
+      "评估序号": 10,
+      "配置": {
+        "rram_preset": "P0",
+        "xbar_size": "128x128",
+        "adc_choice": "6",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "4x4",
+        "tile_connection": "3",
+        "inter_tile_bw": "40"
+      }
+    }
+  },
+  "单目标最优": null
+}

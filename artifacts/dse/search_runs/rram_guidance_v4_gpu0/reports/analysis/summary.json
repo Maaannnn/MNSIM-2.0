@@ -1,0 +1,522 @@
+{
+  "source": "run_root:/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_guidance_v4_gpu0",
+  "source_kind": "run_root",
+  "source_path": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_guidance_v4_gpu0",
+  "source_path_display": "artifacts/dse/search_runs/rram_guidance_v4_gpu0",
+  "dataset_name": "rram_guidance_v4_gpu0",
+  "space_profile": "legacy",
+  "space_profile_label": "历史数据集（未显式记录空间）",
+  "space_profile_note": "旧版数据集，未在数据中显式记录搜索空间，建议只作为先导对照，不作为主结论来源。",
+  "analysis_scope": "全样本",
+  "main_phase": "random",
+  "space_dimensions": [
+    {
+      "dim": "rram_preset",
+      "dim_zh": "RRAM器件预设",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "P1, P2, P3"
+    },
+    {
+      "dim": "xbar_size",
+      "dim_zh": "交叉阵列尺寸",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "128x128, 256x256, 512x512"
+    },
+    {
+      "dim": "adc_choice",
+      "dim_zh": "ADC档位",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "4, 6, 7"
+    },
+    {
+      "dim": "dac_num",
+      "dim_zh": "DAC数量",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "128, 32"
+    },
+    {
+      "dim": "xbar_polarity",
+      "dim_zh": "正负权实现方式",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "2"
+    },
+    {
+      "dim": "sub_position",
+      "dim_zh": "差分相减位置",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "0, 1"
+    },
+    {
+      "dim": "group_num",
+      "dim_zh": "阵列分组数",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "1"
+    },
+    {
+      "dim": "pe_num",
+      "dim_zh": "PE阵列规模",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "2x2, 4x4"
+    },
+    {
+      "dim": "tile_connection",
+      "dim_zh": "Tile连接方式",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "2, 3"
+    },
+    {
+      "dim": "inter_tile_bw",
+      "dim_zh": "片间带宽",
+      "layer_zh": "历史数据",
+      "candidate_values": "未记录（按当前样本推断）",
+      "observed_values": "40, 80"
+    }
+  ],
+  "workload": "-",
+  "dataset_module": "-",
+  "dataset_name_short": "-",
+  "weights_path": "",
+  "weights_path_display": "-",
+  "weights_file": "-",
+  "base_config_file": "-",
+  "base_config_path": "",
+  "base_config_path_display": "-",
+  "device": "-",
+  "run_accuracy": null,
+  "enable_saf": null,
+  "enable_variation": null,
+  "enable_rratio": null,
+  "fixed_qrange": null,
+  "simconfig_rows": [],
+  "preset_rows": [
+    {
+      "preset": "P0",
+      "observed_samples": 0,
+      "device_resistance": "1e6,1e4",
+      "device_variation": "0.5",
+      "device_saf": "0.01,0.01"
+    },
+    {
+      "preset": "P1",
+      "observed_samples": 179,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "1.0",
+      "device_saf": "0.05,0.05"
+    },
+    {
+      "preset": "P2",
+      "observed_samples": 161,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "3.0",
+      "device_saf": "0.05,0.05"
+    },
+    {
+      "preset": "P3",
+      "observed_samples": 92,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "1.5",
+      "device_saf": "0.5,0.5"
+    },
+    {
+      "preset": "P4",
+      "observed_samples": 0,
+      "device_resistance": "5e5,5e4",
+      "device_variation": "5.0",
+      "device_saf": "1.0,1.0"
+    }
+  ],
+  "preset_payloads": {
+    "P0": {
+      "preset": "P0",
+      "note": "近理想基线器件，用作对照组。",
+      "observed_samples": 0,
+      "device_resistance": "1e6,1e4",
+      "device_variation": "0.5",
+      "device_saf": "0.01,0.01"
+    },
+    "P1": {
+      "preset": "P1",
+      "note": "轻度退化器件，阻值窗口与缺陷率略变差。",
+      "observed_samples": 179,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "1.0",
+      "device_saf": "0.05,0.05"
+    },
+    "P2": {
+      "preset": "P2",
+      "note": "中度退化器件，波动进一步增大。",
+      "observed_samples": 161,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "3.0",
+      "device_saf": "0.05,0.05"
+    },
+    "P3": {
+      "preset": "P3",
+      "note": "重度退化器件，当前主实验下已整体掉出可行域。",
+      "observed_samples": 92,
+      "device_resistance": "1e6,2e4",
+      "device_variation": "1.5",
+      "device_saf": "0.5,0.5"
+    },
+    "P4": {
+      "preset": "P4",
+      "note": "极限压力器件，通常只用于边界失效测试。",
+      "observed_samples": 0,
+      "device_resistance": "5e5,5e4",
+      "device_variation": "5.0",
+      "device_saf": "1.0,1.0"
+    }
+  },
+  "effect_rows": [
+    {
+      "group_by_zh": "交叉阵列尺寸",
+      "value_count": 3,
+      "balanced_score_spread": 1.1176618536772485,
+      "accuracy_spread": 0.20878788784855107,
+      "latency_spread": 1104826.9781216364,
+      "energy_spread": 6658717.368951759,
+      "area_spread": 1609633393.871323,
+      "dominant_value": "512x512"
+    },
+    {
+      "group_by_zh": "PE阵列规模",
+      "value_count": 2,
+      "balanced_score_spread": 1.053109408011169,
+      "accuracy_spread": 0.026840626126396705,
+      "latency_spread": 10701552.93924311,
+      "energy_spread": 4545437.811337054,
+      "area_spread": 235236961.9948883,
+      "dominant_value": "2x2"
+    },
+    {
+      "group_by_zh": "ADC档位",
+      "value_count": 3,
+      "balanced_score_spread": 0.4866567843535154,
+      "accuracy_spread": 0.14136913360297898,
+      "latency_spread": 1094401.6714381715,
+      "energy_spread": 4409613.9729414135,
+      "area_spread": 492878638.7750046,
+      "dominant_value": "7"
+    },
+    {
+      "group_by_zh": "DAC数量",
+      "value_count": 2,
+      "balanced_score_spread": 0.43956597214658577,
+      "accuracy_spread": 0.07801339285714282,
+      "latency_spread": 1794640.9903120454,
+      "energy_spread": 5621451.749482912,
+      "area_spread": 137427401.57270622,
+      "dominant_value": "128"
+    },
+    {
+      "group_by_zh": "RRAM器件预设",
+      "value_count": 3,
+      "balanced_score_spread": 0.2781384364727526,
+      "accuracy_spread": 0.14878844102957245,
+      "latency_spread": 2111466.8469114443,
+      "energy_spread": 2015618.3366250666,
+      "area_spread": 147010388.89812636,
+      "dominant_value": "P1"
+    },
+    {
+      "group_by_zh": "差分相减位置",
+      "value_count": 2,
+      "balanced_score_spread": 0.25760713474644403,
+      "accuracy_spread": 0.04271890828897673,
+      "latency_spread": 1274947.383511154,
+      "energy_spread": 2460407.625910104,
+      "area_spread": 105160332.811584,
+      "dominant_value": "1"
+    },
+    {
+      "group_by_zh": "片间带宽",
+      "value_count": 2,
+      "balanced_score_spread": 0.1614988076558831,
+      "accuracy_spread": 0.009827092348544508,
+      "latency_spread": 980316.5336371446,
+      "energy_spread": 706695.5574016552,
+      "area_spread": 131781062.54300451,
+      "dominant_value": "80"
+    },
+    {
+      "group_by_zh": "Tile连接方式",
+      "value_count": 2,
+      "balanced_score_spread": 0.0022073477538145925,
+      "accuracy_spread": 0.02812871384493487,
+      "latency_spread": 511321.1434610728,
+      "energy_spread": 784922.1908324864,
+      "area_spread": 8459348.757275105,
+      "dominant_value": "3"
+    }
+  ],
+  "interaction_cells": [
+    {
+      "x": "128x128",
+      "y": "2x2",
+      "samples": 71,
+      "feasible_rate": 0.5915492957746479,
+      "mean_accuracy": 0.7137571522887324,
+      "best_latency_ns": 3513687.6067524604,
+      "best_energy_nj": 2438120.079495778
+    },
+    {
+      "x": "256x256",
+      "y": "2x2",
+      "samples": 78,
+      "feasible_rate": 0.5769230769230769,
+      "mean_accuracy": 0.8721955128205128,
+      "best_latency_ns": 3905028.5279078325,
+      "best_energy_nj": 1589700.9585995504
+    },
+    {
+      "x": "512x512",
+      "y": "2x2",
+      "samples": 138,
+      "feasible_rate": 0.8115942028985508,
+      "mean_accuracy": 0.8983384284420289,
+      "best_latency_ns": 4328935.425119968,
+      "best_energy_nj": 797588.8653504751
+    },
+    {
+      "x": "128x128",
+      "y": "4x4",
+      "samples": 47,
+      "feasible_rate": 0.46808510638297873,
+      "mean_accuracy": 0.6612990359042553,
+      "best_latency_ns": 13013384.055491323,
+      "best_energy_nj": 6701703.556800941
+    },
+    {
+      "x": "256x256",
+      "y": "4x4",
+      "samples": 50,
+      "feasible_rate": 0.64,
+      "mean_accuracy": 0.87796875,
+      "best_latency_ns": 13953466.833602492,
+      "best_energy_nj": 4050101.962733661
+    },
+    {
+      "x": "512x512",
+      "y": "4x4",
+      "samples": 48,
+      "feasible_rate": 0.9375,
+      "mean_accuracy": 0.9111735026041666,
+      "best_latency_ns": 14533920.102073267,
+      "best_energy_nj": 2382536.3047666484
+    }
+  ],
+  "interaction_xs": [
+    "128x128",
+    "256x256",
+    "512x512"
+  ],
+  "interaction_ys": [
+    "2x2",
+    "4x4"
+  ],
+  "preset_best_rows": [
+    {
+      "preset": "P1",
+      "xbar_size": "512x512",
+      "adc_choice": "7",
+      "dac_num": "128",
+      "pe_num": "2x2",
+      "latency_ns": 4328935.425119968,
+      "energy_nj": 797588.8653504751,
+      "area_um2": 885788665.3005514,
+      "accuracy": 0.92578125
+    },
+    {
+      "preset": "P2",
+      "xbar_size": "512x512",
+      "adc_choice": "7",
+      "dac_num": "128",
+      "pe_num": "2x2",
+      "latency_ns": 4328935.425119968,
+      "energy_nj": 797588.8653504751,
+      "area_um2": 885788665.3005514,
+      "accuracy": 0.9208984375
+    },
+    {
+      "preset": "P3",
+      "xbar_size": "256x256",
+      "adc_choice": "4",
+      "dac_num": "32",
+      "pe_num": "2x2",
+      "latency_ns": 5784806.811956924,
+      "energy_nj": 7803522.713430056,
+      "area_um2": 1214545914.7122579,
+      "accuracy": 0.892578125
+    }
+  ],
+  "samples": 432,
+  "feasible_samples": 298,
+  "feasible_rate": 0.6898148148148148,
+  "global_pareto_samples": 14,
+  "accuracy_target_override": 0.88,
+  "accuracy_targets_in_data": [],
+  "algo_counts": {
+    "mobo": 144,
+    "nsga2": 144,
+    "random": 144
+  },
+  "phase_counts": {
+    "init": 48,
+    "mobo": 120,
+    "gen_1": 12,
+    "gen_2": 12,
+    "gen_3": 12,
+    "gen_4": 12,
+    "gen_5": 12,
+    "gen_6": 12,
+    "gen_7": 12,
+    "gen_8": 12,
+    "gen_9": 12,
+    "gen_10": 12,
+    "random": 144
+  },
+  "rram_preset_counts": {
+    "P3": 92,
+    "P1": 179,
+    "P2": 161
+  },
+  "best_feasible_latency": {
+    "algo": "mobo",
+    "seed": 43,
+    "eval_index": 10,
+    "phase": "mobo",
+    "latency_ns": 3884383.145814948,
+    "energy_nj": 5735710.703200261,
+    "area_um2": 2427300237.7582936,
+    "power_w": 845.1078199484215,
+    "accuracy": 0.90234375,
+    "elapsed_s": 83.32126998901367,
+    "is_pareto": false,
+    "rram_preset": "P1",
+    "xbar_size": "128x128",
+    "adc_choice": "4",
+    "dac_num": "128",
+    "xbar_polarity": "2",
+    "sub_position": "0",
+    "group_num": "1",
+    "pe_num": "2x2",
+    "tile_connection": "2",
+    "inter_tile_bw": "80",
+    "extra_json": "{\"parego_weight\": [0.4084015598339668, 0.14487522073182418, 0.013260744346409281, 0.43346247508779984], \"accuracy_violation\": 0.0}",
+    "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_guidance_v4_gpu0/mobo_seed43",
+    "run_id": "rram_guidance_v4_gpu0",
+    "feasible": true,
+    "global_pareto": false
+  },
+  "best_feasible_energy": {
+    "algo": "mobo",
+    "seed": 42,
+    "eval_index": 28,
+    "phase": "mobo",
+    "latency_ns": 4698711.625120114,
+    "energy_nj": 797588.8653504751,
+    "area_um2": 885788665.3005514,
+    "power_w": 18.642665939012545,
+    "accuracy": 0.916015625,
+    "elapsed_s": 25.091922760009766,
+    "is_pareto": false,
+    "rram_preset": "P1",
+    "xbar_size": "512x512",
+    "adc_choice": "7",
+    "dac_num": "128",
+    "xbar_polarity": "2",
+    "sub_position": "1",
+    "group_num": "1",
+    "pe_num": "2x2",
+    "tile_connection": "3",
+    "inter_tile_bw": "40",
+    "extra_json": "{\"parego_weight\": [0.17082007355839002, 0.15119259157645248, 0.41435445484758365, 0.26363288001757396], \"accuracy_violation\": 0.0}",
+    "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_guidance_v4_gpu0/mobo_seed42",
+    "run_id": "rram_guidance_v4_gpu0",
+    "feasible": true,
+    "global_pareto": false
+  },
+  "best_feasible_area": {
+    "algo": "mobo",
+    "seed": 42,
+    "eval_index": 31,
+    "phase": "mobo",
+    "latency_ns": 4698711.625120114,
+    "energy_nj": 1077230.9208284174,
+    "area_um2": 884941383.1245514,
+    "power_w": 35.34259701478249,
+    "accuracy": 0.9228515625,
+    "elapsed_s": 25.302897453308105,
+    "is_pareto": true,
+    "rram_preset": "P1",
+    "xbar_size": "512x512",
+    "adc_choice": "7",
+    "dac_num": "128",
+    "xbar_polarity": "2",
+    "sub_position": "0",
+    "group_num": "1",
+    "pe_num": "2x2",
+    "tile_connection": "3",
+    "inter_tile_bw": "40",
+    "extra_json": "{\"parego_weight\": [0.19613265697731433, 0.1432204868946215, 0.35762266161920014, 0.30302419450886403], \"accuracy_violation\": 0.0}",
+    "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_guidance_v4_gpu0/mobo_seed42",
+    "run_id": "rram_guidance_v4_gpu0",
+    "feasible": true,
+    "global_pareto": false
+  },
+  "best_accuracy": {
+    "algo": "mobo",
+    "seed": 42,
+    "eval_index": 30,
+    "phase": "mobo",
+    "latency_ns": 4831206.264182526,
+    "energy_nj": 1248300.8586948751,
+    "area_um2": 1005903865.3005512,
+    "power_w": 30.12938593901255,
+    "accuracy": 0.939453125,
+    "elapsed_s": 25.19685411453247,
+    "is_pareto": false,
+    "rram_preset": "P1",
+    "xbar_size": "512x512",
+    "adc_choice": "6",
+    "dac_num": "128",
+    "xbar_polarity": "2",
+    "sub_position": "1",
+    "group_num": "1",
+    "pe_num": "2x2",
+    "tile_connection": "3",
+    "inter_tile_bw": "80",
+    "extra_json": "{\"parego_weight\": [0.655393529468092, 0.06335606309772922, 0.24316251564409924, 0.03808789179007956], \"accuracy_violation\": 0.0}",
+    "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_guidance_v4_gpu0/mobo_seed42",
+    "run_id": "rram_guidance_v4_gpu0",
+    "feasible": true,
+    "global_pareto": false
+  },
+  "metric_ranges": {
+    "latency_ns": {
+      "min": 3513687.6067524604,
+      "max": 18249685.76940889
+    },
+    "energy_nj": {
+      "min": 797588.8653504751,
+      "max": 21853525.738063026
+    },
+    "area_um2": {
+      "min": 884941383.1245514,
+      "max": 3083612557.758293
+    },
+    "accuracy": {
+      "min": 0.10546875,
+      "max": 0.939453125
+    }
+  }
+}

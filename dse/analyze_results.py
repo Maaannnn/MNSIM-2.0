@@ -28,8 +28,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from dse.core import RRAM_PRESETS, SPACE_PROFILES
 from dse.i18n import DIM_COL_ZH
+from dse.space_catalog import RRAM_PRESETS, SPACE_PROFILES
 
 
 DIM_NAMES: List[str] = list(DIM_COL_ZH.keys())

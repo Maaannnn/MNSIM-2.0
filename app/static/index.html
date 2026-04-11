@@ -26,51 +26,81 @@
   @keyframes fadeIn { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
 
   body[data-theme="light"] {
-    background:
-      radial-gradient(circle at top left, rgba(191, 219, 254, 0.55), transparent 36%),
-      radial-gradient(circle at top right, rgba(219, 234, 254, 0.85), transparent 34%),
-      linear-gradient(180deg, #f8fbff 0%, #edf5ff 100%);
-    color: #16325c;
+    background: #f7f8fb;
+    color: #111827;
   }
-  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-track { background: #dbeafe; }
-  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb { background: #93c5fd; }
+  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-track { background: #eef2f7; }
+  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb { background: #c7d0dc; }
   body[data-theme="light"] .bg-slate-950 { background: transparent !important; }
-  body[data-theme="light"] .bg-slate-950\/95 { background: rgba(248, 251, 255, 0.94) !important; }
+  body[data-theme="light"] .bg-slate-950\/95 { background: rgba(247, 248, 251, 0.94) !important; }
   body[data-theme="light"] .bg-slate-900,
   body[data-theme="light"] .bg-slate-900\/70,
   body[data-theme="light"] .bg-slate-900\/60,
   body[data-theme="light"] .bg-slate-900\/50,
   body[data-theme="light"] .bg-slate-900\/40 {
-    background: rgba(255, 255, 255, 0.86) !important;
+    background: #ffffff !important;
   }
   body[data-theme="light"] .bg-slate-800,
   body[data-theme="light"] .bg-slate-800\/80,
   body[data-theme="light"] .bg-slate-800\/60,
   body[data-theme="light"] .bg-slate-800\/40,
   body[data-theme="light"] .bg-slate-800\/30 {
-    background: rgba(227, 238, 255, 0.9) !important;
+    background: #fafbfc !important;
   }
   body[data-theme="light"] .border-slate-800,
   body[data-theme="light"] .border-slate-800\/60,
   body[data-theme="light"] .border-slate-700,
   body[data-theme="light"] .border-slate-700\/50 {
-    border-color: #c7dbff !important;
+    border-color: #dbe2ea !important;
   }
-  body[data-theme="light"] .text-white { color: #0f2d59 !important; }
+  body[data-theme="light"] .text-white { color: #111827 !important; }
   body[data-theme="light"] .text-slate-200,
-  body[data-theme="light"] .text-slate-300 { color: #24446f !important; }
-  body[data-theme="light"] .text-slate-400 { color: #43618e !important; }
-  body[data-theme="light"] .text-slate-500 { color: #5b77a3 !important; }
-  body[data-theme="light"] .text-slate-600 { color: #7991b6 !important; }
+  body[data-theme="light"] .text-slate-300 { color: #374151 !important; }
+  body[data-theme="light"] .text-slate-400 { color: #6b7280 !important; }
+  body[data-theme="light"] .text-slate-500 { color: #6b7280 !important; }
+  body[data-theme="light"] .text-slate-600 { color: #94a3b8 !important; }
   body[data-theme="light"] .hover\:bg-slate-800\/40:hover,
   body[data-theme="light"] .hover\:bg-slate-700:hover,
   body[data-theme="light"] .hover\:bg-slate-800:hover {
-    background: rgba(191, 219, 254, 0.72) !important;
+    background: #f3f6fb !important;
   }
-  body[data-theme="light"] .placeholder-slate-500::placeholder { color: #7b91b5 !important; }
-  body[data-theme="light"] .algo-random { background: #3b82f6; }
+  body[data-theme="light"] .placeholder-slate-500::placeholder { color: #94a3b8 !important; }
+  body[data-theme="light"] .text-blue-300,
+  body[data-theme="light"] .text-blue-400 { color: #2563eb !important; }
+  body[data-theme="light"] .bg-blue-500\/10 { background: #eef2ff !important; }
+  body[data-theme="light"] .border-blue-500\/30,
+  body[data-theme="light"] .border-blue-500\/40 { border-color: #bfdbfe !important; }
+  body[data-theme="light"] .text-fuchsia-400 { color: #4f46e5 !important; }
+  body[data-theme="light"] .text-pink-400 { color: #1d4ed8 !important; }
+  body[data-theme="light"] .text-green-400,
+  body[data-theme="light"] .text-green-300 { color: #15803d !important; }
+  body[data-theme="light"] .text-red-400,
+  body[data-theme="light"] .text-red-300 { color: #b45309 !important; }
+  body[data-theme="light"] .bg-green-900\/50,
+  body[data-theme="light"] .bg-green-900\/40 {
+    background: #eefbf3 !important;
+  }
+  body[data-theme="light"] .border-green-800\/50 {
+    border-color: #bbf7d0 !important;
+  }
+  body[data-theme="light"] .bg-slate-700 {
+    background: #eef2f7 !important;
+  }
+  body[data-theme="light"] .inline-flex.items-center.rounded-full.border.border-slate-700.bg-slate-800\/60,
+  body[data-theme="light"] .inline-flex.flex-col.rounded-lg.border.border-slate-700.bg-slate-800\/60,
+  body[data-theme="light"] .ml-1\.5.px-1\.5.py-0\.5.rounded-full.bg-slate-700.text-slate-300.text-xs {
+    background: #f5f7fb !important;
+    border-color: #dbe2ea !important;
+    color: #374151 !important;
+  }
+  body[data-theme="light"] .inline-flex.items-center.rounded-full.border.border-blue-500\/30.bg-blue-500\/10 {
+    background: #eef2ff !important;
+    border-color: #bfdbfe !important;
+    color: #3730a3 !important;
+  }
+  body[data-theme="light"] .algo-random { background: #374151; }
   body[data-theme="light"] .algo-matrixcsv { background: #0f766e; }
-  body[data-theme="light"] .pareto-row { background: rgba(59, 130, 246, 0.10) !important; }
+  body[data-theme="light"] .pareto-row { background: #eef2ff !important; }
 </style>
 <script>
 tailwind.config = {
@@ -193,6 +223,13 @@ tailwind.config = {
       ? 'bg-blue-500/10 text-blue-400 border-blue-500/40'
       : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200 hover:bg-slate-700'">
     数据库表
+  </button>
+  <button @click="setMainView('legacyReport')"
+    class="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+    :class="mainView === 'legacyReport'
+      ? 'bg-blue-500/10 text-blue-400 border-blue-500/40'
+      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200 hover:bg-slate-700'">
+    旧版报告
   </button>
 </div>
 
@@ -349,36 +386,17 @@ tailwind.config = {
       </div>
 
       <div>
-        <div class="text-lg font-semibold text-white mb-4">PPA 散点图</div>
+        <div class="text-lg font-semibold text-white mb-4">旧版 CSV 报告</div>
         <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
-              <div class="text-sm font-semibold text-white">时延-能耗散点</div>
-              <div class="text-[11px] text-slate-500 mt-1">Latency vs Energy</div>
-              <canvas id="global-chart-lat-en" height="250" class="mt-3"></canvas>
-            </div>
-            <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
-              <div class="text-sm font-semibold text-white">时延-面积散点</div>
-              <div class="text-[11px] text-slate-500 mt-1">Latency vs Area</div>
-              <canvas id="global-chart-lat-ar" height="250" class="mt-3"></canvas>
-            </div>
+          <div class="text-sm text-slate-300 leading-6">
+            当前这个数据库全局分析页不再重画散点图。
+            如果你要看和老版 CSV `index.html` 完全一致的散点图、图例、坐标和布局，请切到上方的“旧版报告”入口。
           </div>
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
-            <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
-              <div class="text-sm font-semibold text-white">能耗-面积散点</div>
-              <div class="text-[11px] text-slate-500 mt-1">Energy vs Area</div>
-              <canvas id="global-chart-en-ar" height="250" class="mt-3"></canvas>
-            </div>
-            <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
-              <div class="text-sm font-semibold text-white">时延-精度散点</div>
-              <div class="text-[11px] text-slate-500 mt-1">Latency vs Accuracy</div>
-              <canvas id="global-chart-lat-acc" height="250" class="mt-3"></canvas>
-            </div>
-          </div>
-          <div class="flex flex-wrap gap-2 mt-4 text-xs">
-            <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-slate-300">浅色点 = 精度不达标</span>
-            <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-slate-300">黑边点 = 全局 Pareto</span>
-            <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/60 px-3 py-1 text-slate-300">颜色 = RRAM preset</span>
+          <div class="mt-4">
+            <button @click="setMainView('legacyReport')"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors">
+              打开旧版 CSV 报告
+            </button>
           </div>
         </div>
       </div>
@@ -547,6 +565,46 @@ tailwind.config = {
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Legacy CSV report ───────────────────────────────────────────────────── -->
+<div x-show="mainView==='legacyReport'" class="max-w-screen-2xl mx-auto px-6 pb-8">
+  <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+    <div class="px-4 py-4 border-b border-slate-800 flex flex-wrap items-center gap-3">
+      <div>
+        <h2 class="text-sm font-semibold text-white">旧版 CSV 报告</h2>
+        <p class="text-xs text-slate-500 mt-0.5">
+          这里直接展示旧版 `analyze_results.py` 生成的原始 `index.html`，散点图与旧版完全一致
+        </p>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <select x-model="selectedLegacyReportPath" @change="updateLegacyReportFrame()"
+          class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 border border-slate-700 focus:outline-none focus:border-blue-500 text-slate-200 min-w-[360px]">
+          <template x-for="report in legacyReports" :key="report.id">
+            <option :value="report.relpath" x-text="report.dataset + ' · ' + report.scope"></option>
+          </template>
+        </select>
+        <button @click="loadLegacyReports(true)"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors">
+          刷新列表
+        </button>
+      </div>
+    </div>
+
+    <div x-show="legacyReportsLoading" class="flex justify-center items-center py-14 text-slate-500 text-sm">
+      旧版报告加载中…
+    </div>
+
+    <div x-show="!legacyReportsLoading && !legacyReports.length" class="py-14 text-center text-slate-500 text-sm">
+      当前没有发现旧版 CSV 报告。先运行 `python3 dse/analyze_results.py --input <dataset_history.csv>` 生成 `index.html`。
+    </div>
+
+    <div x-show="!legacyReportsLoading && legacyReports.length" class="p-4">
+      <iframe :src="legacyReportFrameSrc"
+        class="w-full rounded-xl border border-slate-800 bg-white"
+        style="height: calc(100vh - 220px); min-height: 900px;"></iframe>
     </div>
   </div>
 </div>
@@ -1369,6 +1427,8 @@ function dseApp() {
     runs: [], stats: {}, selectedRun: null, selectedRunDetail: null,
     records: [], loading: false, syncing: false,
     globalAnalysis: null, globalAnalysisLoading: false, globalAnalysisDirty: true, _globalAnalysisTimer: null,
+    legacyReports: [], legacyReportsLoading: false, legacyReportsLoaded: false,
+    selectedLegacyReportPath: '', legacyReportFrameSrc: '',
     tableCatalog: [], tableColumns: [], tableRows: [], tableLoading: false,
     tableCatalogLoaded: false,
     tableBrowser: { selected: 'opt_runs', q: '', limit: 50, offset: 0, total: 0 },
@@ -1439,9 +1499,36 @@ function dseApp() {
       if (view === 'analysis' && (this.globalAnalysisDirty || !this.globalAnalysis)) {
         await this.loadGlobalAnalysis()
       }
+      if (view === 'legacyReport' && !this.legacyReportsLoaded) {
+        await this.loadLegacyReports()
+      }
       if (view === 'database' && !this.tableCatalogLoaded) {
         await this.loadTables()
       }
+    },
+
+    async loadLegacyReports(force = false) {
+      if (this.legacyReportsLoaded && !force) return
+      this.legacyReportsLoading = true
+      try {
+        const r = await fetch('/api/legacy-analysis/reports')
+        this.legacyReports = await r.json()
+        this.legacyReportsLoaded = true
+        if (!this.selectedLegacyReportPath && this.legacyReports.length) {
+          this.selectedLegacyReportPath = this.legacyReports[0].relpath
+        } else if (this.selectedLegacyReportPath && !this.legacyReports.some(report => report.relpath === this.selectedLegacyReportPath)) {
+          this.selectedLegacyReportPath = this.legacyReports[0]?.relpath || ''
+        }
+        this.updateLegacyReportFrame()
+      } finally {
+        this.legacyReportsLoading = false
+      }
+    },
+
+    updateLegacyReportFrame() {
+      this.legacyReportFrameSrc = this.selectedLegacyReportPath
+        ? `/legacy-analysis/${this.selectedLegacyReportPath}`
+        : ''
     },
 
     async loadTables() {
@@ -1553,6 +1640,7 @@ function dseApp() {
       const d = await r.json()
       this.syncing = false
       await Promise.all([this.loadStats(), this.loadRuns()])
+      if (this.legacyReportsLoaded) await this.loadLegacyReports(true)
       if (this.tableCatalogLoaded) await this.loadTables()
       this.globalAnalysisDirty = true
       if (this.mainView === 'analysis') await this.loadGlobalAnalysis()

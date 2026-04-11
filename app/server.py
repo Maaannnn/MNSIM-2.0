@@ -15,6 +15,7 @@ import json
 import os
 import sqlite3
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -1074,6 +1075,50 @@ def api_sim_configs():
         "SELECT id, name, content_hash, created_at FROM sim_configs ORDER BY id"
     ).fetchall()
     return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/legacy-analysis/reports")
+def api_legacy_analysis_reports():
+    report_files = ARTIFACTS_ROOT.glob("datasets/*/reports/analysis/**/index.html")
+    seen: set[str] = set()
+    reports: List[Dict[str, Any]] = []
+    for file_path in report_files:
+        try:
+            resolved = file_path.resolve()
+        except FileNotFoundError:
+            continue
+        rel = resolved.relative_to(ARTIFACTS_ROOT.resolve())
+        rel_str = rel.as_posix()
+        if rel_str in seen:
+            continue
+        seen.add(rel_str)
+
+        parts = rel.parts
+        dataset_name = parts[1] if len(parts) > 1 else "unknown"
+        scope = "汇总报告" if parts[-2] == "analysis" else parts[-2]
+        stat = resolved.stat()
+        reports.append({
+            "id": rel_str,
+            "dataset": dataset_name,
+            "scope": scope,
+            "relpath": rel_str,
+            "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            "size": stat.st_size,
+        })
+
+    reports.sort(key=lambda item: item["updated_at"], reverse=True)
+    return jsonify(reports)
+
+
+@app.route("/legacy-analysis/<path:relpath>")
+def legacy_analysis_file(relpath: str):
+    root = ARTIFACTS_ROOT.resolve()
+    target = (root / relpath).resolve()
+    if root not in target.parents and target != root:
+        return jsonify({"error": "forbidden"}), 403
+    if not target.exists() or not target.is_file():
+        return jsonify({"error": "not found"}), 404
+    return send_from_directory(str(target.parent), target.name)
 
 
 @app.route("/api/sync", methods=["POST"])

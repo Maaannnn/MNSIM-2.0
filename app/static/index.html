@@ -25,82 +25,116 @@
   .fade-in { animation: fadeIn .2s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
 
+  /* ── Light theme ─────────────────────────────── */
   body[data-theme="light"] {
-    background: #f7f8fb;
-    color: #111827;
+    background: #f1f5f9;
+    color: #0f172a;
   }
-  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-track { background: #eef2f7; }
-  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb { background: #c7d0dc; }
-  body[data-theme="light"] .bg-slate-950 { background: transparent !important; }
-  body[data-theme="light"] .bg-slate-950\/95 { background: rgba(247, 248, 251, 0.94) !important; }
+  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-track { background: #e2e8f0; }
+  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+
+  /* Page & panel backgrounds */
+  body[data-theme="light"] .bg-slate-950      { background: #f1f5f9 !important; }
+  body[data-theme="light"] .bg-slate-950\/95  { background: rgba(241,245,249,0.96) !important; }
   body[data-theme="light"] .bg-slate-900,
   body[data-theme="light"] .bg-slate-900\/70,
   body[data-theme="light"] .bg-slate-900\/60,
   body[data-theme="light"] .bg-slate-900\/50,
-  body[data-theme="light"] .bg-slate-900\/40 {
-    background: #ffffff !important;
-  }
+  body[data-theme="light"] .bg-slate-900\/40  { background: #ffffff !important; }
   body[data-theme="light"] .bg-slate-800,
-  body[data-theme="light"] .bg-slate-800\/80,
+  body[data-theme="light"] .bg-slate-800\/80  { background: #f8fafc !important; }
   body[data-theme="light"] .bg-slate-800\/60,
   body[data-theme="light"] .bg-slate-800\/40,
-  body[data-theme="light"] .bg-slate-800\/30 {
-    background: #fafbfc !important;
-  }
+  body[data-theme="light"] .bg-slate-800\/30  { background: #f0f4f8 !important; }
+  body[data-theme="light"] .bg-slate-700      { background: #e2e8f0 !important; }
+  body[data-theme="light"] .bg-slate-950\/70,
+  body[data-theme="light"] .bg-slate-950\/40  { background: #f8fafc !important; }
+
+  /* Borders */
   body[data-theme="light"] .border-slate-800,
   body[data-theme="light"] .border-slate-800\/60,
   body[data-theme="light"] .border-slate-700,
-  body[data-theme="light"] .border-slate-700\/50 {
-    border-color: #dbe2ea !important;
-  }
-  body[data-theme="light"] .text-white { color: #111827 !important; }
-  body[data-theme="light"] .text-slate-200,
-  body[data-theme="light"] .text-slate-300 { color: #374151 !important; }
-  body[data-theme="light"] .text-slate-400 { color: #6b7280 !important; }
-  body[data-theme="light"] .text-slate-500 { color: #6b7280 !important; }
-  body[data-theme="light"] .text-slate-600 { color: #94a3b8 !important; }
+  body[data-theme="light"] .border-slate-700\/50 { border-color: #e2e8f0 !important; }
+
+  /* Text hierarchy */
+  body[data-theme="light"] .text-white        { color: #0f172a !important; }
+  body[data-theme="light"] .text-slate-100    { color: #1e293b !important; }
+  body[data-theme="light"] .text-slate-200    { color: #334155 !important; }
+  body[data-theme="light"] .text-slate-300    { color: #475569 !important; }
+  body[data-theme="light"] .text-slate-400    { color: #64748b !important; }
+  body[data-theme="light"] .text-slate-500    { color: #94a3b8 !important; }
+  body[data-theme="light"] .text-slate-600    { color: #64748b !important; } /* fixed: was near-invisible #94a3b8 */
+
+  /* Hover states */
   body[data-theme="light"] .hover\:bg-slate-800\/40:hover,
   body[data-theme="light"] .hover\:bg-slate-700:hover,
-  body[data-theme="light"] .hover\:bg-slate-800:hover {
-    background: #f3f6fb !important;
-  }
+  body[data-theme="light"] .hover\:bg-slate-800:hover { background: #e8eef5 !important; }
+  body[data-theme="light"] .hover\:text-slate-200:hover { color: #0f172a !important; }
+  body[data-theme="light"] .hover\:text-white:hover    { color: #0f172a !important; }
+
+  /* Inputs */
   body[data-theme="light"] .placeholder-slate-500::placeholder { color: #94a3b8 !important; }
-  body[data-theme="light"] .text-blue-300,
-  body[data-theme="light"] .text-blue-400 { color: #2563eb !important; }
-  body[data-theme="light"] .bg-blue-500\/10 { background: #eef2ff !important; }
+
+  /* Accent – blue */
+  body[data-theme="light"] .text-blue-400,
+  body[data-theme="light"] .text-blue-300     { color: #2563eb !important; }
+  body[data-theme="light"] .bg-blue-500\/10   { background: #eff6ff !important; }
   body[data-theme="light"] .border-blue-500\/30,
   body[data-theme="light"] .border-blue-500\/40 { border-color: #bfdbfe !important; }
-  body[data-theme="light"] .text-fuchsia-400 { color: #4f46e5 !important; }
-  body[data-theme="light"] .text-pink-400 { color: #1d4ed8 !important; }
+  body[data-theme="light"] .border-blue-500   { border-color: #2563eb !important; }
+
+  /* Rank badge colors — distinct per rank */
+  body[data-theme="light"] .text-fuchsia-400  { color: #7c3aed !important; } /* Rank-2: violet */
+  body[data-theme="light"] .text-pink-400     { color: #be185d !important; } /* Rank-3: pink (fixed: was blue) */
+
+  /* Semantic feedback colors */
   body[data-theme="light"] .text-green-400,
-  body[data-theme="light"] .text-green-300 { color: #15803d !important; }
+  body[data-theme="light"] .text-green-300    { color: #16a34a !important; }
   body[data-theme="light"] .text-red-400,
-  body[data-theme="light"] .text-red-300 { color: #b45309 !important; }
+  body[data-theme="light"] .text-red-300      { color: #dc2626 !important; } /* fixed: was amber #b45309 */
+  body[data-theme="light"] .text-cyan-400     { color: #0891b2 !important; }
+  body[data-theme="light"] .text-purple-400   { color: #7c3aed !important; }
+  body[data-theme="light"] .text-sky-300      { color: #0369a1 !important; }
+
+  /* Status badge chips */
   body[data-theme="light"] .bg-green-900\/50,
-  body[data-theme="light"] .bg-green-900\/40 {
-    background: #eefbf3 !important;
-  }
-  body[data-theme="light"] .border-green-800\/50 {
-    border-color: #bbf7d0 !important;
-  }
-  body[data-theme="light"] .bg-slate-700 {
-    background: #eef2f7 !important;
-  }
-  body[data-theme="light"] .inline-flex.items-center.rounded-full.border.border-slate-700.bg-slate-800\/60,
+  body[data-theme="light"] .bg-green-900\/40  { background: #dcfce7 !important; }
+  body[data-theme="light"] .border-green-800\/50 { border-color: #86efac !important; }
+  body[data-theme="light"] .bg-sky-900\/40    { background: #e0f2fe !important; }
+  body[data-theme="light"] .border-sky-800\/50 { border-color: #7dd3fc !important; }
+  body[data-theme="light"] .bg-blue-900\/50   { background: #eff6ff !important; }
+  body[data-theme="light"] .border-blue-800\/50 { border-color: #bfdbfe !important; }
+
+  /* Pareto row — amber tint (same hue as dark theme amber glow) */
+  body[data-theme="light"] .pareto-row { background: rgba(245,158,11,0.08) !important; }
+
+  /* Param chip pills */
   body[data-theme="light"] .inline-flex.flex-col.rounded-lg.border.border-slate-700.bg-slate-800\/60,
+  body[data-theme="light"] .inline-flex.items-center.rounded-full.border.border-slate-700.bg-slate-800\/60 {
+    background: #eef2f7 !important;
+    border-color: #e2e8f0 !important;
+    color: #334155 !important;
+  }
   body[data-theme="light"] .ml-1\.5.px-1\.5.py-0\.5.rounded-full.bg-slate-700.text-slate-300.text-xs {
-    background: #f5f7fb !important;
-    border-color: #dbe2ea !important;
-    color: #374151 !important;
+    background: #e2e8f0 !important;
+    color: #475569 !important;
   }
   body[data-theme="light"] .inline-flex.items-center.rounded-full.border.border-blue-500\/30.bg-blue-500\/10 {
-    background: #eef2ff !important;
+    background: #eff6ff !important;
     border-color: #bfdbfe !important;
-    color: #3730a3 !important;
+    color: #1d4ed8 !important;
   }
-  body[data-theme="light"] .algo-random { background: #374151; }
+
+  /* Code blocks */
+  body[data-theme="light"] pre { color: #334155 !important; }
+
+  /* Dividers */
+  body[data-theme="light"] .divide-slate-800\/70 > * + *,
+  body[data-theme="light"] .divide-slate-800\/60 > * + * { border-color: #e2e8f0 !important; }
+
+  /* Algo badges — keep dark pills with white text; only update visually-broken ones */
+  body[data-theme="light"] .algo-random    { background: #475569; }
   body[data-theme="light"] .algo-matrixcsv { background: #0f766e; }
-  body[data-theme="light"] .pareto-row { background: #eef2ff !important; }
 </style>
 <script>
 tailwind.config = {
@@ -386,18 +420,45 @@ tailwind.config = {
       </div>
 
       <div>
-        <div class="text-lg font-semibold text-white mb-4">旧版 CSV 报告</div>
-        <div class="bg-slate-800/30 border border-slate-800 rounded-2xl p-4">
-          <div class="text-sm text-slate-300 leading-6">
-            当前这个数据库全局分析页不再重画散点图。
-            如果你要看和老版 CSV `index.html` 完全一致的散点图、图例、坐标和布局，请切到上方的“旧版报告”入口。
+        <div class=”text-lg font-semibold text-white mb-3”>PPA 散点图</div>
+        <!-- legend -->
+        <div class=”flex flex-wrap items-center gap-x-5 gap-y-1.5 mb-4 text-xs text-slate-400”>
+          <span class=”flex items-center gap-1.5”><span class=”w-2.5 h-2.5 rounded-full inline-block flex-shrink-0” style=”background:#2563eb”></span>P0</span>
+          <span class=”flex items-center gap-1.5”><span class=”w-2.5 h-2.5 rounded-full inline-block flex-shrink-0” style=”background:#0f766e”></span>P1</span>
+          <span class=”flex items-center gap-1.5”><span class=”w-2.5 h-2.5 rounded-full inline-block flex-shrink-0” style=”background:#7c3aed”></span>P2</span>
+          <span class=”flex items-center gap-1.5”><span class=”w-2.5 h-2.5 rounded-full inline-block flex-shrink-0” style=”background:#db2777”></span>P3</span>
+          <span class=”flex items-center gap-1.5”><span class=”w-2.5 h-2.5 rounded-full inline-block flex-shrink-0” style=”background:#ea580c”></span>P4</span>
+          <span class=”text-slate-500”>│</span>
+          <span>浅色 = 不可行</span>
+          <span>深色 = 可行</span>
+          <span>黑边 = 全局 Pareto</span>
+        </div>
+        <div class=”grid grid-cols-1 xl:grid-cols-2 gap-4”>
+          <div class=”bg-slate-800/30 border border-slate-800 rounded-2xl p-4”>
+            <div class=”text-sm font-semibold text-white mb-1”>时延 vs 能耗</div>
+            <div class=”text-[11px] text-slate-500 mb-3”>Latency vs Energy</div>
+            <canvas id=”global-chart-lat-en” height=”220”></canvas>
           </div>
-          <div class="mt-4">
-            <button @click="setMainView('legacyReport')"
-              class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors">
-              打开旧版 CSV 报告
-            </button>
+          <div class=”bg-slate-800/30 border border-slate-800 rounded-2xl p-4”>
+            <div class=”text-sm font-semibold text-white mb-1”>时延 vs 面积</div>
+            <div class=”text-[11px] text-slate-500 mb-3”>Latency vs Area</div>
+            <canvas id=”global-chart-lat-ar” height=”220”></canvas>
           </div>
+          <div class=”bg-slate-800/30 border border-slate-800 rounded-2xl p-4”>
+            <div class=”text-sm font-semibold text-white mb-1”>能耗 vs 面积</div>
+            <div class=”text-[11px] text-slate-500 mb-3”>Energy vs Area</div>
+            <canvas id=”global-chart-en-ar” height=”220”></canvas>
+          </div>
+          <div class=”bg-slate-800/30 border border-slate-800 rounded-2xl p-4”>
+            <div class=”text-sm font-semibold text-white mb-1”>时延 vs 精度</div>
+            <div class=”text-[11px] text-slate-500 mb-3”>Latency vs Accuracy</div>
+            <canvas id=”global-chart-lat-acc” height=”220”></canvas>
+          </div>
+        </div>
+        <div class=”mt-3 text-xs text-slate-500”>
+          含热图 / 退化曲线的完整分析 →
+          <button @click=”setMainView('legacyReport')”
+            class=”text-blue-400 hover:underline ml-1”>旧版报告</button>
         </div>
       </div>
 
@@ -1453,6 +1514,12 @@ function dseApp() {
       this.loading = true
       await Promise.all([this.loadStats(), this.loadRuns()])
       this.loading = false
+      // Redraw global charts whenever loading completes (catches timing edge-cases)
+      this.$watch('globalAnalysisLoading', (loading) => {
+        if (!loading && this.globalAnalysis && this.mainView === 'analysis') {
+          this.$nextTick(() => this.drawGlobalCharts())
+        }
+      })
     },
 
     async loadStats() {
@@ -1488,10 +1555,12 @@ function dseApp() {
         const r = await fetch('/api/analysis/global?' + this.buildRunFilterParams().toString())
         this.globalAnalysis = await r.json()
         this.globalAnalysisDirty = false
-        this.$nextTick(() => this.drawGlobalCharts())
       } finally {
         this.globalAnalysisLoading = false
       }
+      // Schedule chart draw AFTER both globalAnalysis and globalAnalysisLoading
+      // have been committed, so the canvas container is already visible in DOM.
+      this.$nextTick(() => this.drawGlobalCharts())
     },
 
     async setMainView(view) {
@@ -1686,51 +1755,48 @@ function dseApp() {
     drawGlobalCharts() {
       const rows = this.globalAnalysis?.plot_rows || []
       const isLight = this.theme === 'light'
-      const axisColor = isLight ? '#4b6690' : '#94a3b8'
-      const titleColor = isLight ? '#5b77a3' : '#64748b'
-      const gridColor = isLight ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.06)'
+      const axisColor  = isLight ? '#475569' : '#94a3b8'
+      const titleColor = isLight ? '#334155' : '#64748b'
+      const gridColor  = isLight ? 'rgba(100,116,139,0.12)' : 'rgba(255,255,255,0.06)'
+      const bgFill     = isLight ? '#ffffff' : '#0f172a'
       const presetColors = {
-        P0: '#2563eb',
-        P1: '#0f766e',
-        P2: '#7c3aed',
-        P3: '#db2777',
-        P4: '#ea580c',
+        P0: '#2563eb', P1: '#0f766e', P2: '#7c3aed', P3: '#db2777', P4: '#ea580c',
       }
-      const colorOf = row => presetColors[row.rram_preset] || (isLight ? '#3b82f6' : '#60a5fa')
+      const colorOf  = row => presetColors[row.rram_preset] || (isLight ? '#3b82f6' : '#60a5fa')
       const bgColorOf = row => {
         const base = colorOf(row)
-        const alpha = row.feasible ? (isLight ? 'cc' : 'd9') : (isLight ? '4d' : '40')
+        const alpha = row.feasible ? (isLight ? 'dd' : 'e0') : (isLight ? '40' : '38')
         return `${base}${alpha}`
       }
-      const borderColorOf = row => row.global_pareto ? '#111827' : colorOf(row)
-      const borderWidthOf = row => row.global_pareto ? 1.5 : 0.5
-      const radiusOf = row => row.global_pareto ? 5.5 : 4
+      const borderColorOf = row => row.global_pareto ? (isLight ? '#0f172a' : '#f8fafc') : 'transparent'
+      const borderWidthOf = row => row.global_pareto ? 1.8 : 0
+      const radiusOf = row => row.global_pareto ? 6 : 4.5
       const axisStyle = {
         grid: { color: gridColor },
         ticks: { color: axisColor, font: { size: 10 } },
       }
       const tooltipFor = row => ([
-        `preset: ${row.rram_preset || '—'}`,
-        `xbar: ${row.xbar_size || '—'}`,
-        `ADC: ${row.adc_choice || '—'}`,
-        `DAC: ${row.dac_num || '—'}`,
-        `PE: ${row.pe_num || '—'}`,
-        `时延 / Latency: ${this.fmtLatency(row.latency_ns)}`,
-        `能耗 / Energy: ${this.fmtEnergy(row.energy_nj)}`,
-        `面积 / Area: ${this.fmtArea(row.area_um2)}`,
-        row.accuracy != null ? `精度 / ACC: ${this.fmtPercent(row.accuracy, 2)}` : null,
-        `${row.global_pareto ? '全局 Pareto' : '非 Pareto'} · ${row.feasible ? '可行' : '不可行'}`,
+        `preset: ${row.rram_preset || '—'}  xbar: ${row.xbar_size || '—'}`,
+        `ADC: ${row.adc_choice || '—'}  DAC: ${row.dac_num || '—'}  PE: ${row.pe_num || '—'}`,
+        `时延: ${this.fmtLatency(row.latency_ns)}  能耗: ${this.fmtEnergy(row.energy_nj)}`,
+        `面积: ${this.fmtArea(row.area_um2)}` + (row.accuracy != null ? `  精度: ${this.fmtPercent(row.accuracy, 2)}` : ''),
+        `${row.global_pareto ? '★ 全局Pareto' : '非Pareto'} · ${row.feasible ? '可行' : '不可行'}`,
         `${row.run_group || '—'} · #${row.eval_index ?? '—'} ${row.phase || ''}`.trim(),
       ].filter(Boolean))
       const baseOpts = (xlabel, ylabel) => ({
         responsive: true,
         maintainAspectRatio: true,
+        animation: { duration: 250 },
         plugins: {
           legend: { display: false },
           tooltip: {
-            callbacks: {
-              afterBody: ctx => tooltipFor(ctx.raw._r),
-            },
+            backgroundColor: isLight ? 'rgba(15,23,42,0.92)' : 'rgba(15,23,42,0.96)',
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            borderColor: isLight ? '#334155' : '#475569',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: { afterBody: ctx => tooltipFor(ctx.raw._r) },
           },
         },
         scales: {
@@ -1745,30 +1811,41 @@ function dseApp() {
         borderColor: items.map(borderColorOf),
         borderWidth: items.map(borderWidthOf),
         pointRadius: items.map(radiusOf),
-        pointHoverRadius: items.map(row => radiusOf(row) + 1.5),
+        pointHoverRadius: items.map(row => radiusOf(row) + 2),
       })
       const mk = (id, items, xMap, yMap, opts) => {
         const el = document.getElementById(id)
         if (!el) return
+        // Fill chart background
+        const bgPlugin = {
+          id: 'bg', beforeDraw: (chart) => {
+            const ctx = chart.canvas.getContext('2d')
+            ctx.save()
+            ctx.fillStyle = bgFill
+            ctx.fillRect(0, 0, chart.width, chart.height)
+            ctx.restore()
+          }
+        }
         this._globalCharts[id] = new Chart(el, {
           type: 'scatter',
           data: { datasets: [mkDataset(items, xMap, yMap)] },
           options: opts,
+          plugins: [bgPlugin],
         })
       }
 
       Object.values(this._globalCharts).forEach(c => c?.destroy())
       this._globalCharts = {}
 
-      const latEn = rows.filter(row => row.latency_ns != null && row.energy_nj != null)
-      const latAr = rows.filter(row => row.latency_ns != null && row.area_um2 != null)
-      const enAr = rows.filter(row => row.energy_nj != null && row.area_um2 != null)
-      const latAcc = rows.filter(row => row.latency_ns != null && row.accuracy != null)
+      const latEn  = rows.filter(r => r.latency_ns != null && r.energy_nj != null)
+      const latAr  = rows.filter(r => r.latency_ns != null && r.area_um2 != null)
+      const enAr   = rows.filter(r => r.energy_nj  != null && r.area_um2 != null)
+      const latAcc = rows.filter(r => r.latency_ns != null && r.accuracy != null)
 
-      mk('global-chart-lat-en', latEn, row => row.latency_ns / 1e6, row => row.energy_nj / 1e3, baseOpts('时延 / Latency (ms)', '能耗 / Energy (µJ)'))
-      mk('global-chart-lat-ar', latAr, row => row.latency_ns / 1e6, row => row.area_um2 / 1e6, baseOpts('时延 / Latency (ms)', '面积 / Area (mm²)'))
-      mk('global-chart-en-ar', enAr, row => row.energy_nj / 1e3, row => row.area_um2 / 1e6, baseOpts('能耗 / Energy (µJ)', '面积 / Area (mm²)'))
-      mk('global-chart-lat-acc', latAcc, row => row.latency_ns / 1e6, row => row.accuracy * 100, baseOpts('时延 / Latency (ms)', '精度 / Accuracy (%)'))
+      mk('global-chart-lat-en',  latEn,  r => r.latency_ns/1e6, r => r.energy_nj/1e3,  baseOpts('Latency (ms)', 'Energy (µJ)'))
+      mk('global-chart-lat-ar',  latAr,  r => r.latency_ns/1e6, r => r.area_um2/1e6,   baseOpts('Latency (ms)', 'Area (mm²)'))
+      mk('global-chart-en-ar',   enAr,   r => r.energy_nj/1e3,  r => r.area_um2/1e6,   baseOpts('Energy (µJ)',  'Area (mm²)'))
+      mk('global-chart-lat-acc', latAcc, r => r.latency_ns/1e6, r => r.accuracy*100,    baseOpts('Latency (ms)', 'Accuracy (%)'))
     },
 
     drawCharts() {
@@ -1776,11 +1853,20 @@ function dseApp() {
       const pareto = all.filter(r => r.is_pareto)
       const nonPareto = all.filter(r => !r.is_pareto)
       const isLight = this.theme === 'light'
-      const axisColor = isLight ? '#4b6690' : '#94a3b8'
-      const titleColor = isLight ? '#5b77a3' : '#64748b'
-      const gridColor = isLight ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.06)'
-      const normalPoint = isLight ? 'rgba(59,130,246,0.62)' : 'rgba(99,102,241,0.5)'
-      const paretoPoint = isLight ? 'rgba(14,116,240,0.92)' : 'rgba(96,165,250,0.9)'
+      const axisColor  = isLight ? '#475569' : '#94a3b8'
+      const titleColor = isLight ? '#334155' : '#64748b'
+      const gridColor  = isLight ? 'rgba(100,116,139,0.12)' : 'rgba(255,255,255,0.06)'
+      const bgFill     = isLight ? '#ffffff' : '#0f172a'
+      const normalPoint = isLight ? 'rgba(59,130,246,0.55)' : 'rgba(99,102,241,0.5)'
+      const paretoPoint = isLight ? 'rgba(14,116,240,0.95)' : 'rgba(96,165,250,0.9)'
+      const bgPlugin = {
+        id: 'bg', beforeDraw: (chart) => {
+          const ctx = chart.canvas.getContext('2d')
+          ctx.save(); ctx.fillStyle = bgFill
+          ctx.fillRect(0, 0, chart.width, chart.height)
+          ctx.restore()
+        }
+      }
 
       const mkDataset = (recs, label, color, size) => ({
         label, data: recs.map(r => ({ x: r.latency_ns/1e6, y: r.energy_nj/1e3, _r: r })),
@@ -1818,7 +1904,7 @@ function dseApp() {
       const mk = (id, datasets, opts) => {
         const el = document.getElementById(id)
         if (!el) return
-        this._charts[id] = new Chart(el, { type: 'scatter', data: { datasets }, options: opts })
+        this._charts[id] = new Chart(el, { type: 'scatter', data: { datasets }, options: opts, plugins: [bgPlugin] })
       }
 
       mk('chart-lat-en', [

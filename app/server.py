@@ -1021,10 +1021,23 @@ def api_db_table_rows(table_name: str):
         params + [limit, offset],
     ).fetchall()
 
+    # Auto-parse JSON string columns for readability
+    _json_cols = {"params_json", "run_config_json", "hv_reference_point"}
+    parsed_rows = []
+    for r in rows:
+        row_dict = dict(r)
+        for col in _json_cols:
+            if col in row_dict and isinstance(row_dict[col], str):
+                try:
+                    row_dict[col] = json.loads(row_dict[col])
+                except Exception:
+                    pass
+        parsed_rows.append(row_dict)
+
     return jsonify({
         "table": table_name,
         "columns": columns,
-        "rows": [dict(r) for r in rows],
+        "rows": parsed_rows,
         "total": total,
         "limit": limit,
         "offset": offset,
@@ -1079,32 +1092,40 @@ def api_sim_configs():
 
 @app.route("/api/legacy-analysis/reports")
 def api_legacy_analysis_reports():
-    report_files = ARTIFACTS_ROOT.glob("datasets/*/reports/analysis/**/index.html")
+    # Scan multiple locations for index.html analysis reports
+    scan_patterns = [
+        "datasets/*/reports/analysis/**/index.html",          # old dataset-centric reports
+        "search_runs/*/reports/analysis/**/index.html",        # per-group search run reports
+        "search_runs/reports/*/**/index.html",                 # merged cross-group reports
+        "matrix_runs/*/reports/analysis/**/index.html",
+    ]
     seen: set[str] = set()
     reports: List[Dict[str, Any]] = []
-    for file_path in report_files:
-        try:
-            resolved = file_path.resolve()
-        except FileNotFoundError:
-            continue
-        rel = resolved.relative_to(ARTIFACTS_ROOT.resolve())
-        rel_str = rel.as_posix()
-        if rel_str in seen:
-            continue
-        seen.add(rel_str)
+    for pattern in scan_patterns:
+        for file_path in ARTIFACTS_ROOT.glob(pattern):
+            try:
+                resolved = file_path.resolve()
+            except FileNotFoundError:
+                continue
+            rel = resolved.relative_to(ARTIFACTS_ROOT.resolve())
+            rel_str = rel.as_posix()
+            if rel_str in seen:
+                continue
+            seen.add(rel_str)
 
-        parts = rel.parts
-        dataset_name = parts[1] if len(parts) > 1 else "unknown"
-        scope = "汇总报告" if parts[-2] == "analysis" else parts[-2]
-        stat = resolved.stat()
-        reports.append({
-            "id": rel_str,
-            "dataset": dataset_name,
-            "scope": scope,
-            "relpath": rel_str,
-            "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-            "size": stat.st_size,
-        })
+            parts = rel.parts
+            # Determine a readable label: use the run-group or dataset folder name
+            group_name = parts[1] if len(parts) > 1 else "unknown"
+            scope = "汇总报告" if parts[-2] == "analysis" else parts[-2]
+            stat = resolved.stat()
+            reports.append({
+                "id": rel_str,
+                "dataset": group_name,
+                "scope": scope,
+                "relpath": rel_str,
+                "updated_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                "size": stat.st_size,
+            })
 
     reports.sort(key=lambda item: item["updated_at"], reverse=True)
     return jsonify(reports)

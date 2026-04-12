@@ -27,6 +27,8 @@ artifacts/dse/
     ├── run_formal_v3_exhaustive.sh   # 实验 0：36 点穷举（Ground Truth）
     ├── run_formal_v3_search.sh       # 实验 1：formal_v3 算法对比
     ├── run_guidance_v4_search.sh     # 实验 2：guidance_v4 设计指导
+    ├── run_testdata_analysis.sh      # 真实测试数据提取与 measured preset 生成
+    ├── run_measured_matrix_experiments.sh # 使用 measured presets 自动生成并运行矩阵实验
     ├── run_dual_a100_jobs.sh         # 双 GPU 并行：实验 1 + 实验 2 同时跑
     └── finalize_search_run.sh        # 任务结束后重建 comparison + HTML 分析
 ```
@@ -91,6 +93,26 @@ bash artifacts/dse/scripts/run_dual_a100_jobs.sh
 bash artifacts/dse/scripts/finalize_search_run.sh artifacts/dse/search_runs/exp01_formal_v3
 bash artifacts/dse/scripts/finalize_search_run.sh artifacts/dse/search_runs/exp02_guidance_v4
 ```
+
+**步骤 6：提取真实测试数据并生成 measured presets**
+
+```bash
+bash artifacts/dse/scripts/run_testdata_analysis.sh
+```
+
+- 读取 `test_data/` 下真实 CSV
+- 导出 `cycle_state_summary.csv`、`retention_phase_summary.csv`、`measured_presets.csv`
+- 默认输出到 `artifacts/dse/testdata_runs/run_YYYYMMDD_HHMMSS/`
+
+**步骤 7：基于 measured presets 自动跑矩阵实验**
+
+```bash
+bash artifacts/dse/scripts/run_measured_matrix_experiments.sh
+```
+
+- 读取 `measured_presets.csv`
+- 为每个 measured preset 生成单独的 patched `SimConfig.ini`
+- 自动调用 `dse/run_matrix_csv.py`，分别输出到 `matrix_runs/measured_run_YYYYMMDD_HHMMSS/`
 
 ---
 
@@ -160,3 +182,4 @@ ALGOS=nsga2 bash artifacts/dse/scripts/run_formal_v3_search.sh
 | 新搜索实验结果 | `search_runs/expNN_name/` |
 | 新矩阵定义 | `matrices/rram_v2/matrix_X.csv` |
 | 矩阵逐点评估结果 | `matrix_runs/exp_name/` |
+| test_data 提取结果 | `testdata_runs/run_YYYYMMDD_HHMMSS/` |

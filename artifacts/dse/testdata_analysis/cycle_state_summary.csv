@@ -1,0 +1,4 @@
+state,source_family,member_count,member_files,hrs_mean_ohm,lrs_mean_ohm,resistance_window_ratio,device_variation_pct_raw_median,device_variation_pct_suggested,mean_be_verify_pulses,mean_abs_be_drift_pmu,note
+cycle_strong,2T1R_cycle,5,"wafer_xy16.csv, wafer_xy18.csv, wafer_xy22.csv, wafer_xy23.csv, wafer_xy25.csv",14261.58,2325.34,6.1331,16.670,16.670,11.846,0.940,Static snapshot derived from real cycle data; good candidate for measured preset replacement.
+cycle_typical,2T1R_cycle,5,"wafer_xy17.csv, wafer_xy19.csv, wafer_xy20.csv, wafer_xy21.csv, wafer_xy24.csv",14522.56,2509.07,5.7880,248.826,100.000,13.204,4.184,Static snapshot derived from real cycle data; good candidate for measured preset replacement.
+cycle_weak,2T1R_cycle,5,"wafer_xy1.csv, wafer_xy12.csv, wafer_xy15.csv, wafer_xy3.csv, wafer_xy7.csv",12677.43,2618.25,4.8420,25.055,25.055,22.195,14.168,Static snapshot derived from real cycle data; good candidate for measured preset replacement.

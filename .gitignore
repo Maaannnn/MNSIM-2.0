@@ -20,3 +20,8 @@ __pycache__/
 /MNSIM/Interface/outputs
 /MNSIM/Interface/nohup.out
 .venv/
+*.DS_Store
+test_data/
+artifacts/dse/testdata_runs/
+artifacts/dse/matrix_runs/measured_run_*/
+artifacts/dse/search_runs/*/reports/

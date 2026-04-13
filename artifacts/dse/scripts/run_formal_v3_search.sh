@@ -49,4 +49,3 @@ echo "[formal-v3] algos        : ${ALGOS}"
   --device "${DEVICE}" \
   --output-root "${OUTPUT_ROOT}" \
   --plots
-

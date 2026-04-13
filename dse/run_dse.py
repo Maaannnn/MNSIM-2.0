@@ -820,6 +820,38 @@ def main() -> None:
 
     apply_space_profile(args.space_profile)
 
+    # --- Resolve resource paths (compatible with new folders) ---
+    def _resolve_resource(path_like: str, kind: str) -> str:
+        """Return an existing absolute path for weights/config.
+        Search order:
+          1) as-given (absolute or cwd-relative)
+          2) <repo>/weights/<name>   (for kind == 'weights')
+          3) <repo>/configs/<name>   (for kind == 'config')
+          4) <repo>/<name>           (legacy root fallback)
+        """
+        p = Path(os.path.expanduser(str(path_like)))
+        if p.exists():
+            return str(p.resolve())
+        name = Path(str(path_like)).name
+        if kind == "weights":
+            for cand in [
+                _PROJ_ROOT / "weights" / name,
+                _PROJ_ROOT / name,
+            ]:
+                if cand.exists():
+                    return str(cand.resolve())
+        if kind == "config":
+            for cand in [
+                _PROJ_ROOT / "configs" / name,
+                _PROJ_ROOT / name,
+            ]:
+                if cand.exists():
+                    return str(cand.resolve())
+        return str(p)
+
+    args.weights = _resolve_resource(args.weights, "weights")
+    args.base_config = _resolve_resource(args.base_config, "config")
+
     # Auto behavior: pure random sampling defaults to append-only dataset mode.
     auto_dataset_append = set(args.algos) == {"random"} and (not args.no_dataset_append)
     if auto_dataset_append and not args.dataset_append:

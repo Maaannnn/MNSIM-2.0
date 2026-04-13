@@ -52,6 +52,36 @@ from dse.run_dse import _append_dataset_history, _apply_global_hv, _auto_dataset
 
 AUTO_OUTPUT_ROOT = "AUTO"
 
+_PROJ_ROOT = Path(__file__).resolve().parent.parent
+
+def _resolve_resource(path_like: str, kind: str) -> str:
+    """Return an existing absolute path for weights/config.
+    Search order:
+      1) as-given (absolute or cwd-relative)
+      2) <repo>/weights/<name>   (for kind == 'weights')
+      3) <repo>/configs/<name>   (for kind == 'config')
+      4) <repo>/<name>           (legacy root fallback)
+    """
+    p = Path(os.path.expanduser(str(path_like)))
+    if p.exists():
+        return str(p.resolve())
+    name = Path(str(path_like)).name
+    if kind == "weights":
+        for cand in [
+            _PROJ_ROOT / "weights" / name,
+            _PROJ_ROOT / name,
+        ]:
+            if cand.exists():
+                return str(cand.resolve())
+    if kind == "config":
+        for cand in [
+            _PROJ_ROOT / "configs" / name,
+            _PROJ_ROOT / name,
+        ]:
+            if cand.exists():
+                return str(cand.resolve())
+    return str(p)
+
 
 def _read_matrix_rows(path: Path) -> List[Dict[str, str]]:
     with open(path, newline="", encoding="utf-8") as f:
@@ -218,6 +248,9 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
+    # Resolve resources to support new weights/ and configs/ folders
+    args.weights = _resolve_resource(args.weights, "weights")
+    args.base_config = _resolve_resource(args.base_config, "config")
     apply_space_profile(args.space_profile)
 
     if args.accuracy_target is not None and not args.run_accuracy:

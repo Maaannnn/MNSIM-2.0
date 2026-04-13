@@ -25,3 +25,29 @@ test_data/
 artifacts/dse/testdata_runs/
 artifacts/dse/matrix_runs/measured_run_*/
 artifacts/dse/search_runs/*/reports/
+# ---- General OS/editor junk ----
+.DS_Store
+Thumbs.db
+._*
+
+# ---- Python caches & coverage ----
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.py[cod]
+*.pyo
+.coverage
+.coverage.*
+htmlcov/
+.cache/
+
+# ---- Logs & temp ----
+*.log
+nohup.out
+
+# ---- Local app db ----
+app/dse_records.db
+
+# Ignore SQLite sidecar files
+app/dse_records.db*

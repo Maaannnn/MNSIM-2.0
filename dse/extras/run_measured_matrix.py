@@ -26,6 +26,21 @@ from typing import Dict, Iterable, List, Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
+def _resolve_resource(path_like: str, kind: str) -> str:
+    p = Path(os.path.expanduser(str(path_like)))
+    if p.exists():
+        return str(p.resolve())
+    name = Path(str(path_like)).name
+    if kind == "weights":
+        for cand in [REPO_ROOT/"weights"/name, REPO_ROOT/name]:
+            if cand.exists():
+                return str(cand.resolve())
+    if kind == "config":
+        for cand in [REPO_ROOT/"configs"/name, REPO_ROOT/name]:
+            if cand.exists():
+                return str(cand.resolve())
+    return str(p)
+
 
 def _timestamp() -> str:
     return time.strftime("%Y%m%d_%H%M%S")
@@ -160,7 +175,8 @@ def main() -> None:
     args = parser.parse_args()
 
     measured_path = Path(args.measured_presets_csv).expanduser().resolve()
-    base_config_path = Path(args.base_config).expanduser().resolve()
+    base_config_path = Path(_resolve_resource(args.base_config, "config")).expanduser().resolve()
+    args.weights = _resolve_resource(args.weights, "weights")
     rows = _select_presets(_read_rows(measured_path), args.preset_name)
     if not rows:
         raise SystemExit("No measured presets selected.")

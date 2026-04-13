@@ -29,6 +29,26 @@ def main() -> None:
     parser.add_argument("--output-dir", default=os.path.join(cwd, "surrogate_data"))
     args = parser.parse_args()
 
+    # Resolve resources to support new weights/ and configs/ folders
+    from pathlib import Path
+    _PROJ_ROOT = Path(__file__).resolve().parents[2]
+    def _resolve_resource(path_like: str, kind: str) -> str:
+        p = Path(os.path.expanduser(str(path_like)))
+        if p.exists():
+            return str(p.resolve())
+        name = Path(str(path_like)).name
+        if kind == "weights":
+            for cand in [_PROJ_ROOT/"weights"/name, _PROJ_ROOT/name]:
+                if cand.exists():
+                    return str(cand.resolve())
+        if kind == "config":
+            for cand in [_PROJ_ROOT/"configs"/name, _PROJ_ROOT/name]:
+                if cand.exists():
+                    return str(cand.resolve())
+        return str(p)
+    args.weights = _resolve_resource(args.weights, "weights")
+    args.base_config = _resolve_resource(args.base_config, "config")
+
     random.seed(args.seed)
     os.makedirs(args.output_dir, exist_ok=True)
 

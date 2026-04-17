@@ -1,0 +1,26 @@
+{
+  "kind": "measured_preset",
+  "name": "meas_cycle_weak",
+  "source": {
+    "measured_presets_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/testdata_runs/run_20260417_142758/measured_presets.csv"
+  },
+  "config_patch": {
+    "Device level": {
+      "Device_Resistance": "12677.43,2618.25",
+      "Device_Variation": "25.055",
+      "Device_SAF": "0.1179,0.1179"
+    }
+  },
+  "measured_fields": {
+    "preset_name": "meas_cycle_weak",
+    "source_family": "2T1R_cycle",
+    "source_members": "wafer_xy1.csv, wafer_xy12.csv, wafer_xy15.csv, wafer_xy3.csv, wafer_xy7.csv",
+    "device_resistance": "12677.43,2618.25",
+    "device_variation": "25.055",
+    "device_saf_heuristic": "0.1179",
+    "resistance_window_ratio": "4.8420",
+    "default_retention_phase": "retention_typical",
+    "simconfig_patch_json": "{\"Device level\": {\"Device_Resistance\": \"12677.43,2618.25\", \"Device_Variation\": 25.055, \"Device_SAF\": \"0.1179,0.1179\"}}",
+    "note": "SAF is only a heuristic lower-bound from write-failure data. Retention phases should be modeled as separate stress runs."
+  }
+}

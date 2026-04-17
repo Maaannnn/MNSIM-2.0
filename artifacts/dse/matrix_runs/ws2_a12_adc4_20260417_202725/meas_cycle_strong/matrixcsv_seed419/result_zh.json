@@ -1,0 +1,133 @@
+{
+  "算法": "matrixcsv",
+  "优化轨道": "多目标",
+  "随机种子": 419,
+  "预算评估次数": 12,
+  "总评估次数": 12,
+  "帕累托解数量": 4,
+  "超体积": 2.9199859273822333e+23,
+  "HV参考点": [
+    19081133.46634984,
+    15663528.149921106,
+    2669372444.9185567
+  ],
+  "墙钟时间_s": 1089.0109269618988,
+  "开始时间_UTC": "2026-04-17T12:27:26.906827+00:00",
+  "结束时间_UTC": "2026-04-17T12:45:35.917758+00:00",
+  "运行配置": {
+    "契约版本": "ws5a_v1",
+    "网络": "vgg8",
+    "初始化评估": 0,
+    "权重路径": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "基础配置": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_a12_adc4_20260417_202725/configs/meas_cycle_strong.ini",
+    "启用精度仿真": true,
+    "设备": "mps",
+    "精度评估批次数上限": 2,
+    "设计空间配置": "rram_v2",
+    "场景": {
+      "kind": "measured_preset",
+      "name": "meas_cycle_strong",
+      "source": {
+        "measured_presets_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/testdata_runs/run_20260417_142758/measured_presets.csv"
+      },
+      "config_patch": {
+        "Device level": {
+          "Device_Resistance": "14261.58,2325.34",
+          "Device_Variation": "16.670",
+          "Device_SAF": "0.1179,0.1179"
+        }
+      },
+      "measured_fields": {
+        "preset_name": "meas_cycle_strong",
+        "source_family": "2T1R_cycle",
+        "source_members": "wafer_xy16.csv, wafer_xy18.csv, wafer_xy22.csv, wafer_xy23.csv, wafer_xy25.csv",
+        "device_resistance": "14261.58,2325.34",
+        "device_variation": "16.670",
+        "device_saf_heuristic": "0.1179",
+        "resistance_window_ratio": "6.1331",
+        "default_retention_phase": "retention_typical",
+        "simconfig_patch_json": "{\"Device level\": {\"Device_Resistance\": \"14261.58,2325.34\", \"Device_Variation\": 16.67, \"Device_SAF\": \"0.1179,0.1179\"}}",
+        "note": "SAF is only a heuristic lower-bound from write-failure data. Retention phases should be modeled as separate stress runs."
+      }
+    },
+    "算法参数": {
+      "accuracy_target": 0.88,
+      "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_A.csv",
+      "batch": {
+        "total": 12,
+        "num_batches": 1,
+        "batch_index": 1,
+        "start": 0,
+        "end": 12
+      },
+      "noise_seed_base": 419000
+    }
+  },
+  "各目标最优": {
+    "延迟_ns": {
+      "数值": 4430024.989793121,
+      "评估序号": 1,
+      "配置": {
+        "rram_preset": "P0",
+        "xbar_size": "128x128",
+        "adc_choice": "4",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "能耗_nJ": {
+      "数值": 3193060.1506895665,
+      "评估序号": 7,
+      "配置": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "4",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "面积_um2": {
+      "数值": 894254493.5562104,
+      "评估序号": 3,
+      "配置": {
+        "rram_preset": "P0",
+        "xbar_size": "512x512",
+        "adc_choice": "4",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "精度": {
+      "数值": 0.951171875,
+      "评估序号": 3,
+      "配置": {
+        "rram_preset": "P0",
+        "xbar_size": "512x512",
+        "adc_choice": "4",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    }
+  },
+  "单目标最优": null
+}

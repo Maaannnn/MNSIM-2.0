@@ -18,7 +18,8 @@
   - `framework/`：论文框架、问题定义、选题定位与 claim
   - `simulator/`：`MNSIM` / `NeuroSim` / `CrossSim` / fidelity gap 分析
   - `notes/`：PDF / DOCX 阅读笔记与阶段性研究启发
-- `SimConfig.ini` — 默认硬件配置；脚本默认从仓库根目录读取。
+  - `references/`：外部参考材料（官方手册、调研报告、开题文档等 PDF/DOCX）
+- `SimConfig.ini` — 默认硬件配置（软链接 → `configs/SimConfig.ini`）。
 - `*.pth` — 预训练权重（默认从仓库根目录读取，已忽略版本控制）。
 - `.venv/` — 本地虚拟环境（已忽略版本控制）。
 

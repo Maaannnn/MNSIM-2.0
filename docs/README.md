@@ -38,8 +38,7 @@
 
 补充参考：
 
-- [`simulator/reference/MNSIM_2.0_深度分析报告.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/reference/MNSIM_2.0_深度分析报告.md)
-- [`simulator/reference/MNSIM_完整技术分析报告.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/reference/MNSIM_完整技术分析报告.md)
+- [`simulator/reference/MNSIM_完整技术分析报告.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/reference/MNSIM_完整技术分析报告.md)：完整源码/框架/PPA/参数/缺陷分析
 
 ## Research Notes
 
@@ -47,9 +46,14 @@
 - [`notes/pdf_insights_rram_cim_nonidealities.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/notes/pdf_insights_rram_cim_nonidealities.md)
 - [`notes/docx_insights_framework_selection.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/notes/docx_insights_framework_selection.md)
 
-后续新增文档建议优先进入这 4 类：
+## External References
+
+- [`references/README.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/references/README.md)：外部参考材料（官方手册、调研报告、开题文档 PDF/DOCX）
+
+后续新增文档建议优先进入这 5 类：
 
 - `status/`：执行状态、路线图、仓库组织
 - `framework/`：论文框架、问题定义、定位与 claim
 - `simulator/`：MNSIM / NeuroSim / CrossSim / fidelity 相关分析
 - `notes/`：单次 PDF / DOCX 阅读、阶段性研究笔记
+- `references/`：外部参考材料（手册、报告、开题文档等）

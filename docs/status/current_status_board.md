@@ -192,6 +192,23 @@
 - 关键旧 run 已回填 manifest / scenario / contract_version
 - `app` 同步后，`ws2_firstlook_20260417` 的 strong/weak 已能显示 measured scenario 名称
 
+### `WS5B` 的进入条件
+
+- 不在 `WS2/WS3` 证据还弱的时候直接进入
+- 进入前至少要满足：
+  - `WS5A` 已稳定
+  - 已有明确需要解释的现象
+  - 有对应数据资产
+  - 已定义 nominal regression / 速度开销 / 解释增益
+- 当前最推荐的 `WS5B` 顺序：
+  - `device state LUT`
+  - `ADC CALIB`
+  - `drift / retention scenario fields`
+  - `IR-drop proxy`
+- 当前不建议：
+  - 直接把 `NeuroSim` 现成 LUT 或整套实现搬进 `MNSIM`
+  - 更稳的路线是借鉴机制，用自己的 `test_data` 生成数据资产
+
 ---
 
 ## 9. 当前最重要的一句话

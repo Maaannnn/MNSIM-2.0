@@ -936,51 +936,213 @@ bash artifacts/dse/scripts/run_testdata_analysis.sh
 
 ### WS5B 物理建模轻量增强
 
+目标：
+
+- 不是把 `MNSIM` 重写成慢版 `NeuroSim`
+- 而是在不明显牺牲吞吐的前提下，把最影响当前论文结论的 fidelity gap 补到“够用”
+
 原则：
 
 - 这部分不抢在 WS2 / WS3 前面拍板
 - 只有主结论明显被粗模型卡住时，才进入实现
+- 一次只做 `1-2` 个增强项，不并行开大工
+- 机制可以借鉴 `NeuroSim`，但实现和数据资产尽量自己生成
 
-### T5B.1 判断是否真的需要升级
+### T5B.0 进入条件判断
 
 - 状态：`pending`
-- 输入：
-  - WS2、WS3 的结果
-- 问题：
-  - 当前结论是否已经被 `variation/SAF` 粗模型限制住
-  - 当前 `ADC` 模型是否真的影响了主结论解释
+- 进入 WS5B 前必须同时满足：
+  - `WS5A` 已收束
+  - `WS2/WS3` 已形成可复现的 baseline 现象
+  - 当前论文主结论确实被粗模型限制，而不是被样本数不足限制
+- 具体判断问题：
+  - 当前 observed / repeat-summary 的分歧，是否源于 ranking definition，本来就应在方法层解决
+  - 还是源于底层模型太粗，导致某类场景无法被解释
+  - 当前 `retention / drift / ADC / IR-drop` 中，到底哪一项真的在卡主结论
 - 验收：
-  - 给出“需要 / 暂不需要”的判断
+  - 输出一个 `进入 / 暂缓 / 只做单点增强` 的判断
 
-### T5B.2 设计第一优先级增强项
+### T5B.1 前置条件总表
 
 - 状态：`pending`
-- 只允许从以下候选里选 1 到 2 个：
-  - `device_states.csv`
+- 进入实现前必须明确下面 5 个前置条件：
+  - 现象前提：
+    - 已经有明确需要解释的现象，例如 nominal-optimal 与 measured-optimal 迁移、某类场景下 ranking 异常敏感、retention 明显影响结论等
+  - 数据前提：
+    - 目标增强项所需的数据源存在，且可被整理成稳定文件，而不是只有零散观察
+  - 契约前提：
+    - `scenario object` 已能承载新增字段，避免后续再大规模重构输入输出
+  - 验证前提：
+    - 已定义 nominal regression、速度开销、解释增益这三类验收指标
+  - 范围前提：
+    - 已限定这次只增强 `1-2` 个点，避免把 WS5B 演化成平台重构
+
+### T5B.2 候选增强项与触发条件
+
+- 状态：`pending`
+- 只允许从以下候选里选 `1-2` 个：
+  - `device state LUT`
   - `ADC CALIB`
-  - 输入相关 `IR drop` proxy
-  - `drift / retention` preset 字段
-- 验收：
-  - 每个增强都能对应一个明确物理缺口
+  - `drift / retention` scenario fields
+  - 输入相关 `IR-drop proxy`
+- 推荐触发规则：
+  - 如果问题主要是“同一 preset 内权重扰动太粗，解释不了 state-dependent 差异”
+    - 先做 `device state LUT`
+  - 如果问题主要是“ADC bit trade-off 结论不稳定，怀疑量化范围过于理想”
+    - 先做 `ADC CALIB`
+  - 如果问题主要是“retention 只停留在摘要里，无法进入执行链”
+    - 先做 `drift / retention scenario fields`
+  - 如果问题主要是“大阵列场景解释不了输入相关退化”
+    - 再考虑 `IR-drop proxy`
+- 当前默认优先级：
+  1. `device state LUT`
+  2. `ADC CALIB`
+  3. `drift / retention scenario fields`
+  4. `IR-drop proxy`
 
-### T5B.3 写实现前设计说明
+### T5B.3 明确“不直接拿 NeuroSim 数据硬塞进来”
 
 - 状态：`pending`
-- 内容：
-  - 改哪些文件
-  - 为什么改
-  - 对速度的影响
-  - 如何验证
+- 当前建议：
+  - 不直接把 `NeuroSim` 附带 LUT 或代码整体搬进来
+  - 可以借鉴：
+    - `state -> mean/std` 的 LUT 机制
+    - `ADC output code -> mean/std` 的 LUT 机制
+    - `CALIB` 这种量化前校准思路
+- 更稳的做法是：
+  - 先用自己的 `test_data/` 生成本项目的 LUT / scenario files
+  - 如果自有数据不够，再明确标注“literature-informed proxy LUT”
+  - `NeuroSim` 最多作为：
+    - 机制参考
+    - 文件结构参考
+    - 趋势 sanity-check 参考
+- 原因：
+  - 我们真正要讲的是 measured-data-driven enhancement
+  - 直接拿现成 `NeuroSim` 数据会削弱自己的 measured 主线
+  - `NeuroSim` 代码和资源还涉及许可边界，机制借鉴比直接搬运更稳妥
+
+### T5B.4 数据资产准备
+
+- 状态：`pending`
+- 按增强项分别准备：
+  - `device state LUT`
+    - 从 `test_data/` 抽 `state -> mean/std`
+    - 推荐输出：
+      - `artifacts/dse/testdata_runs/<run>/device_state_lut.csv`
+  - `ADC CALIB`
+    - 从现有数据集抽少量 calibration batch
+    - 推荐输出：
+      - `artifacts/dse/datasets/<dataset>/adc_calib_manifest.json`
+      - 或每层量化范围缓存文件
+  - `drift / retention`
+    - 复用：
+      - `retention_phase_summary.csv`
+      - `summary.json` 中已有 retention 摘要
+    - 推荐输出：
+      - `retention scenario pack`
+  - `IR-drop proxy`
+    - 先定义 proxy 所需的输入统计，而不是先写代码
+    - 至少明确：
+      - 与 `xbar_size`
+      - 激活稀疏度
+      - `ADC` 范围
+      的关系
+
+### T5B.5 场景契约扩展设计
+
+- 状态：`pending`
+- 在实现前先确定 `scenario v2` 需要哪些字段：
+  - `device_state_lut_path`
+  - `adc_calib_mode`
+  - `adc_calib_cache`
+  - `retention_phase`
+  - `retention_scenario_name`
+  - `ir_drop_proxy_mode`
+  - `ir_drop_proxy_strength`
+- 关联文件：
+  - [dse/contracts.py](/Users/bytedance/workspace/MNSIM-2.0/dse/contracts.py)
+  - [dse/extras/run_measured_matrix.py](/Users/bytedance/workspace/MNSIM-2.0/dse/extras/run_measured_matrix.py)
+  - [dse/extras/run_cross_scenario_robustness.py](/Users/bytedance/workspace/MNSIM-2.0/dse/extras/run_cross_scenario_robustness.py)
+- 验收：
+  - 新字段能进入 manifest
+  - 老 run 不会因缺字段失效
+
+### T5B.6 实现顺序建议
+
+- 状态：`pending`
+- 推荐按下面顺序实现：
+
+1. `device state LUT`
+   - 目标：
+     - 把当前统一 `variation%` 升级成 per-state 统计扰动
+   - 优先改：
+     - [MNSIM/Accuracy_Model/Weight_update.py](/Users/bytedance/workspace/MNSIM-2.0/MNSIM/Accuracy_Model/Weight_update.py)
+     - [dse/core.py](/Users/bytedance/workspace/MNSIM-2.0/dse/core.py)
+   - 预期收益：
+     - 更像真实器件状态分布
+     - 最贴合 measured 主线
+
+2. `ADC CALIB`
+   - 目标：
+     - 在 `SCALE/FIX` 之外提供更接近部署口径的量化范围校准
+   - 优先改：
+     - [MNSIM/Interface/quantize.py](/Users/bytedance/workspace/MNSIM-2.0/MNSIM/Interface/quantize.py)
+     - [MNSIM/Interface/interface.py](/Users/bytedance/workspace/MNSIM-2.0/MNSIM/Interface/interface.py)
+   - 预期收益：
+     - 让 `ADC bit` 相关结论更可信
+
+3. `drift / retention scenario fields`
+   - 目标：
+     - 把 retention 从摘要层拉进执行链
+   - 优先改：
+     - [dse/extras/extract_measured_presets.py](/Users/bytedance/workspace/MNSIM-2.0/dse/extras/extract_measured_presets.py)
+     - [dse/extras/run_measured_matrix.py](/Users/bytedance/workspace/MNSIM-2.0/dse/extras/run_measured_matrix.py)
+     - [dse/contracts.py](/Users/bytedance/workspace/MNSIM-2.0/dse/contracts.py)
+   - 预期收益：
+     - 可以正式讲 retention-aware scenario
+
+4. `IR-drop proxy`
+   - 目标：
+     - 不做完整电路求解，但补一个输入相关的大阵列退化 proxy
+   - 优先改：
+     - [MNSIM/Interface/quantize.py](/Users/bytedance/workspace/MNSIM-2.0/MNSIM/Interface/quantize.py)
+   - 预期收益：
+     - 有助于解释大阵列 trade-off
+   - 注意：
+     - 这是当前最后一档，不建议最先做
+
+### T5B.7 实现前设计说明
+
+- 状态：`pending`
+- 每个增强都必须先有 design note，至少写清：
+  - 为什么现在做它
+  - 它要解释哪个现象
+  - 需要什么输入文件
+  - 改哪些源码
+  - 预期带来什么输出变化
+  - 如何做 regression
+  - 可接受的速度开销是多少
 - 验收：
   - 先有 design doc，再开始改代码
 
-### T5B.4 实现后做最小验证
+### T5B.8 最小验证与停止条件
 
 - 状态：`pending`
-- 验收：
-  - nominal 路径不能被破坏
-  - 至少一个场景的解释能力变强
-  - 速度开销在可接受范围内
+- 最小验证至少包含：
+  - nominal regression 通过
+  - measured 路径能跑通
+  - 至少一个 previously unexplained 现象变得更可解释
+  - 速度开销在可接受范围
+- 推荐阈值：
+  - wall-time 增幅先控制在 `<= 30%`
+  - 不要求 absolute accuracy 更高，但要求：
+    - 趋势更稳定
+    - 场景解释更清楚
+    - ranking 口径更自洽
+- 停止条件：
+  - 如果增强后只增加复杂度，但没有改善结论解释
+  - 或者必须引入过重计算才能生效
+  - 那就停止，把它保留为 future work
 
 ## WS6 论文写作与组会资产
 

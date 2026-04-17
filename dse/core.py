@@ -481,6 +481,8 @@ def evaluate_config(
     dataset_module: str = "MNSIM.Interface.cifar10",
     max_acc_batches: int = 11,
     noise_seed: Optional[int] = None,
+    pim_sim_model=None,
+    ir_drop_model=None,
 ) -> EvalResult:
     """
     Evaluate a single hardware configuration by running the MNSIM simulator.
@@ -525,13 +527,26 @@ def evaluate_config(
     accuracy = None
     if run_accuracy:
         bits = test_if.get_net_bits()
-        bits_after = weight_update(
-            sim_config_path,
-            bits,
-            is_Variation=enable_variation,
-            is_SAF=enable_saf,
-            is_Rratio=enable_rratio,
-        )
+        if pim_sim_model is not None:
+            from pim_sim.accuracy.weight_inject import pim_sim_weight_inject
+            bits_after = pim_sim_weight_inject(
+                sim_config_path,
+                bits,
+                is_Variation=enable_variation,
+                is_SAF=enable_saf,
+                is_Rratio=enable_rratio,
+                pim_sim_model=pim_sim_model,
+                ir_drop_model=ir_drop_model,
+                rng_seed=noise_seed,
+            )
+        else:
+            bits_after = weight_update(
+                sim_config_path,
+                bits,
+                is_Variation=enable_variation,
+                is_SAF=enable_saf,
+                is_Rratio=enable_rratio,
+            )
         adc_action = "FIX" if fixed_qrange else "SCALE"
         accuracy = float(test_if.set_net_bits_evaluate(bits_after, adc_action=adc_action))
 

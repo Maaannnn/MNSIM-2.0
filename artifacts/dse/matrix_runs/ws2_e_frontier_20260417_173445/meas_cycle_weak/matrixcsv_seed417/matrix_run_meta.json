@@ -1,0 +1,33 @@
+{
+  "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_E.csv",
+  "selected_rows": 10,
+  "batch": {
+    "total": 10,
+    "num_batches": 1,
+    "batch_index": 1,
+    "start": 0,
+    "end": 10
+  },
+  "successful_rows": 10,
+  "failed_rows": 0,
+  "matrix_names": [
+    "E"
+  ],
+  "point_ids": [
+    "E_004",
+    "E_008",
+    "E_010",
+    "E_011",
+    "E_012",
+    "E_016",
+    "E_020",
+    "E_022",
+    "E_023",
+    "E_024"
+  ],
+  "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_e_frontier_20260417_173445/meas_cycle_weak/matrixcsv_seed417",
+  "space_profile": "rram_v2",
+  "workers": 1,
+  "noise_seed_base": 417000,
+  "failures": []
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": "ws5a_v1",
+  "created_at": "2026-04-17T13:03:56.625827+00:00",
+  "repo_root": "/Users/bytedance/workspace/MNSIM-2.0",
+  "workflow": "robustness_replay",
+  "entrypoint": "dse/extras/run_robustness.py",
+  "inputs": {
+    "input_root": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_a12_adc4_20260417_202725/meas_cycle_strong",
+    "selected_trials": [
+      {
+        "algo": "matrixcsv",
+        "seed": 419,
+        "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_a12_adc4_20260417_202725/configs/meas_cycle_strong.ini",
+        "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth"
+      }
+    ]
+  },
+  "execution": {
+    "source": "pareto",
+    "sort_by": "energy_nj",
+    "topk": 4,
+    "repeats": 3,
+    "seed_base": 41900,
+    "accuracy_target": 0.88
+  },
+  "scenario": {
+    "kind": "measured_preset",
+    "name": "meas_cycle_strong",
+    "source": {
+      "measured_presets_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/testdata_runs/run_20260417_142758/measured_presets.csv"
+    },
+    "config_patch": {
+      "Device level": {
+        "Device_Resistance": "14261.58,2325.34",
+        "Device_Variation": "16.670",
+        "Device_SAF": "0.1179,0.1179"
+      }
+    },
+    "measured_fields": {
+      "preset_name": "meas_cycle_strong",
+      "source_family": "2T1R_cycle",
+      "source_members": "wafer_xy16.csv, wafer_xy18.csv, wafer_xy22.csv, wafer_xy23.csv, wafer_xy25.csv",
+      "device_resistance": "14261.58,2325.34",
+      "device_variation": "16.670",
+      "device_saf_heuristic": "0.1179",
+      "resistance_window_ratio": "6.1331",
+      "default_retention_phase": "retention_typical",
+      "simconfig_patch_json": "{\"Device level\": {\"Device_Resistance\": \"14261.58,2325.34\", \"Device_Variation\": 16.67, \"Device_SAF\": \"0.1179,0.1179\"}}",
+      "note": "SAF is only a heuristic lower-bound from write-failure data. Retention phases should be modeled as separate stress runs."
+    }
+  },
+  "outputs": {
+    "output_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_a12_adc4_20260417_202725/meas_cycle_strong/robustness",
+    "summary_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_a12_adc4_20260417_202725/meas_cycle_strong/robustness/summary.csv",
+    "per_repeat_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_a12_adc4_20260417_202725/meas_cycle_strong/robustness/per_repeat.csv"
+  },
+  "notes": [
+    "This workflow replays selected configurations with deterministic noise seeds.",
+    "Current robustness is within-scenario repeated evaluation, not cross-scenario aggregation."
+  ],
+  "extra": {}
+}

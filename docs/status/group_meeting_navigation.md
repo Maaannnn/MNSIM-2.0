@@ -121,7 +121,6 @@ flowchart LR
 ## 6. 追问时看哪些补充材料
 
 - 如果老师追问 `MNSIM` 源码细节，看：
-  - [reference/MNSIM_2.0_深度分析报告.md](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/reference/MNSIM_2.0_深度分析报告.md)
   - [reference/MNSIM_完整技术分析报告.md](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/reference/MNSIM_完整技术分析报告.md)
 - 如果追问问题定义和实验设计，看：
   - [RRAM_DSE_Problem_Formulation_And_Method.md](/Users/bytedance/workspace/MNSIM-2.0/docs/framework/RRAM_DSE_Problem_Formulation_And_Method.md)

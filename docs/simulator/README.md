@@ -10,5 +10,4 @@
 
 补充参考：
 
-- [`reference/MNSIM_2.0_深度分析报告.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/reference/MNSIM_2.0_深度分析报告.md)：更完整的源码/框架分析材料
-- [`reference/MNSIM_完整技术分析报告.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/reference/MNSIM_完整技术分析报告.md)：技术细节向分析报告
+- [`reference/MNSIM_完整技术分析报告.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/reference/MNSIM_完整技术分析报告.md)：完整源码/框架分析报告（含层次建模、PPA 方法、SimConfig 参数、已知缺陷与优化方向）

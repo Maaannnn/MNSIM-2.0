@@ -1,0 +1,58 @@
+{
+  "schema_version": "ws5a_v1",
+  "created_at": "2026-04-17T12:27:25.386012+00:00",
+  "repo_root": "/Users/bytedance/workspace/MNSIM-2.0",
+  "workflow": "measured_matrix",
+  "entrypoint": "dse/extras/run_measured_matrix.py",
+  "inputs": {
+    "measured_presets_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/testdata_runs/run_20260417_142758/measured_presets.csv",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/configs/SimConfig.ini",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "nn": "vgg8",
+    "dataset_module": "MNSIM.Interface.cifar10",
+    "matrix_csv": "artifacts/dse/matrices/rram_v2/matrix_A.csv",
+    "selected_presets": [
+      "meas_cycle_strong",
+      "meas_cycle_weak"
+    ]
+  },
+  "execution": {
+    "space_profile": "rram_v2",
+    "run_accuracy": true,
+    "accuracy_target": 0.88,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "seed": 419,
+    "workers": 1,
+    "max_points": null,
+    "batch_size": null,
+    "num_batches": null,
+    "batch_index": null,
+    "matrix_name": [],
+    "point_id": [
+      "A_001",
+      "A_002",
+      "A_005",
+      "A_006",
+      "A_009",
+      "A_010",
+      "A_013",
+      "A_014",
+      "A_017",
+      "A_018",
+      "A_021",
+      "A_022"
+    ]
+  },
+  "scenario": {},
+  "outputs": {
+    "output_root": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_a12_adc4_20260417_202725"
+  },
+  "notes": [
+    "Each preset produces one patched SimConfig and one scenario JSON under this output root.",
+    "Downstream run_matrix_csv.py receives the scenario contract explicitly."
+  ],
+  "extra": {}
+}

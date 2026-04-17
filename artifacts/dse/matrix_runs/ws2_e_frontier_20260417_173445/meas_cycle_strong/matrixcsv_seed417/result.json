@@ -1,0 +1,138 @@
+{
+  "algo": "matrixcsv",
+  "track": "multi",
+  "seed": 417,
+  "budget": 10,
+  "total_evaluated": 10,
+  "pareto_size": 4,
+  "hypervolume": 3.5520909910814523e+20,
+  "hv_reference_point": [
+    5981085.23576409,
+    1769072.8027116833,
+    1106494251.8306065
+  ],
+  "wall_time_s": 483.2046310901642,
+  "started_at": "2026-04-17T09:34:49.453599+00:00",
+  "finished_at": "2026-04-17T09:42:52.658242+00:00",
+  "run_config": {
+    "contract_version": "ws5a_v1",
+    "nn": "vgg8",
+    "init_evals": 0,
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_e_frontier_20260417_173445/configs/meas_cycle_strong.ini",
+    "run_accuracy": true,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "device": "mps",
+    "dataset_module": "MNSIM.Interface.cifar10",
+    "max_acc_batches": 2,
+    "space_profile": "rram_v2",
+    "scenario": {
+      "kind": "measured_preset",
+      "name": "meas_cycle_strong",
+      "source": {
+        "measured_presets_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/testdata_runs/run_20260417_142758/measured_presets.csv"
+      },
+      "config_patch": {
+        "Device level": {
+          "Device_Resistance": "14261.58,2325.34",
+          "Device_Variation": "16.670",
+          "Device_SAF": "0.1179,0.1179"
+        }
+      },
+      "measured_fields": {
+        "preset_name": "meas_cycle_strong",
+        "source_family": "2T1R_cycle",
+        "source_members": "wafer_xy16.csv, wafer_xy18.csv, wafer_xy22.csv, wafer_xy23.csv, wafer_xy25.csv",
+        "device_resistance": "14261.58,2325.34",
+        "device_variation": "16.670",
+        "device_saf_heuristic": "0.1179",
+        "resistance_window_ratio": "6.1331",
+        "default_retention_phase": "retention_typical",
+        "simconfig_patch_json": "{\"Device level\": {\"Device_Resistance\": \"14261.58,2325.34\", \"Device_Variation\": 16.67, \"Device_SAF\": \"0.1179,0.1179\"}}",
+        "note": "SAF is only a heuristic lower-bound from write-failure data. Retention phases should be modeled as separate stress runs."
+      }
+    },
+    "algo_kwargs": {
+      "accuracy_target": 0.88,
+      "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_E.csv",
+      "batch": {
+        "total": 10,
+        "num_batches": 1,
+        "batch_index": 1,
+        "start": 0,
+        "end": 10
+      },
+      "noise_seed_base": 417000
+    }
+  },
+  "best_by_objective": {
+    "latency_ns": {
+      "value": 4328935.425119968,
+      "eval_index": 4,
+      "config": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "7",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "0",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "energy_nj": {
+      "value": 797588.8653504751,
+      "eval_index": 5,
+      "config": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "7",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "area_um2": {
+      "value": 884941383.1245514,
+      "eval_index": 4,
+      "config": {
+        "rram_preset": "P1",
+        "xbar_size": "512x512",
+        "adc_choice": "7",
+        "dac_num": "128",
+        "xbar_polarity": "2",
+        "sub_position": "0",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    },
+    "accuracy": {
+      "value": 0.94921875,
+      "eval_index": 8,
+      "config": {
+        "rram_preset": "P2",
+        "xbar_size": "512x512",
+        "adc_choice": "7",
+        "dac_num": "32",
+        "xbar_polarity": "2",
+        "sub_position": "1",
+        "group_num": "1",
+        "pe_num": "2x2",
+        "tile_connection": "2",
+        "inter_tile_bw": "80"
+      }
+    }
+  },
+  "single_track_best": null
+}

@@ -1,0 +1,27 @@
+pim_sim Calibration Report
+============================================================
+
+Wafer directory: test_data/2T1R_cycle
+Files processed: 15/15
+
+Per-wafer results:
+  wafer_xy1             HRS_CV= 30.3%  LRS_CV=  1.5%
+  wafer_xy12            HRS_CV= 37.9%  LRS_CV=  1.9%
+  wafer_xy15            HRS_CV= 38.4%  LRS_CV=  2.5%
+  wafer_xy16            HRS_CV= 27.8%  LRS_CV=  1.7%
+  wafer_xy17            HRS_CV= 28.2%  LRS_CV=  1.7%
+  wafer_xy18            HRS_CV= 30.2%  LRS_CV=  2.0%
+  wafer_xy19            HRS_CV= 29.8%  LRS_CV=  1.4%
+  wafer_xy20            HRS_CV= 31.1%  LRS_CV=  1.4%
+  wafer_xy21            HRS_CV= 26.5%  LRS_CV=  2.1%
+  wafer_xy22            HRS_CV= 31.2%  LRS_CV=  1.9%
+  wafer_xy23            HRS_CV= 29.6%  LRS_CV=  1.9%
+  wafer_xy24            HRS_CV= 32.1%  LRS_CV=  3.4%
+  wafer_xy25            HRS_CV= 29.1%  LRS_CV=  2.1%
+  wafer_xy3             HRS_CV= 33.2%  LRS_CV=  3.1%
+  wafer_xy7             HRS_CV=122.2%  LRS_CV=405.0%
+
+Aggregate statistics:
+  HRS CV%: mean=37.16  std=22.95
+  LRS CV%: mean=28.91  std=100.52
+  HRS/LRS ratio: 1.29x

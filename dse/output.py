@@ -15,6 +15,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+from dse.contracts import EXPERIMENT_SCHEMA_VERSION
 from dse.core import DIM_NAMES, SPACE, decode_dim_value, encode_dim_value
 from dse.i18n import (
     COMPARISON_COL_ZH,
@@ -63,6 +64,8 @@ class RunConfig:
     dataset_module: str = "MNSIM.Interface.cifar10"
     max_acc_batches: int = 11
     space_profile: str = "rram_v2"
+    contract_version: str = EXPERIMENT_SCHEMA_VERSION
+    scenario: Dict[str, Any] = field(default_factory=dict)
     # Algorithm-specific extras (flat dict to keep RunConfig generic)
     algo_kwargs: Dict[str, Any] = field(default_factory=dict)
     # BO+GP: w_latency, w_energy, w_area, two_stage, topk_accuracy,
@@ -316,7 +319,9 @@ def write_result_json(result: DSERunResult, path: str) -> None:
         "started_at": result.started_at,
         "finished_at": result.finished_at,
         "run_config": {
+            "contract_version": cfg.contract_version,
             "nn": cfg.nn,
+            "init_evals": cfg.init_evals,
             "weights_path": cfg.weights_path,
             "base_config_path": cfg.base_config_path,
             "run_accuracy": cfg.run_accuracy,
@@ -328,6 +333,7 @@ def write_result_json(result: DSERunResult, path: str) -> None:
             "dataset_module": cfg.dataset_module,
             "max_acc_batches": cfg.max_acc_batches,
             "space_profile": cfg.space_profile,
+            "scenario": cfg.scenario,
             "algo_kwargs": cfg.algo_kwargs,
         },
         "best_by_objective": {
@@ -382,13 +388,16 @@ def write_result_json_zh(result: DSERunResult, path: str) -> None:
         "开始时间_UTC": result.started_at,
         "结束时间_UTC": result.finished_at,
         "运行配置": {
+            "契约版本": cfg.contract_version,
             "网络": cfg.nn,
+            "初始化评估": cfg.init_evals,
             "权重路径": cfg.weights_path,
             "基础配置": cfg.base_config_path,
             "启用精度仿真": cfg.run_accuracy,
             "设备": cfg.device,
             "精度评估批次数上限": cfg.max_acc_batches,
             "设计空间配置": cfg.space_profile,
+            "场景": cfg.scenario,
             "算法参数": cfg.algo_kwargs,
         },
         "各目标最优": {

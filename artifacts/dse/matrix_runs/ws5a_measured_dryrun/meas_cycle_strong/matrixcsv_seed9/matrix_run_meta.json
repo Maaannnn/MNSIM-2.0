@@ -1,0 +1,20 @@
+{
+  "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_all.csv",
+  "selected_rows": 1,
+  "batch": {
+    "total": 1,
+    "num_batches": 1,
+    "batch_index": 1,
+    "start": 0,
+    "end": 1
+  },
+  "matrix_names": [
+    "A"
+  ],
+  "point_ids": [
+    "A_001"
+  ],
+  "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws5a_measured_dryrun/meas_cycle_strong/matrixcsv_seed9",
+  "space_profile": "rram_v2",
+  "dry_run": true
+}

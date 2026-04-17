@@ -1,0 +1,72 @@
+{
+  "schema_version": "ws5a_v1",
+  "created_at": "2026-04-17T07:47:07.797484+00:00",
+  "repo_root": "/Users/bytedance/workspace/MNSIM-2.0",
+  "workflow": "matrix_csv",
+  "entrypoint": "dse/run_matrix_csv.py",
+  "inputs": {
+    "matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrices/rram_v2/matrix_all.csv",
+    "selected_rows": 1,
+    "selected_matrix_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws5a_measured_smoke_acc/meas_cycle_strong/matrixcsv_seed11/selected_matrix.csv",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws5a_measured_smoke_acc/configs/meas_cycle_strong.ini",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "nn": "vgg8",
+    "dataset_module": "MNSIM.Interface.cifar10"
+  },
+  "execution": {
+    "space_profile": "rram_v2",
+    "seed": 11,
+    "noise_seed_base": 11000,
+    "run_accuracy": true,
+    "accuracy_target": 0.88,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "device": "mps",
+    "max_acc_batches": 1,
+    "batch": {
+      "total": 1,
+      "num_batches": 1,
+      "batch_index": 1,
+      "start": 0,
+      "end": 1
+    },
+    "workers": 1
+  },
+  "scenario": {
+    "kind": "measured_preset",
+    "name": "meas_cycle_strong",
+    "source": {
+      "measured_presets_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/testdata_runs/run_20260417_142758/measured_presets.csv"
+    },
+    "config_patch": {
+      "Device level": {
+        "Device_Resistance": "14261.58,2325.34",
+        "Device_Variation": "16.670",
+        "Device_SAF": "0.1179,0.1179"
+      }
+    },
+    "measured_fields": {
+      "preset_name": "meas_cycle_strong",
+      "source_family": "2T1R_cycle",
+      "source_members": "wafer_xy16.csv, wafer_xy18.csv, wafer_xy22.csv, wafer_xy23.csv, wafer_xy25.csv",
+      "device_resistance": "14261.58,2325.34",
+      "device_variation": "16.670",
+      "device_saf_heuristic": "0.1179",
+      "resistance_window_ratio": "6.1331",
+      "default_retention_phase": "retention_typical",
+      "simconfig_patch_json": "{\"Device level\": {\"Device_Resistance\": \"14261.58,2325.34\", \"Device_Variation\": 16.67, \"Device_SAF\": \"0.1179,0.1179\"}}",
+      "note": "SAF is only a heuristic lower-bound from write-failure data. Retention phases should be modeled as separate stress runs."
+    }
+  },
+  "outputs": {
+    "output_root": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws5a_measured_smoke_acc/meas_cycle_strong",
+    "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws5a_measured_smoke_acc/meas_cycle_strong/matrixcsv_seed11"
+  },
+  "notes": [
+    "Per-point noise seeds are derived deterministically from noise_seed_base + source_index - 1.",
+    "selected_matrix.csv is the exact fixed-point manifest for this matrix run."
+  ],
+  "extra": {}
+}

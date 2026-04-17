@@ -118,6 +118,7 @@ def _resolve_output_root(raw: str) -> Path:
 
 
 from dse.metrics import compute_reference_point, hypervolume_3d
+from dse.contracts import build_experiment_manifest, make_nominal_scenario, resolve_resource, write_json
 from dse.output import DSERunResult, RunConfig, print_report, print_report_zh, write_all, write_comparison
 
 
@@ -129,6 +130,7 @@ def _run_trial(algo: str, seed: int, run_cfg_dict: Dict[str, Any], output_dir: s
     Raises on failure (exception propagates through the Future).
     """
     from dse.algorithms import REGISTRY
+    from dse.contracts import build_experiment_manifest, write_json
     from dse.output import RunConfig, write_all
 
     # Inject trial_dir so algorithms can open the DB writer
@@ -141,6 +143,36 @@ def _run_trial(algo: str, seed: int, run_cfg_dict: Dict[str, Any], output_dir: s
 
     os.makedirs(output_dir, exist_ok=True)
     write_all(result, output_dir)
+    manifest = build_experiment_manifest(
+        workflow="search_trial",
+        entrypoint="dse/run_dse.py",
+        inputs={
+            "base_config_path": cfg.base_config_path,
+            "weights_path": cfg.weights_path,
+            "nn": cfg.nn,
+            "dataset_module": cfg.dataset_module,
+        },
+        execution={
+            "algo": cfg.algo,
+            "seed": cfg.seed,
+            "budget": cfg.budget,
+            "init_evals": cfg.init_evals,
+            "space_profile": cfg.space_profile,
+            "run_accuracy": bool(cfg.run_accuracy),
+            "accuracy_target": cfg.algo_kwargs.get("accuracy_target"),
+            "enable_saf": bool(cfg.enable_saf),
+            "enable_variation": bool(cfg.enable_variation),
+            "enable_rratio": bool(cfg.enable_rratio),
+            "fixed_qrange": bool(cfg.fixed_qrange),
+            "device": cfg.device,
+            "max_acc_batches": cfg.max_acc_batches,
+            "algo_kwargs": cfg.algo_kwargs,
+        },
+        outputs={"trial_dir": os.path.abspath(output_dir)},
+        scenario=cfg.scenario,
+        notes=["This manifest captures one algorithm-seed trial."],
+    )
+    write_json(Path(output_dir) / "experiment_manifest.json", manifest)
 
     # After run completes, update hypervolume in DB if db_path is set
     if cfg.db_path:
@@ -210,16 +242,24 @@ def load_results_from_dir(output_root: str) -> List[DSERunResult]:
             rj = json.load(f)
 
         rc_data = rj.get("run_config", {})
+        manifest_data: Dict[str, Any] = {}
+        manifest_json = trial_dir / "experiment_manifest.json"
+        if manifest_json.exists():
+            try:
+                with open(manifest_json, encoding="utf-8") as f:
+                    manifest_data = json.load(f)
+            except Exception:
+                manifest_data = {}
         algo = rj["algo"]
         seed = rj["seed"]
         cfg = RunConfig(
             algo=algo,
             seed=seed,
             budget=rj.get("budget", 0),
-            init_evals=0,
+            init_evals=rc_data.get("init_evals", 0),
             nn=rc_data.get("nn", ""),
-            weights_path=rc_data.get("weights_path", ""),
-            base_config_path=rc_data.get("base_config_path", ""),
+            weights_path=resolve_resource(rc_data.get("weights_path", ""), "weights", repo_root=_PROJ_ROOT),
+            base_config_path=resolve_resource(rc_data.get("base_config_path", ""), "config", repo_root=_PROJ_ROOT),
             run_accuracy=rc_data.get("run_accuracy", False),
             enable_saf=rc_data.get("enable_saf", True),
             enable_variation=rc_data.get("enable_variation", False),
@@ -229,6 +269,8 @@ def load_results_from_dir(output_root: str) -> List[DSERunResult]:
             dataset_module=rc_data.get("dataset_module", "MNSIM.Interface.cifar10"),
             max_acc_batches=rc_data.get("max_acc_batches", 11),
             space_profile=rc_data.get("space_profile", "rram_v2"),
+            contract_version=rc_data.get("contract_version", manifest_data.get("schema_version", "legacy")),
+            scenario=rc_data.get("scenario", manifest_data.get("scenario", {})),
             algo_kwargs=rc_data.get("algo_kwargs", {}),
         )
 
@@ -820,37 +862,8 @@ def main() -> None:
 
     apply_space_profile(args.space_profile)
 
-    # --- Resolve resource paths (compatible with new folders) ---
-    def _resolve_resource(path_like: str, kind: str) -> str:
-        """Return an existing absolute path for weights/config.
-        Search order:
-          1) as-given (absolute or cwd-relative)
-          2) <repo>/weights/<name>   (for kind == 'weights')
-          3) <repo>/configs/<name>   (for kind == 'config')
-          4) <repo>/<name>           (legacy root fallback)
-        """
-        p = Path(os.path.expanduser(str(path_like)))
-        if p.exists():
-            return str(p.resolve())
-        name = Path(str(path_like)).name
-        if kind == "weights":
-            for cand in [
-                _PROJ_ROOT / "weights" / name,
-                _PROJ_ROOT / name,
-            ]:
-                if cand.exists():
-                    return str(cand.resolve())
-        if kind == "config":
-            for cand in [
-                _PROJ_ROOT / "configs" / name,
-                _PROJ_ROOT / name,
-            ]:
-                if cand.exists():
-                    return str(cand.resolve())
-        return str(p)
-
-    args.weights = _resolve_resource(args.weights, "weights")
-    args.base_config = _resolve_resource(args.base_config, "config")
+    args.weights = resolve_resource(args.weights, "weights", repo_root=_PROJ_ROOT)
+    args.base_config = resolve_resource(args.base_config, "config", repo_root=_PROJ_ROOT)
 
     # Auto behavior: pure random sampling defaults to append-only dataset mode.
     auto_dataset_append = set(args.algos) == {"random"} and (not args.no_dataset_append)
@@ -884,6 +897,41 @@ def main() -> None:
     else:
         output_root = base_root
     compare_dir = output_root / "comparison"
+
+    root_manifest = build_experiment_manifest(
+        workflow="search_group",
+        entrypoint="dse/run_dse.py",
+        inputs={
+            "base_config_path": str(Path(args.base_config).resolve()),
+            "weights_path": str(Path(args.weights).resolve()),
+            "nn": args.nn,
+            "dataset_module": args.dataset_module,
+            "algorithms": list(args.algos),
+            "seeds": list(args.seeds),
+        },
+        execution={
+            "budget": args.budget,
+            "init_evals": args.init_evals,
+            "space_profile": args.space_profile,
+            "run_accuracy": bool(args.run_accuracy),
+            "accuracy_target": args.accuracy_target,
+            "enable_saf": bool(args.enable_saf),
+            "enable_variation": bool(args.enable_variation),
+            "enable_rratio": bool(args.enable_rratio),
+            "fixed_qrange": bool(args.fixed_qrange),
+            "device": args.device,
+            "max_acc_batches": args.max_acc_batches,
+            "dataset_append": bool(args.dataset_append),
+            "db_path": _db_path if "_db_path" in locals() else "",
+        },
+        outputs={
+            "output_root": str(output_root.resolve()),
+            "compare_dir": str(compare_dir.resolve()),
+        },
+        scenario=make_nominal_scenario(args.base_config),
+        notes=["Each child trial writes its own experiment_manifest.json under <algo>_seed<N>/."],
+    )
+    write_json(output_root / "experiment_manifest.json", root_manifest)
 
     if args.plot_only:
         if args.compare_only:
@@ -970,6 +1018,7 @@ def main() -> None:
             "dataset_module": args.dataset_module,
             "max_acc_batches": args.max_acc_batches,
             "space_profile": args.space_profile,
+            "scenario": make_nominal_scenario(args.base_config),
             "algo_kwargs": algo_kwargs_map.get(algo, {}),
             "db_path": _db_path,
             # trial_dir is injected by _run_trial at subprocess start

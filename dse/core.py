@@ -11,10 +11,13 @@ from __future__ import annotations
 import configparser as cp
 import copy
 import os
+import random
 import tempfile
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
+
+import numpy as np
 
 from MNSIM.Interface.interface import TrainTestInterface
 from MNSIM.Accuracy_Model.Weight_update import weight_update
@@ -477,6 +480,7 @@ def evaluate_config(
     device: str = "cpu",
     dataset_module: str = "MNSIM.Interface.cifar10",
     max_acc_batches: int = 11,
+    noise_seed: Optional[int] = None,
 ) -> EvalResult:
     """
     Evaluate a single hardware configuration by running the MNSIM simulator.
@@ -485,6 +489,10 @@ def evaluate_config(
     Accuracy simulation is optional (slow, ~5-10× slower than hardware-only).
     """
     t0 = time.time()
+
+    if noise_seed is not None:
+        random.seed(int(noise_seed))
+        np.random.seed(int(noise_seed))
 
     test_if = TrainTestInterface(
         network_module=nn_name,

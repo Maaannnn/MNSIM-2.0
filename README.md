@@ -19,3 +19,29 @@ MNSIM-2.0 aims to model the HW performance and NN computing accuracy of Processi
 For more information about MNSIM-2.0, please refer to the MNSIM_manual.pdf and the IEEE TCAD paper of MNSIM 2.0.
 
 *Weights File: https://1drv.ms/f/s!AtForEDTP2-PgkzYkCJNONO9xnX6?e=y4s0XG*
+
+## Research Codex Workspace
+
+This repository now includes a lightweight Codex-oriented research workspace inspired by [`jy00295005/decision-grade-memory`](https://github.com/jy00295005/decision-grade-memory), adapted to the MNSIM and RRAM DSE workflow instead of a generic paper-drafting project.
+
+### Start here
+
+- `AGENTS.md`: repository-level rules for research-safe Codex collaboration
+- `agent.md`: current experiment roadmap and execution checklist
+- `app/README.md`: local dashboard backend/frontend structure
+- `docs/README.md`: research and status document index
+- `docs/framework/SCIENTIFIC_CODEX_FRAMEWORK.md`: research framework distilled from the proposal document and current repo assets
+- `codex/session_handoff.md`: short template for resuming work across sessions
+- `codex/research_workflow.md`: workflow conventions for experiment, analysis, and writing tasks
+- `prompts/README.md`: reusable prompt library for setup, literature, experiment design, analysis, and manuscript drafting
+
+### What this configuration is for
+
+- keeping Codex sessions reproducible across experiment and writing tasks
+- preserving evidence discipline for paper-oriented work
+- reusing prompt templates instead of restating project context every time
+- making measured-in-the-loop and DSE work easier to hand off and resume
+
+### Scope
+
+This workspace layer does not replace the original simulator structure. It adds research-collaboration conventions on top of the existing MNSIM code, scripts, and artifact layout.

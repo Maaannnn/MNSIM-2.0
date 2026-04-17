@@ -1,0 +1,5 @@
+candidate_index,scenario_name,mode,adc_choice,dac_num,group_num,inter_tile_bw,pe_num,rram_preset,sub_position,tile_connection,xbar_polarity,xbar_size,matched,mean_accuracy,worst_accuracy,scenario_yield,latency_ns,energy_nj,area_um2
+1,meas_cycle_strong,robust_summary,4,32,1,80,2x2,P0,1,2,2,128x128,1,0.9375,0.931640625,1.0,4430024.989793121,9452907.30945102,2426702222.653233
+1,meas_cycle_weak,robust_summary,4,32,1,80,2x2,P0,1,2,2,128x128,1,0.9375,0.931640625,1.0,4430024.989793121,9452907.30945102,2426702222.653233
+2,meas_cycle_strong,robust_summary,4,32,1,80,4x4,P0,1,2,2,128x128,1,0.9375,0.931640625,1.0,14995379.256951638,14239571.045382822,2354348727.1181145
+2,meas_cycle_weak,robust_summary,4,32,1,80,4x4,P0,1,2,2,128x128,1,0.9375,0.931640625,1.0,14995379.256951638,14239571.045382822,2354348727.1181145

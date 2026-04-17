@@ -1,0 +1,42 @@
+{
+  "schema_version": "ws5a_v1",
+  "created_at": "2026-04-17T07:55:56.997825+00:00",
+  "repo_root": "/Users/bytedance/workspace/MNSIM-2.0",
+  "workflow": "search_trial",
+  "entrypoint": "dse/run_dse.py",
+  "inputs": {
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/configs/SimConfig.ini",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "nn": "vgg8",
+    "dataset_module": "MNSIM.Interface.cifar10"
+  },
+  "execution": {
+    "algo": "random",
+    "seed": 43,
+    "budget": 24,
+    "space_profile": "rram_formal_v3",
+    "run_accuracy": true,
+    "accuracy_target": 0.88,
+    "enable_saf": true,
+    "enable_variation": true,
+    "enable_rratio": false,
+    "fixed_qrange": false,
+    "device": "cuda:0",
+    "max_acc_batches": 4
+  },
+  "scenario": {
+    "kind": "nominal",
+    "name": "nominal",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/configs/SimConfig.ini",
+    "config_patch": {}
+  },
+  "outputs": {
+    "trial_dir": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_formal_v3_gpu1/random_seed43",
+    "result_json": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_formal_v3_gpu1/random_seed43/result.json",
+    "history_csv": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/search_runs/rram_formal_v3_gpu1/random_seed43/history.csv"
+  },
+  "notes": [
+    "Backfilled from legacy run artifacts."
+  ],
+  "extra": {}
+}

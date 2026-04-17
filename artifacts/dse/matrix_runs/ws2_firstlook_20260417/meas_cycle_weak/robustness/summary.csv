@@ -1,0 +1,3 @@
+algo,trial_seed,candidate_index,source,sort_by,repeats,mean_latency_ns,mean_energy_nj,mean_area_um2,mean_power_w,mean_accuracy,std_accuracy,worst_accuracy,yield,accuracy_target,rram_preset,xbar_size,adc_choice,dac_num,xbar_polarity,sub_position,group_num,pe_num,tile_connection,inter_tile_bw
+matrixcsv,42,1,pareto,energy_nj,3,4430024.989793121,9452907.30945102,2426702222.653233,429.6055257914888,0.9375,0.004784159653873394,0.931640625,1.0,0.88,P0,128x128,4,32,2,1,1,2x2,2,80
+matrixcsv,42,2,pareto,energy_nj,3,14995379.256951638,14239571.045382822,2354348727.1181145,434.0356431720805,0.9375,0.004784159653873394,0.931640625,1.0,0.88,P0,128x128,4,32,2,1,1,4x4,2,80

@@ -1,0 +1,12 @@
+{
+  "input_root": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_firstlook_20260417/meas_cycle_weak",
+  "source": "pareto",
+  "sort_by": "energy_nj",
+  "topk": 2,
+  "repeats": 3,
+  "seed_base": 1000,
+  "algo": null,
+  "seed": null,
+  "accuracy_target": 0.88,
+  "total_candidates": 2
+}

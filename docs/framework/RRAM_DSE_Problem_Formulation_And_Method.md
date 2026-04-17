@@ -1,4 +1,4 @@
-# RRAM-CIM DSE 的问题定义、方法与实验设计
+# 方法骨架：RRAM-CIM DSE 的问题定义、方法与实验设计
 
 ## 1. Problem Formulation
 
@@ -735,7 +735,7 @@ I = G * f(V, alpha)
 - [dse/i18n.py](/Users/bytedance/workspace/MNSIM-2.0/dse/i18n.py)
   - 同步新的中文字段名
 
-- [dse/surrogate_query.py](/Users/bytedance/workspace/MNSIM-2.0/dse/surrogate_query.py)
+- [dse/extras/surrogate_query.py](/Users/bytedance/workspace/MNSIM-2.0/dse/extras/surrogate_query.py)
   - 更新示例输入
 
 - [dse/analyze_results.py](/Users/bytedance/workspace/MNSIM-2.0/dse/analyze_results.py)
@@ -744,7 +744,7 @@ I = G * f(V, alpha)
   - 生成可直接打开的 `index.html` 可视化仪表盘
   - 页面已增加中文术语解释、单位展示和更易读的数字格式
 
-- [dse/export_rram_v2_matrices.py](/Users/bytedance/workspace/MNSIM-2.0/dse/export_rram_v2_matrices.py)
+- [dse/extras/export_rram_v2_matrices.py](/Users/bytedance/workspace/MNSIM-2.0/dse/extras/export_rram_v2_matrices.py)
   - 导出第二版论文采样矩阵 `A/B/C/D`
   - 自动生成 `72` 点总表 `matrix_all.csv`
 
@@ -1019,7 +1019,7 @@ python3 dse/run_dse.py \
 如果你想直接拿到第二版论文矩阵 `A/B/C/D`，运行：
 
 ```bash
-python3 dse/export_rram_v2_matrices.py \
+python3 dse/extras/export_rram_v2_matrices.py \
   --output-dir artifacts/dse/matrices/rram_v2
 ```
 

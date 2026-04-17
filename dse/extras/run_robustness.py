@@ -14,10 +14,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-_PROJ_ROOT = Path(__file__).resolve().parent.parent
+_PROJ_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_PROJ_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJ_ROOT))
 
+from dse.contracts import build_experiment_manifest, write_json
 from dse.core import accuracy_violation, encode_dim_value, evaluate_config, write_temp_config  # noqa: E402
 from dse.output import DSERecord  # noqa: E402
 from dse.progress import try_make_tqdm, update_progress  # noqa: E402
@@ -84,6 +85,42 @@ def main() -> None:
     per_repeat_path = out_dir / "per_repeat.csv"
     summary_path = out_dir / "summary.csv"
 
+    manifest = build_experiment_manifest(
+        workflow="robustness_replay",
+        entrypoint="dse/extras/run_robustness.py",
+        inputs={
+            "input_root": str(Path(args.input_root).resolve()),
+            "selected_trials": [
+                {
+                    "algo": r.run_config.algo,
+                    "seed": r.run_config.seed,
+                    "base_config_path": r.run_config.base_config_path,
+                    "weights_path": r.run_config.weights_path,
+                }
+                for r in results
+            ],
+        },
+        execution={
+            "source": args.source,
+            "sort_by": args.sort_by,
+            "topk": args.topk,
+            "repeats": args.repeats,
+            "seed_base": args.seed_base,
+            "accuracy_target": args.accuracy_target,
+        },
+        outputs={
+            "output_dir": str(out_dir.resolve()),
+            "summary_csv": str(summary_path.resolve()),
+            "per_repeat_csv": str(per_repeat_path.resolve()),
+        },
+        scenario=results[0].run_config.scenario if results else {},
+        notes=[
+            "This workflow replays selected configurations with deterministic noise seeds.",
+            "Current robustness is within-scenario repeated evaluation, not cross-scenario aggregation.",
+        ],
+    )
+    write_json(out_dir / "experiment_manifest.json", manifest)
+
     per_repeat_rows: List[Dict[str, Any]] = []
     summary_rows: List[Dict[str, Any]] = []
 
@@ -129,11 +166,12 @@ def main() -> None:
                         enable_saf=rc.enable_saf,
                         enable_variation=rc.enable_variation,
                         enable_rratio=rc.enable_rratio,
-                        fixed_qrange=rc.fixed_qrange,
-                        device=rc.device,
-                        dataset_module=rc.dataset_module,
-                        max_acc_batches=rc.max_acc_batches,
-                    )
+                    fixed_qrange=rc.fixed_qrange,
+                    device=rc.device,
+                    dataset_module=rc.dataset_module,
+                    max_acc_batches=rc.max_acc_batches,
+                    noise_seed=seed_value,
+                )
                 finally:
                     os.remove(temp_path)
 

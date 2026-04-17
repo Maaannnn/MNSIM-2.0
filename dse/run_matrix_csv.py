@@ -32,6 +32,13 @@ from typing import Any, Dict, List, Optional, Tuple
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from dse.contracts import (
+    build_experiment_manifest,
+    make_nominal_scenario,
+    read_json,
+    resolve_resource,
+    write_json,
+)
 from dse.core import (
     DIM_NAMES,
     available_space_profiles,
@@ -53,34 +60,6 @@ from dse.run_dse import _append_dataset_history, _apply_global_hv, _auto_dataset
 AUTO_OUTPUT_ROOT = "AUTO"
 
 _PROJ_ROOT = Path(__file__).resolve().parent.parent
-
-def _resolve_resource(path_like: str, kind: str) -> str:
-    """Return an existing absolute path for weights/config.
-    Search order:
-      1) as-given (absolute or cwd-relative)
-      2) <repo>/weights/<name>   (for kind == 'weights')
-      3) <repo>/configs/<name>   (for kind == 'config')
-      4) <repo>/<name>           (legacy root fallback)
-    """
-    p = Path(os.path.expanduser(str(path_like)))
-    if p.exists():
-        return str(p.resolve())
-    name = Path(str(path_like)).name
-    if kind == "weights":
-        for cand in [
-            _PROJ_ROOT / "weights" / name,
-            _PROJ_ROOT / name,
-        ]:
-            if cand.exists():
-                return str(cand.resolve())
-    if kind == "config":
-        for cand in [
-            _PROJ_ROOT / "configs" / name,
-            _PROJ_ROOT / name,
-        ]:
-            if cand.exists():
-                return str(cand.resolve())
-    return str(p)
 
 
 def _read_matrix_rows(path: Path) -> List[Dict[str, str]]:
@@ -188,12 +167,14 @@ def _run_one_point(job: Dict[str, Any]) -> Dict[str, Any]:
             device=str(job["device"]),
             dataset_module=str(job["dataset_module"]),
             max_acc_batches=int(job["max_acc_batches"]),
+            noise_seed=int(job["noise_seed"]),
         )
     finally:
         os.remove(temp_path)
 
     return {
         "source_index": int(job["source_index"]),
+        "noise_seed": int(job["noise_seed"]),
         "row": dict(job["row"]),
         "metrics": {
             "latency_ns": res.latency_ns,
@@ -228,6 +209,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dataset-module", default="MNSIM.Interface.cifar10")
     parser.add_argument("--space-profile", default="rram_v2", choices=available_space_profiles())
     parser.add_argument("--max-acc-batches", type=int, default=11)
+    parser.add_argument("--scenario-json", default=None, help="Optional scenario contract JSON. If omitted, a nominal scenario is used.")
 
     parser.add_argument("--run-accuracy", action="store_true")
     parser.add_argument("--accuracy-target", type=float, default=None)
@@ -236,6 +218,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--enable-rratio", action="store_true", default=False)
     parser.add_argument("--fixed-qrange", action="store_true", default=False)
     parser.add_argument("--seed", type=int, default=42, help="Metadata seed for this matrix run")
+    parser.add_argument("--noise-seed-base", type=int, default=None, help="Deterministic base for per-point noise seeds. Default: seed*1000.")
     parser.add_argument("--dry-run", action="store_true", help="Only materialize selected_matrix.csv and print summary; do not run MNSIM.")
     parser.add_argument("--workers", type=int, default=0, help="Parallel worker processes. 0 = min(n_points, cpu_count//2).")
     parser.add_argument("--fail-fast", action="store_true", help="Abort remaining points on first failure.")
@@ -249,9 +232,17 @@ def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
     # Resolve resources to support new weights/ and configs/ folders
-    args.weights = _resolve_resource(args.weights, "weights")
-    args.base_config = _resolve_resource(args.base_config, "config")
+    args.weights = resolve_resource(args.weights, "weights", repo_root=_PROJ_ROOT)
+    args.base_config = resolve_resource(args.base_config, "config", repo_root=_PROJ_ROOT)
     apply_space_profile(args.space_profile)
+    if args.noise_seed_base is None:
+        args.noise_seed_base = int(args.seed) * 1000
+
+    scenario: Dict[str, Any]
+    if args.scenario_json:
+        scenario = read_json(Path(args.scenario_json).expanduser().resolve())
+    else:
+        scenario = make_nominal_scenario(args.base_config)
 
     if args.accuracy_target is not None and not args.run_accuracy:
         parser.error("--accuracy-target requires --run-accuracy.")
@@ -288,6 +279,45 @@ def main() -> None:
     trial_dir.mkdir(parents=True, exist_ok=True)
     _write_selected_manifest(trial_dir / "selected_matrix.csv", rows)
 
+    manifest = build_experiment_manifest(
+        workflow="matrix_csv",
+        entrypoint="dse/run_matrix_csv.py",
+        inputs={
+            "matrix_csv": str(matrix_csv),
+            "selected_rows": len(rows),
+            "selected_matrix_csv": str((trial_dir / "selected_matrix.csv").resolve()),
+            "base_config_path": str(Path(args.base_config).resolve()),
+            "weights_path": str(Path(args.weights).resolve()),
+            "nn": args.nn,
+            "dataset_module": args.dataset_module,
+        },
+        execution={
+            "space_profile": args.space_profile,
+            "seed": args.seed,
+            "noise_seed_base": args.noise_seed_base,
+            "run_accuracy": bool(args.run_accuracy),
+            "accuracy_target": args.accuracy_target,
+            "enable_saf": bool(args.enable_saf),
+            "enable_variation": bool(args.enable_variation),
+            "enable_rratio": bool(args.enable_rratio),
+            "fixed_qrange": bool(args.fixed_qrange),
+            "device": args.device,
+            "max_acc_batches": args.max_acc_batches,
+            "batch": batch_meta,
+            "workers": args.workers,
+        },
+        outputs={
+            "output_root": str(output_root.resolve()),
+            "trial_dir": str(trial_dir.resolve()),
+        },
+        scenario=scenario,
+        notes=[
+            "Per-point noise seeds are derived deterministically from noise_seed_base + source_index - 1.",
+            "selected_matrix.csv is the exact fixed-point manifest for this matrix run.",
+        ],
+    )
+    write_json(trial_dir / "experiment_manifest.json", manifest)
+
     run_cfg = RunConfig(
         algo="matrixcsv",
         seed=args.seed,
@@ -305,10 +335,12 @@ def main() -> None:
         dataset_module=args.dataset_module,
         max_acc_batches=args.max_acc_batches,
         space_profile=args.space_profile,
+        scenario=scenario,
         algo_kwargs={
             "accuracy_target": args.accuracy_target,
             "matrix_csv": str(matrix_csv),
             "batch": batch_meta,
+            "noise_seed_base": args.noise_seed_base,
         },
     )
 
@@ -321,6 +353,7 @@ def main() -> None:
     print(f"[matrix] space profile : {current_space_profile()}")
     print(f"[matrix] output root   : {output_root}")
     print(f"[matrix] trial dir     : {trial_dir}")
+    print(f"[matrix] scenario      : {scenario.get('name', scenario.get('kind', 'unknown'))}")
 
     if args.dry_run:
         meta = {
@@ -335,6 +368,8 @@ def main() -> None:
         }
         with open(trial_dir / "matrix_run_meta.json", "w", encoding="utf-8") as f:
             json.dump(meta, f, indent=2, ensure_ascii=False)
+        manifest["outputs"]["dry_run"] = True
+        write_json(trial_dir / "experiment_manifest.json", manifest)
         print("[matrix] dry-run only; no simulation executed.")
         return
 
@@ -363,6 +398,7 @@ def main() -> None:
                 "dataset_module": args.dataset_module,
                 "max_acc_batches": args.max_acc_batches,
                 "space_profile": args.space_profile,
+                "noise_seed": args.noise_seed_base + source_index - 1,
             }
         )
 
@@ -426,6 +462,7 @@ def main() -> None:
                 "matrix_point_id": row.get("matrix_point_id"),
                 "matrix_purpose": row.get("matrix_purpose"),
                 "source_index": int(payload["source_index"]),
+                "noise_seed": int(payload["noise_seed"]),
                 "accuracy_violation": accuracy_violation(metrics.get("accuracy"), args.accuracy_target),
             },
         )
@@ -463,6 +500,7 @@ def main() -> None:
         "trial_dir": str(trial_dir),
         "space_profile": args.space_profile,
         "workers": max_workers,
+        "noise_seed_base": args.noise_seed_base,
         "failures": [{"matrix_point_id": pid, "error": err} for pid, err in failures],
     }
     with open(trial_dir / "matrix_run_meta.json", "w", encoding="utf-8") as f:

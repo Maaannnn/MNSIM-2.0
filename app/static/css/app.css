@@ -1,0 +1,127 @@
+  [x-cloak] { display: none !important; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+    transition: background-color .2s ease, color .2s ease;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+  .algo-nsga2   { background: #1d4ed8; }
+  .algo-mobo    { background: #7c3aed; }
+  .algo-bo_gp   { background: #0369a1; }
+  .algo-random  { background: #374151; }
+  .algo-matrixcsv { background: #065f46; }
+  .pareto-row   { background: rgba(245, 158, 11, 0.08) !important; }
+  .fade-in { animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
+
+  /* ── Light theme ─────────────────────────────── */
+  body[data-theme="light"] {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-track { background: #e2e8f0; }
+  body[data-theme="light"] .scrollbar-thin::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+
+  /* Page & panel backgrounds */
+  body[data-theme="light"] .bg-slate-950      { background: #f1f5f9 !important; }
+  body[data-theme="light"] .bg-slate-950\/95  { background: rgba(241,245,249,0.96) !important; }
+  body[data-theme="light"] .bg-slate-900,
+  body[data-theme="light"] .bg-slate-900\/70,
+  body[data-theme="light"] .bg-slate-900\/60,
+  body[data-theme="light"] .bg-slate-900\/50,
+  body[data-theme="light"] .bg-slate-900\/40  { background: #ffffff !important; }
+  body[data-theme="light"] .bg-slate-800,
+  body[data-theme="light"] .bg-slate-800\/80  { background: #f8fafc !important; }
+  body[data-theme="light"] .bg-slate-800\/60,
+  body[data-theme="light"] .bg-slate-800\/40,
+  body[data-theme="light"] .bg-slate-800\/30  { background: #f0f4f8 !important; }
+  body[data-theme="light"] .bg-slate-700      { background: #e2e8f0 !important; }
+  body[data-theme="light"] .bg-slate-950\/70,
+  body[data-theme="light"] .bg-slate-950\/40  { background: #f8fafc !important; }
+
+  /* Borders */
+  body[data-theme="light"] .border-slate-800,
+  body[data-theme="light"] .border-slate-800\/60,
+  body[data-theme="light"] .border-slate-700,
+  body[data-theme="light"] .border-slate-700\/50 { border-color: #e2e8f0 !important; }
+
+  /* Text hierarchy */
+  body[data-theme="light"] .text-white        { color: #0f172a !important; }
+  body[data-theme="light"] .text-slate-100    { color: #1e293b !important; }
+  body[data-theme="light"] .text-slate-200    { color: #334155 !important; }
+  body[data-theme="light"] .text-slate-300    { color: #475569 !important; }
+  body[data-theme="light"] .text-slate-400    { color: #64748b !important; }
+  body[data-theme="light"] .text-slate-500    { color: #94a3b8 !important; }
+  body[data-theme="light"] .text-slate-600    { color: #64748b !important; } /* fixed: was near-invisible #94a3b8 */
+
+  /* Hover states */
+  body[data-theme="light"] .hover\:bg-slate-800\/40:hover,
+  body[data-theme="light"] .hover\:bg-slate-700:hover,
+  body[data-theme="light"] .hover\:bg-slate-800:hover { background: #e8eef5 !important; }
+  body[data-theme="light"] .hover\:text-slate-200:hover { color: #0f172a !important; }
+  body[data-theme="light"] .hover\:text-white:hover    { color: #0f172a !important; }
+
+  /* Inputs */
+  body[data-theme="light"] .placeholder-slate-500::placeholder { color: #94a3b8 !important; }
+
+  /* Accent – blue */
+  body[data-theme="light"] .text-blue-400,
+  body[data-theme="light"] .text-blue-300     { color: #2563eb !important; }
+  body[data-theme="light"] .bg-blue-500\/10   { background: #eff6ff !important; }
+  body[data-theme="light"] .border-blue-500\/30,
+  body[data-theme="light"] .border-blue-500\/40 { border-color: #bfdbfe !important; }
+  body[data-theme="light"] .border-blue-500   { border-color: #2563eb !important; }
+
+  /* Rank badge colors — distinct per rank */
+  body[data-theme="light"] .text-fuchsia-400  { color: #7c3aed !important; } /* Rank-2: violet */
+  body[data-theme="light"] .text-pink-400     { color: #be185d !important; } /* Rank-3: pink (fixed: was blue) */
+
+  /* Semantic feedback colors */
+  body[data-theme="light"] .text-green-400,
+  body[data-theme="light"] .text-green-300    { color: #16a34a !important; }
+  body[data-theme="light"] .text-red-400,
+  body[data-theme="light"] .text-red-300      { color: #dc2626 !important; } /* fixed: was amber #b45309 */
+  body[data-theme="light"] .text-cyan-400     { color: #0891b2 !important; }
+  body[data-theme="light"] .text-purple-400   { color: #7c3aed !important; }
+  body[data-theme="light"] .text-sky-300      { color: #0369a1 !important; }
+
+  /* Status badge chips */
+  body[data-theme="light"] .bg-green-900\/50,
+  body[data-theme="light"] .bg-green-900\/40  { background: #dcfce7 !important; }
+  body[data-theme="light"] .border-green-800\/50 { border-color: #86efac !important; }
+  body[data-theme="light"] .bg-sky-900\/40    { background: #e0f2fe !important; }
+  body[data-theme="light"] .border-sky-800\/50 { border-color: #7dd3fc !important; }
+  body[data-theme="light"] .bg-blue-900\/50   { background: #eff6ff !important; }
+  body[data-theme="light"] .border-blue-800\/50 { border-color: #bfdbfe !important; }
+
+  /* Pareto row — amber tint (same hue as dark theme amber glow) */
+  body[data-theme="light"] .pareto-row { background: rgba(245,158,11,0.08) !important; }
+
+  /* Param chip pills */
+  body[data-theme="light"] .inline-flex.flex-col.rounded-lg.border.border-slate-700.bg-slate-800\/60,
+  body[data-theme="light"] .inline-flex.items-center.rounded-full.border.border-slate-700.bg-slate-800\/60 {
+    background: #eef2f7 !important;
+    border-color: #e2e8f0 !important;
+    color: #334155 !important;
+  }
+  body[data-theme="light"] .ml-1\.5.px-1\.5.py-0\.5.rounded-full.bg-slate-700.text-slate-300.text-xs {
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+  }
+  body[data-theme="light"] .inline-flex.items-center.rounded-full.border.border-blue-500\/30.bg-blue-500\/10 {
+    background: #eff6ff !important;
+    border-color: #bfdbfe !important;
+    color: #1d4ed8 !important;
+  }
+
+  /* Code blocks */
+  body[data-theme="light"] pre { color: #334155 !important; }
+
+  /* Dividers */
+  body[data-theme="light"] .divide-slate-800\/70 > * + *,
+  body[data-theme="light"] .divide-slate-800\/60 > * + * { border-color: #e2e8f0 !important; }
+
+  /* Algo badges — keep dark pills with white text; only update visually-broken ones */
+  body[data-theme="light"] .algo-random    { background: #475569; }
+  body[data-theme="light"] .algo-matrixcsv { background: #0f766e; }

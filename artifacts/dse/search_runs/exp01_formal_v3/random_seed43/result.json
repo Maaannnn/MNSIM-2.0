@@ -12,8 +12,8 @@
   "finished_at": "2026-04-14T08:18:28.463996+00:00",
   "run_config": {
     "nn": "vgg8",
-    "weights_path": "/data/home/jiaqizhao/zcustom/MNSIM-2.0/weights/cifar10_vgg8_params.pth",
-    "base_config_path": "/data/home/jiaqizhao/zcustom/MNSIM-2.0/configs/SimConfig.ini",
+    "weights_path": "/Users/bytedance/workspace/MNSIM-2.0/cifar10_vgg8_params.pth",
+    "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/configs/SimConfig.ini",
     "run_accuracy": true,
     "enable_saf": true,
     "enable_variation": true,
@@ -25,6 +25,13 @@
     "space_profile": "rram_formal_v3",
     "algo_kwargs": {
       "accuracy_target": 0.88
+    },
+    "contract_version": "ws5a_v1",
+    "scenario": {
+      "kind": "nominal",
+      "name": "nominal",
+      "base_config_path": "/Users/bytedance/workspace/MNSIM-2.0/configs/SimConfig.ini",
+      "config_patch": {}
     }
   },
   "best_by_objective": {

@@ -1,4 +1,6 @@
-# MNSIM 2.0 深度技术分析报告
+# 参考分析：MNSIM 2.0 深度技术分析报告
+
+这篇文档保留为源码深挖参考，不作为当前组会或执行路线的主入口。
 > 面向组会汇报 | 结合论文（IEEE TCAD 2023）与代码（GitHub: thu-nics/MNSIM-2.0）
 >
 > 论文全称：*MNSIM 2.0: A Behavior-Level Modeling Tool for Processing-In-Memory Architectures*

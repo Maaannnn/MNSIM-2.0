@@ -1,4 +1,8 @@
-# 面向 RRAM 论文的 MNSIM+DSE 设计建议
+# 补充建议：面向 RRAM 论文的 MNSIM + DSE 设计建议
+
+本文档保留为补充参考版本。当前主入口已经收敛到：
+
+- [RRAM_DSE_Problem_Formulation_And_Method.md](/Users/bytedance/workspace/MNSIM-2.0/docs/framework/RRAM_DSE_Problem_Formulation_And_Method.md)
 
 ## 1. 目标定位
 
@@ -571,4 +575,3 @@
 5. 非线性导通模型
 
 加进去作为亮点增强。
-

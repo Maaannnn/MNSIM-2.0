@@ -321,6 +321,7 @@ class DSEDbWriter:
         run_group = trial_path.parent.name
         accuracy_target = cfg.algo_kwargs.get("accuracy_target") if cfg.algo_kwargs else None
         run_config_json = json.dumps({
+            "contract_version": cfg.contract_version,
             "nn": cfg.nn,
             "weights_path": str(cfg.weights_path),
             "base_config_path": str(cfg.base_config_path),
@@ -334,6 +335,7 @@ class DSEDbWriter:
             "device": cfg.device,
             "dataset_module": cfg.dataset_module,
             "max_acc_batches": cfg.max_acc_batches,
+            "scenario": cfg.scenario,
         })
         db = self._db()
         with db:

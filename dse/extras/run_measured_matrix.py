@@ -14,32 +14,25 @@ device states drive the experiment.
 from __future__ import annotations
 
 import argparse
-import configparser as cp
 import csv
-import os
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+from dse.contracts import (
+    build_experiment_manifest,
+    make_measured_scenario,
+    resolve_resource,
+    write_json,
+    write_patched_config,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-
-def _resolve_resource(path_like: str, kind: str) -> str:
-    p = Path(os.path.expanduser(str(path_like)))
-    if p.exists():
-        return str(p.resolve())
-    name = Path(str(path_like)).name
-    if kind == "weights":
-        for cand in [REPO_ROOT/"weights"/name, REPO_ROOT/name]:
-            if cand.exists():
-                return str(cand.resolve())
-    if kind == "config":
-        for cand in [REPO_ROOT/"configs"/name, REPO_ROOT/name]:
-            if cand.exists():
-                return str(cand.resolve())
-    return str(p)
 
 
 def _timestamp() -> str:
@@ -58,35 +51,14 @@ def _select_presets(rows: List[Dict[str, str]], names: Optional[List[str]]) -> L
     return [row for row in rows if row.get("preset_name", "").strip() in wanted]
 
 
-def _patch_config(base_config_path: Path, row: Dict[str, str], output_path: Path) -> None:
-    parser = cp.ConfigParser()
-    parser.read(base_config_path, encoding="UTF-8")
-
-    device_resistance = row.get("device_resistance", "").strip()
-    device_variation = row.get("device_variation", "").strip()
-    device_saf = row.get("device_saf_heuristic", "").strip()
-
-    if not device_resistance:
-        raise ValueError(f"Missing device_resistance for preset={row.get('preset_name')}")
-    parser.set("Device level", "Device_Resistance", device_resistance)
-
-    if device_variation:
-        parser.set("Device level", "Device_Variation", device_variation)
-
-    if device_saf:
-        parser.set("Device level", "Device_SAF", f"{device_saf},{device_saf}")
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        parser.write(f)
-
-
-def _build_cmd(args: argparse.Namespace, patched_config_path: Path, output_root: Path) -> List[str]:
+def _build_cmd(args: argparse.Namespace, patched_config_path: Path, scenario_json_path: Path, output_root: Path) -> List[str]:
     cmd = [
         args.python_bin,
         "dse/run_matrix_csv.py",
         "--matrix-csv",
         args.matrix_csv,
+        "--scenario-json",
+        str(scenario_json_path),
         "--base-config",
         str(patched_config_path),
         "--nn",
@@ -173,10 +145,12 @@ def main() -> None:
     parser.add_argument("--matrix-name", nargs="+", default=None)
     parser.add_argument("--point-id", nargs="+", default=None)
     args = parser.parse_args()
+    if args.accuracy_target is not None and not args.run_accuracy:
+        parser.error("--accuracy-target requires --run-accuracy.")
 
     measured_path = Path(args.measured_presets_csv).expanduser().resolve()
-    base_config_path = Path(_resolve_resource(args.base_config, "config")).expanduser().resolve()
-    args.weights = _resolve_resource(args.weights, "weights")
+    base_config_path = Path(resolve_resource(args.base_config, "config", repo_root=REPO_ROOT)).expanduser().resolve()
+    args.weights = resolve_resource(args.weights, "weights", repo_root=REPO_ROOT)
     rows = _select_presets(_read_rows(measured_path), args.preset_name)
     if not rows:
         raise SystemExit("No measured presets selected.")
@@ -193,13 +167,54 @@ def main() -> None:
     print(f"[measured-matrix] selected presets : {', '.join(row['preset_name'] for row in rows)}")
 
     configs_dir = output_root / "configs"
+    scenarios_dir = output_root / "scenarios"
+    root_manifest = build_experiment_manifest(
+        workflow="measured_matrix",
+        entrypoint="dse/extras/run_measured_matrix.py",
+        inputs={
+            "measured_presets_csv": str(measured_path),
+            "base_config_path": str(base_config_path),
+            "weights_path": str(Path(args.weights).resolve()),
+            "nn": args.nn,
+            "dataset_module": args.dataset_module,
+            "matrix_csv": str(Path(args.matrix_csv).expanduser()),
+            "selected_presets": [row["preset_name"] for row in rows],
+        },
+        execution={
+            "space_profile": args.space_profile,
+            "run_accuracy": bool(args.run_accuracy),
+            "accuracy_target": args.accuracy_target,
+            "enable_saf": bool(args.enable_saf),
+            "enable_variation": bool(args.enable_variation),
+            "enable_rratio": bool(args.enable_rratio),
+            "fixed_qrange": bool(args.fixed_qrange),
+            "seed": args.seed,
+            "workers": args.workers,
+            "max_points": args.max_points,
+            "batch_size": args.batch_size,
+            "num_batches": args.num_batches,
+            "batch_index": args.batch_index,
+            "matrix_name": args.matrix_name or [],
+            "point_id": args.point_id or [],
+        },
+        outputs={"output_root": str(output_root)},
+        notes=[
+            "Each preset produces one patched SimConfig and one scenario JSON under this output root.",
+            "Downstream run_matrix_csv.py receives the scenario contract explicitly.",
+        ],
+    )
+    write_json(output_root / "experiment_manifest.json", root_manifest)
+
     for row in rows:
         preset_name = row["preset_name"].strip()
         preset_output = output_root / preset_name
         patched_config_path = configs_dir / f"{preset_name}.ini"
-        _patch_config(base_config_path, row, patched_config_path)
+        scenario = make_measured_scenario(row, measured_presets_csv=str(measured_path))
+        scenario_json_path = scenarios_dir / f"{preset_name}.json"
+        write_json(scenario_json_path, scenario)
+        write_patched_config(base_config_path, scenario.get("config_patch", {}), patched_config_path)
 
-        cmd = _build_cmd(args, patched_config_path, preset_output)
+        cmd = _build_cmd(args, patched_config_path, scenario_json_path, preset_output)
         print(f"[measured-matrix] run preset={preset_name}")
         print(f"[measured-matrix] command={' '.join(cmd)}")
         subprocess.run(cmd, cwd=REPO_ROOT, check=True)

@@ -153,6 +153,8 @@ def calibrate_from_wafer_csv(
     hrs_curve: str = "teERS",
     lrs_curve: str = "bePGM",
     resistance_col: str = "R_cell",
+    robust: bool = True,
+    outlier_iqr_factor: float = 10.0,
 ) -> Tuple[AsymmetricGaussianModel, EmpiricalDeviceModel]:
     """Calibrate device models directly from a raw 2T1R cycle CSV file.
 
@@ -169,6 +171,12 @@ def calibrate_from_wafer_csv(
         ``Curve Name`` values that identify HRS and LRS rows.
     resistance_col:
         Column name containing the cell resistance (Ω).
+    robust:
+        If True (default), remove outliers via IQR before computing CV.
+        Outlier threshold: Q1 - factor*IQR or Q3 + factor*IQR.
+        This handles SAF (stuck-at-fault) cells that inflate raw std.
+    outlier_iqr_factor:
+        IQR multiplier for outlier rejection (default 10 = conservative).
 
     Returns
     -------
@@ -203,6 +211,10 @@ def calibrate_from_wafer_csv(
     hrs_arr = np.array(hrs_values)
     lrs_arr = np.array(lrs_values)
 
+    if robust:
+        hrs_arr = _iqr_filter(hrs_arr, outlier_iqr_factor)
+        lrs_arr = _iqr_filter(lrs_arr, outlier_iqr_factor)
+
     hrs_mean = float(np.mean(hrs_arr))
     lrs_mean = float(np.mean(lrs_arr))
     hrs_cv = float(np.std(hrs_arr) / hrs_mean * 100.0)
@@ -213,6 +225,7 @@ def calibrate_from_wafer_csv(
         f"HRS mean={hrs_mean:.0f}Ω CV={hrs_cv:.1f}%  "
         f"LRS mean={lrs_mean:.0f}Ω CV={lrs_cv:.1f}%  "
         f"n_hrs={len(hrs_arr)} n_lrs={len(lrs_arr)}"
+        + (" [robust]" if robust else "")
     )
 
     asymmetric_model = AsymmetricGaussianModel(state_cv_pct=[hrs_cv, lrs_cv])
@@ -222,6 +235,15 @@ def calibrate_from_wafer_csv(
     )
 
     return asymmetric_model, empirical_model
+
+
+def _iqr_filter(arr: np.ndarray, factor: float = 10.0) -> np.ndarray:
+    """Remove outliers beyond factor × IQR from Q1/Q3."""
+    q1, q3 = np.percentile(arr, 25), np.percentile(arr, 75)
+    iqr = q3 - q1
+    lo, hi = q1 - factor * iqr, q3 + factor * iqr
+    filtered = arr[(arr >= lo) & (arr <= hi)]
+    return filtered if len(filtered) > 10 else arr  # fallback if over-aggressive
 
 
 # ---------------------------------------------------------------------------

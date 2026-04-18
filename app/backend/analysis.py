@@ -54,8 +54,7 @@ def build_run_filter_clause(args) -> Tuple[List[str], List[Any]]:
     params: List[Any] = []
 
     for field, col in [("algo", "r.algo"), ("space", "r.space_profile"),
-                       ("group", "r.run_group"), ("source", "r.source_type"),
-                       ("status", "r.status")]:
+                       ("group", "r.run_group"), ("source", "r.source_type")]:
         val = args.get(field)
         if val:
             where.append(f"{col}=?")

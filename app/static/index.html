@@ -561,11 +561,17 @@ tailwind.config = {
                 : 'border-slate-800 bg-slate-800/30 hover:bg-slate-800/50'">
               <div class="flex items-center justify-between gap-3">
                 <div class="text-sm font-semibold text-white" x-text="report.label"></div>
-                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] border"
-                  :class="report.mode_key === 'observed'
-                    ? 'bg-amber-900/40 text-amber-300 border-amber-800/50'
-                    : 'bg-fuchsia-900/30 text-fuchsia-300 border-fuchsia-800/40'"
-                  x-text="report.mode_short_label"></span>
+                <div class="flex items-center gap-2">
+                  <span x-show="report.is_invalidated"
+                        class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] border bg-rose-900/40 text-rose-300 border-rose-800/50">
+                    invalid
+                  </span>
+                  <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] border"
+                    :class="report.mode_key === 'observed'
+                      ? 'bg-amber-900/40 text-amber-300 border-amber-800/50'
+                      : 'bg-fuchsia-900/30 text-fuchsia-300 border-fuchsia-800/40'"
+                    x-text="report.mode_short_label"></span>
+                </div>
               </div>
               <div class="text-xs text-slate-500 mt-2" x-text="report.description"></div>
               <div class="grid grid-cols-3 gap-3 mt-4 text-xs">
@@ -602,12 +608,21 @@ tailwind.config = {
                 : 'bg-fuchsia-900/30 text-fuchsia-300 border-fuchsia-800/40'"
               x-text="selectedCrossScenarioReport?.report?.mode_short_label || '—'"></span>
           </div>
-          <div class="text-sm text-slate-500 mt-2">
-            <span x-text="'场景：' + crossScenarioScenarioNamesText"></span>
-            <span class="mx-2">·</span>
-            <span x-text="'更新时间：' + fmtDate(selectedCrossScenarioReport?.report?.updated_at)"></span>
-          </div>
+        <div class="text-sm text-slate-500 mt-2">
+          <span x-text="'场景：' + crossScenarioScenarioNamesText"></span>
+          <span class="mx-2">·</span>
+          <span x-text="'更新时间：' + fmtDate(selectedCrossScenarioReport?.report?.updated_at)"></span>
         </div>
+
+        <div x-show="selectedCrossScenarioReport?.report?.is_invalidated"
+             class="rounded-2xl border border-rose-800/60 bg-rose-950/30 px-4 py-3 mt-4">
+          <div class="text-sm font-semibold text-rose-300">该报告已失效</div>
+          <div class="text-xs text-rose-200/90 mt-2"
+               x-text="selectedCrossScenarioReport?.report?.invalidation?.reason || '其上游 measured runs 已被标记为失效。'"></div>
+          <div class="text-[11px] text-rose-200/70 mt-2 font-mono"
+               x-text="selectedCrossScenarioReport?.report?.invalidation?.evidence_doc || ''"></div>
+        </div>
+      </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <template x-for="card in crossScenarioSummaryCards" :key="card.zh">
@@ -921,6 +936,10 @@ tailwind.config = {
                     class="px-1.5 py-0.5 rounded text-xs bg-sky-900/40 text-sky-300 border border-sky-800/50">
                 VAR
               </span>
+              <span x-show="run.is_invalidated"
+                    class="px-1.5 py-0.5 rounded text-xs bg-rose-900/40 text-rose-300 border border-rose-800/50">
+                INVALID
+              </span>
               <span x-show="run.status === 'running'"
                     class="px-1.5 py-0.5 rounded text-xs bg-blue-900/50 text-blue-400 border border-blue-800/50 animate-pulse">
                 LIVE
@@ -1189,6 +1208,15 @@ tailwind.config = {
 
       <!-- ── Tab: 概览 ─────────────────────────────────────────── -->
       <div x-show="activeTab==='overview'" class="p-6 space-y-6">
+
+        <div x-show="selectedRunDetail?.is_invalidated"
+             class="rounded-2xl border border-rose-800/60 bg-rose-950/30 px-4 py-3">
+          <div class="text-sm font-semibold text-rose-300">该实验已被标记为失效</div>
+          <div class="text-xs text-rose-200/90 mt-2"
+               x-text="selectedRunDetail?.invalidation?.reason || '该历史 run 不应继续作为当前研究证据使用。'"></div>
+          <div class="text-[11px] text-rose-200/70 mt-2 font-mono"
+               x-text="selectedRunDetail?.invalidation?.evidence_doc || ''"></div>
+        </div>
 
         <!-- best metrics -->
         <div>

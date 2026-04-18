@@ -140,7 +140,12 @@ def to_ini_value(v: Any) -> str:
     return s
 
 
-def derive_effective_config(base_content: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def derive_effective_config(
+    base_content: str,
+    params: Dict[str, Any],
+    *,
+    scenario_patch: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
     parser = make_parser_from_content(base_content)
     overrides: List[Dict[str, Any]] = []
 
@@ -181,6 +186,11 @@ def derive_effective_config(base_content: str, params: Dict[str, Any]) -> Dict[s
         if target:
             section, key = target
             apply_override(section, key, to_ini_value(value), "design_point", dim)
+
+    if scenario_patch:
+        for section, kv in scenario_patch.items():
+            for key, new_value in kv.items():
+                apply_override(section, key, new_value, "scenario_post_patch", "scenario")
 
     buf = io.StringIO()
     parser.write(buf)

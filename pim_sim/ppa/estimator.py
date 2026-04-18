@@ -98,6 +98,8 @@ def adc_ppa_delta(
     adc_choice = int(cfg.get("Interface level", "ADC_Choice"))
 
     # MNSIM baseline
+    # Energy [nJ] = latency [ns] × power [W]
+    # (ns × W = 1e-9 s × W = 1e-9 J = 1 nJ, so no extra factor needed)
     if adc_choice == -1:
         # User-defined: read directly from config
         mnsim_power = float(cfg.get("Interface level", "ADC_Power"))
@@ -105,20 +107,20 @@ def adc_ppa_delta(
         mnsim_precision = int(cfg.get("Interface level", "ADC_Precision"))
         mnsim_rate = float(cfg.get("Interface level", "ADC_Sample_Rate"))
         mnsim_latency = (mnsim_precision + 2) / mnsim_rate
-        mnsim_energy = mnsim_latency * mnsim_power
+        mnsim_energy = mnsim_latency * mnsim_power   # nJ = ns × W
     else:
         baseline = mnsim_adc_to_walden(adc_choice)
         mnsim_power = baseline.power_w()
         mnsim_area = baseline.area_um2()
         mnsim_latency = baseline.latency_ns()
-        mnsim_energy = mnsim_latency * mnsim_power * 1e9  # → nJ
+        mnsim_energy = mnsim_latency * mnsim_power   # nJ = ns × W
 
     # pim_sim parametric
     pim_adc = WaldenADCModel(enob=target_enob, sample_rate_gsps=sample_rate_gsps)
     pim_power = pim_adc.power_w()
     pim_area = pim_adc.area_um2()
     pim_latency = pim_adc.latency_ns()
-    pim_energy = pim_latency * pim_power * 1e9  # → nJ
+    pim_energy = pim_latency * pim_power   # nJ = ns × W
 
     total_adcs = xbar_cols * n_xbars
 
@@ -160,7 +162,7 @@ def parametric_adc_sweep(
             "enob": enob,
             "total_power_mw": adc.power_w() * total_adcs * 1e3,
             "total_area_mm2": adc.area_um2() * total_adcs * 1e-6,
-            "total_energy_nj_per_conversion": adc.energy_j() * total_adcs * 1e9,
+            "total_energy_nj_per_cycle": adc.energy_j() * total_adcs * 1e9,
             "latency_ns": adc.latency_ns(),
             "single_adc_summary": adc.summary(),
         })

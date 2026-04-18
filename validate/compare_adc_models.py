@@ -77,7 +77,8 @@ def main():
     mnsim_rows = []
     for choice, (bits, power, area, rate) in sorted(_MNSIM_ADC_TABLE.items()):
         latency = (bits + 2) / rate if bits > 1 else 1.0 / rate
-        energy_fj = latency * power * 1e12
+        # energy = latency_ns × 1e-9 s × power_W × 1e15 fJ/J = latency_ns × power_W × 1e6
+        energy_fj = latency * power * 1e6
         print(f"{choice:>7}  {bits:>5}  {power*1e3:>10.3f}  {area:>10.1f}  "
               f"{rate:>12.2f}  {latency:>12.3f}  {energy_fj:>11.2f}")
         mnsim_rows.append({

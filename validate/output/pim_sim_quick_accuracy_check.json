@@ -1,0 +1,9 @@
+{
+  "max_batches": 1,
+  "device": "mps",
+  "results": {
+    "mnsim_original": 0.94921875,
+    "pim_asym_strong_like": 0.1015625,
+    "pim_empirical_wafer16": 0.08984375
+  }
+}

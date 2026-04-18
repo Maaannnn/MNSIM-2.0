@@ -8,8 +8,10 @@ import itertools
 import json
 import os
 import random
+from pathlib import Path
 from typing import Any, Dict, List
 
+from dse.contracts import read_json
 from dse.core import SPACE, evaluate_config, write_temp_config
 
 
@@ -22,6 +24,7 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=500)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--scenario-json", default=None, help="Optional scenario contract JSON; its config_patch is re-applied after SPACE overrides.")
     parser.add_argument("--enable-saf", action="store_true", default=True)
     parser.add_argument("--enable-variation", action="store_true", default=False)
     parser.add_argument("--enable-rratio", action="store_true", default=False)
@@ -30,7 +33,6 @@ def main() -> None:
     args = parser.parse_args()
 
     # Resolve resources to support new weights/ and configs/ folders
-    from pathlib import Path
     _PROJ_ROOT = Path(__file__).resolve().parents[2]
     def _resolve_resource(path_like: str, kind: str) -> str:
         p = Path(os.path.expanduser(str(path_like)))
@@ -48,6 +50,10 @@ def main() -> None:
         return str(p)
     args.weights = _resolve_resource(args.weights, "weights")
     args.base_config = _resolve_resource(args.base_config, "config")
+    scenario_patch = None
+    if args.scenario_json:
+        scenario = read_json(Path(args.scenario_json).expanduser().resolve())
+        scenario_patch = scenario.get("config_patch") or None
 
     random.seed(args.seed)
     os.makedirs(args.output_dir, exist_ok=True)
@@ -63,7 +69,7 @@ def main() -> None:
 
     rows: List[Dict[str, Any]] = []
     for i, cfg in enumerate(picked, start=1):
-        temp_cfg = write_temp_config(args.base_config, cfg)
+        temp_cfg = write_temp_config(args.base_config, cfg, post_patch=scenario_patch)
         try:
             res = evaluate_config(
                 sim_config_path=temp_cfg,
@@ -117,6 +123,7 @@ def main() -> None:
         "nn": args.nn,
         "weights": args.weights,
         "base_config": args.base_config,
+        "scenario_json": args.scenario_json,
         "dims": dim_names,
         "output_csv": out_csv,
     }

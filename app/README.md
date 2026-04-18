@@ -10,6 +10,8 @@
   run/global analysis 的聚合与排序逻辑。
 - `backend/reports.py`
   cross-scenario 报告与 legacy report 的扫描和装载。
+- `backend/validity.py`
+  读取 `artifacts/dse/invalidation_registry.json`，为历史失效实验和报告补充 `invalidated` 标记。
 - `backend/sync.py`
   `artifacts/dse` 到 SQLite 的同步入口。
 - `static/index.html`
@@ -21,9 +23,13 @@
 - `dse_records.db`
   本地 SQLite 缓存数据库。
 
+补充说明：
+
+- `artifacts/dse/invalidation_registry.json`
+  非破坏式失效注册表。用于保留历史 artifact，同时在前后端明确标记“不应继续作为当前研究证据使用”的 run / report。
+
 当前设计原则：
 
 - `server.py` 不再承载大段分析逻辑
 - `index.html` 不再内联大块 CSS/JS
 - 新的分析视图优先通过 contract 化 JSON API 接入，而不是继续堆 iframe/legacy 分支
-

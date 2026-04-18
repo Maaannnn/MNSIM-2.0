@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .shared import ARTIFACTS_ROOT, read_typed_csv
+from .validity import annotate_artifact
 
 
 def cross_scenario_mode_info(manifest: Dict[str, Any]) -> Dict[str, str]:
@@ -102,6 +103,7 @@ def build_cross_scenario_report_payload(report_dir: Path, *, include_rows: bool 
         "topk": manifest.get("execution", {}).get("topk"),
         "accuracy_target": manifest.get("execution", {}).get("accuracy_target"),
     }
+    report.update(annotate_artifact(report_dir, status="completed"))
 
     payload = {
         "report": report,
@@ -118,6 +120,7 @@ def build_cross_scenario_report_payload(report_dir: Path, *, include_rows: bool 
         },
         "manifest": manifest,
         "meta": meta,
+        "invalidation": report.get("invalidation"),
     }
     if include_rows:
         payload["summary_rows"] = summary_rows

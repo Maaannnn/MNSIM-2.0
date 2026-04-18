@@ -569,19 +569,27 @@ function dseApp() {
     },
 
     get statCards() {
-      return [
+      const cards = [
         { label: '实验运行数', value: this.stats.total_runs ?? '…' },
         { label: '评估记录（原始）', value: this.stats.total_records ?? '…' },
         { label: '评估点（去重）', value: this.stats.total_measurements ?? '…' },
         { label: 'Pareto 点数', value: this.stats.total_pareto ?? '…' },
         { label: '唯一设计点', value: this.stats.total_design_points ?? '…' },
       ]
+      if ((this.stats.invalidated_runs || 0) > 0) {
+        cards.push({ label: '已失效实验', value: this.stats.invalidated_runs, sub: '默认不参与全局聚合' })
+      }
+      return cards
     },
 
     get globalAnalysisScopeText() {
       const scope = this.globalAnalysis?.scope
       if (!scope) return '当前筛选'
-      return `命中 ${scope.matched_runs ?? 0} 个实验`
+      const excluded = scope.excluded_invalidated_runs || 0
+      if (excluded > 0) {
+        return `命中 ${scope.matched_runs ?? 0} 个有效实验，另有 ${excluded} 个失效实验被自动排除`
+      }
+      return `命中 ${scope.matched_runs ?? 0} 个有效实验`
     },
 
     get mainViewTitle() {
@@ -671,10 +679,14 @@ function dseApp() {
       const report = this.selectedCrossScenarioReport?.report
       const summary = this.selectedCrossScenarioReport?.summary
       if (!report || !summary) return []
-      const items = [
+      const items = []
+      if (report.is_invalidated) {
+        items.push(`该报告已被标记为失效：${report.invalidation?.reason || '其上游 measured runs 已失效。'}`)
+      }
+      items.push(
         'cross-scenario 排名依赖候选集合；如果每个场景只保留很少的 Top-K，排名仍然是 first-look 而不是最终论文结论。',
         'observed 与 repeat-summary 两种口径的排序都应该保留；前者更敏感，后者更保守，不能互相替代。',
-      ]
+      )
       if ((summary.full_match_candidates || 0) < (summary.candidate_count || 0)) {
         items.push('存在没有覆盖全部场景的候选点，解释结果时要注意“matched_scenarios / scenario_count”是否完整。')
       }
@@ -686,8 +698,9 @@ function dseApp() {
 
     get globalAnalysisSummaryCards() {
       const summary = this.globalAnalysis?.summary
+      const scope = this.globalAnalysis?.scope
       if (!summary) return []
-      return [
+      const cards = [
         { zh: '实验数', en: 'Matched Runs', value: summary.matched_runs ?? 0, sub: 'opt_runs' },
         { zh: '样本数', en: 'Samples', value: summary.samples ?? 0, sub: 'run_evaluations' },
         { zh: '可行样本', en: 'Feasible Samples', value: summary.feasible_samples ?? 0, sub: this.fmtPercent(summary.feasible_rate ?? 0) },
@@ -697,6 +710,15 @@ function dseApp() {
         { zh: '最低能耗', en: 'Best Energy', value: this.fmtEnergy(summary.best_energy_nj), sub: summary.best_energy_eval_index ? `#${summary.best_energy_eval_index}` : null },
         { zh: '最高精度', en: 'Best Accuracy', value: summary.best_accuracy != null ? this.fmtPercent(summary.best_accuracy, 2) : '—', sub: summary.best_accuracy_eval_index ? `#${summary.best_accuracy_eval_index}` : null },
       ]
+      if ((scope?.excluded_invalidated_runs || 0) > 0) {
+        cards.splice(1, 0, {
+          zh: '排除失效',
+          en: 'Excluded Invalidated',
+          value: scope.excluded_invalidated_runs,
+          sub: 'history kept, aggregate skipped',
+        })
+      }
+      return cards
     },
 
     get globalRecommendationStage() {
@@ -719,6 +741,9 @@ function dseApp() {
         `当前筛选命中 ${summary.matched_runs ?? 0} 个实验、${summary.samples ?? 0} 个评估样本，数据库口径下可行率为 ${this.fmtPercent(summary.feasible_rate ?? 0)}。`,
         `当前范围内共有 ${summary.global_pareto_samples ?? 0} 个全局 Pareto 点，可作为下一轮重点对比候选。`,
       ]
+      if ((scope?.excluded_invalidated_runs || 0) > 0) {
+        items.push(`系统已自动排除 ${scope.excluded_invalidated_runs} 个已失效实验，避免历史 bug 污染当前全局聚合。`)
+      }
       if (top) {
         const parts = this.analysisParamSummary(top.params).slice(0, 4).map(item => `${item.label.en}=${item.value}`)
         items.push(`当前综合排序第一的候选点来自 ${(top.run_group || '未分组实验')}，核心参数为 ${parts.join(' / ') || '—'}。`)
@@ -758,6 +783,9 @@ function dseApp() {
         '当前页面使用数据库实时聚合结果，不再依赖 CSV；因此数值以 opt_runs、run_evaluations、measurements、design_points 的联表结果为准。',
         '“Top-3 推荐配置”是具体评估记录，不是分组均值；同一组参数在不同 run 中仍可能因为上下文、阶段或种子不同而出现差异。',
       ]
+      if ((scope?.excluded_invalidated_runs || 0) > 0) {
+        items.push('当前聚合已经自动排除了被标记为 invalidated 的历史实验；如需核对原始 artifact，请回到实验列表单独查看。')
+      }
       if ((scope?.runs || []).length === 1) {
         items.push('当前实际上只命中 1 个实验，虽然页面叫“全局分析”，但结论仍更接近单次 run 视角。')
       } else {
@@ -878,6 +906,7 @@ function dseApp() {
         { zh: '超体积', en: 'Hypervolume', v: this.fmtHV(r.hypervolume) },
         { zh: 'Pareto 数量', en: 'Pareto Size', v: fmt(r.pareto_size) },
         { zh: '来源', en: 'Source', v: r.source_type },
+        { zh: '状态', en: 'Status', v: r.status || '—' },
         { zh: '开始时间', en: 'Started', v: this.fmtDate(r.started_at) },
       ]
     },
@@ -943,6 +972,9 @@ function dseApp() {
     },
 
     crossScenarioReportPreview(report) {
+      if (report?.is_invalidated) {
+        return `已标记失效：${report?.invalidation?.title || '其上游 measured runs 已失效。'}`
+      }
       const top = report?.top_candidate
       if (!top) return '当前报告还没有有效候选。'
       const params = this.crossScenarioParamSummary(top).slice(0, 3).map(item => `${item.label.en}=${item.value}`).join(' / ')

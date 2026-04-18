@@ -34,6 +34,7 @@
 - [`simulator/README.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/README.md)：仿真器分析索引
 - [`simulator/MNSIM_group_meeting_report.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/MNSIM_group_meeting_report.md)：组会主报告
 - [`simulator/mnsim_fidelity_gap_review.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/mnsim_fidelity_gap_review.md)：短板与增强建议
+- [`simulator/measured_preset_mapping_audit_20260417.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/measured_preset_mapping_audit_20260417.md)：`measured preset` 映射与执行链审计
 - [`simulator/neurosim_lessons_for_mnsim.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/neurosim_lessons_for_mnsim.md)：NeuroSim 借鉴清单
 
 补充参考：

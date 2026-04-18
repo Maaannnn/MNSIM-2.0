@@ -67,9 +67,10 @@ def run(cfg: RunConfig) -> DSERunResult:
 
     records: List[DSERecord] = []
     pbar = try_make_tqdm(n_iter, tag)
+    scenario_patch = cfg.scenario.get("config_patch") or None
     for k, idx in enumerate(chosen, start=1):
         cfg_vals = candidates[idx]
-        temp_path = write_temp_config(cfg.base_config_path, cfg_vals)
+        temp_path = write_temp_config(cfg.base_config_path, cfg_vals, post_patch=scenario_patch)
         try:
             res = evaluate_config(
                 sim_config_path=temp_path,

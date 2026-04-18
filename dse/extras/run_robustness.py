@@ -141,6 +141,7 @@ def main() -> None:
 
     for result, candidates in candidates_per_trial:
         rc = result.run_config
+        scenario_patch = rc.scenario.get("config_patch") or None
         trial_accuracy_target = args.accuracy_target
         if trial_accuracy_target is None:
             trial_accuracy_target = rc.algo_kwargs.get("accuracy_target", None)
@@ -155,7 +156,11 @@ def main() -> None:
                 seed_value = args.seed_base + repeat_idx
                 random.seed(seed_value)
                 np.random.seed(seed_value)
-                temp_path = write_temp_config(rc.base_config_path, record.config)
+                temp_path = write_temp_config(
+                    rc.base_config_path,
+                    record.config,
+                    post_patch=scenario_patch,
+                )
                 try:
                     res = evaluate_config(
                         sim_config_path=temp_path,

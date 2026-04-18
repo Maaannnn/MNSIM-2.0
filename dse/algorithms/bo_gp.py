@@ -124,10 +124,11 @@ def run(cfg: RunConfig) -> DSERunResult:
 
     chosen: List[int] = []
     records: List[DSERecord] = []
+    scenario_patch = cfg.scenario.get("config_patch") or None
 
     def _evaluate_and_record(idx: int, phase: str) -> DSERecord:
         cfg_vals = candidates[idx]
-        temp_path = write_temp_config(cfg.base_config_path, cfg_vals)
+        temp_path = write_temp_config(cfg.base_config_path, cfg_vals, post_patch=scenario_patch)
         try:
             res = evaluate_config(
                 sim_config_path=temp_path,
@@ -231,7 +232,7 @@ def run(cfg: RunConfig) -> DSERunResult:
         topk = sorted(records, key=lambda r: r.extra["scalarized_obj"])[:k]
         print(f"\n{tag} === Stage-2 accuracy rerank on top-{k} ===")
         for rank, base_rec in enumerate(topk, start=1):
-            temp_path = write_temp_config(cfg.base_config_path, base_rec.config)
+            temp_path = write_temp_config(cfg.base_config_path, base_rec.config, post_patch=scenario_patch)
             try:
                 res2 = evaluate_config(
                     sim_config_path=temp_path,

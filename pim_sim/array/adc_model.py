@@ -50,8 +50,12 @@ import numpy as np
 
 
 # Fitted Walden FOM constants from MNSIM reference ADCs (28nm)
-_DEFAULT_FOM_WALDEN_J_PER_CONV = 1.0e-12   # J / conversion (energy FOM)
-_DEFAULT_FOM_AREA_UM2          = 450.0     # µm² per (2^ENOB / GSa/s)
+# Derived from choice-4 (6b, 1.26 mW, 1 GSa/s):
+#   FOM_W = P / (2^ENOB * f) = 1.26e-3 / (64 * 1e9) ≈ 19.7e-15 J/conv
+# Derived from choice-2 (8b, 1200 µm², 1.28 GSa/s):
+#   FOM_A = Area / (2^ENOB / f_GSps) = 1200 / (256/1.28) ≈ 6.0 µm²
+_DEFAULT_FOM_WALDEN_J_PER_CONV = 20.0e-15  # J / conversion (energy FOM)
+_DEFAULT_FOM_AREA_UM2          = 8.0       # µm² per (2^ENOB / GSa/s)
 
 
 @dataclass

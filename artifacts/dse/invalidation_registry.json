@@ -1,0 +1,149 @@
+{
+  "schema_version": "artifact_invalidation_v1",
+  "updated_at": "2026-04-17T00:00:00+08:00",
+  "entries": [
+    {
+      "id": "measured-ws2-firstlook-strong",
+      "scope": "run",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_firstlook_20260417/meas_cycle_strong/matrixcsv_seed42",
+      "status": "invalidated",
+      "title": "Measured preset 被 nominal preset 覆盖",
+      "reason": "该历史 run 生成于 2026-04-17 修复之前。执行链先读取 measured base config，再根据 design point 的 rram_preset 重写 Device_Resistance / Device_Variation / Device_SAF，导致 measured device patch 可能被覆盖回 nominal preset。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "measured-ws2-firstlook-weak",
+      "scope": "run",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_firstlook_20260417/meas_cycle_weak/matrixcsv_seed42",
+      "status": "invalidated",
+      "title": "Measured preset 被 nominal preset 覆盖",
+      "reason": "该历史 run 生成于 2026-04-17 修复之前。执行链先读取 measured base config，再根据 design point 的 rram_preset 重写 Device_Resistance / Device_Variation / Device_SAF，导致 measured device patch 可能被覆盖回 nominal preset。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "measured-ws2-efrontier-strong",
+      "scope": "run",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_e_frontier_20260417_173445/meas_cycle_strong/matrixcsv_seed417",
+      "status": "invalidated",
+      "title": "Measured preset 被 nominal preset 覆盖",
+      "reason": "该历史 run 生成于 2026-04-17 修复之前。执行链先读取 measured base config，再根据 design point 的 rram_preset 重写 Device_Resistance / Device_Variation / Device_SAF，导致 measured device patch 可能被覆盖回 nominal preset。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "measured-ws2-efrontier-weak",
+      "scope": "run",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_e_frontier_20260417_173445/meas_cycle_weak/matrixcsv_seed417",
+      "status": "invalidated",
+      "title": "Measured preset 被 nominal preset 覆盖",
+      "reason": "该历史 run 生成于 2026-04-17 修复之前。执行链先读取 measured base config，再根据 design point 的 rram_preset 重写 Device_Resistance / Device_Variation / Device_SAF，导致 measured device patch 可能被覆盖回 nominal preset。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "measured-ws2-a12-strong",
+      "scope": "run",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_a12_adc4_20260417_202725/meas_cycle_strong/matrixcsv_seed419",
+      "status": "invalidated",
+      "title": "Measured preset 被 nominal preset 覆盖",
+      "reason": "该历史 run 生成于 2026-04-17 修复之前。执行链先读取 measured base config，再根据 design point 的 rram_preset 重写 Device_Resistance / Device_Variation / Device_SAF，导致 measured device patch 可能被覆盖回 nominal preset。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "measured-ws2-a12-weak",
+      "scope": "run",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_a12_adc4_20260417_202725/meas_cycle_weak/matrixcsv_seed419",
+      "status": "invalidated",
+      "title": "Measured preset 被 nominal preset 覆盖",
+      "reason": "该历史 run 生成于 2026-04-17 修复之前。执行链先读取 measured base config，再根据 design point 的 rram_preset 重写 Device_Resistance / Device_Variation / Device_SAF，导致 measured device patch 可能被覆盖回 nominal preset。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "measured-ws5a-smoke-strong",
+      "scope": "run",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws5a_measured_smoke_acc/meas_cycle_strong/matrixcsv_seed11",
+      "status": "invalidated",
+      "title": "Measured preset 被 nominal preset 覆盖",
+      "reason": "该历史 run 生成于 2026-04-17 修复之前。执行链先读取 measured base config，再根据 design point 的 rram_preset 重写 Device_Resistance / Device_Variation / Device_SAF，导致 measured device patch 可能被覆盖回 nominal preset。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "cross-ws2-firstlook-observed",
+      "scope": "report",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_firstlook_20260417/cross_scenario_observed",
+      "status": "invalidated",
+      "title": "Cross-scenario 报告依赖已失效 measured runs",
+      "reason": "该 cross-scenario 报告建立在已失效的 measured matrix runs 之上，因此不能再作为 measured-in-the-loop 结论证据。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "cross-ws2-firstlook-robust",
+      "scope": "report",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_firstlook_20260417/cross_scenario_robustness",
+      "status": "invalidated",
+      "title": "Cross-scenario 报告依赖已失效 measured runs",
+      "reason": "该 cross-scenario 报告建立在已失效的 measured matrix runs 之上，因此不能再作为 measured-in-the-loop 结论证据。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "cross-ws2-efrontier-observed",
+      "scope": "report",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_e_frontier_20260417_173445/cross_scenario_observed",
+      "status": "invalidated",
+      "title": "Cross-scenario 报告依赖已失效 measured runs",
+      "reason": "该 cross-scenario 报告建立在已失效的 measured matrix runs 之上，因此不能再作为 measured-in-the-loop 结论证据。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "cross-ws2-efrontier-robust",
+      "scope": "report",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_e_frontier_20260417_173445/cross_scenario_robustness",
+      "status": "invalidated",
+      "title": "Cross-scenario 报告依赖已失效 measured runs",
+      "reason": "该 cross-scenario 报告建立在已失效的 measured matrix runs 之上，因此不能再作为 measured-in-the-loop 结论证据。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "cross-ws2-a12-observed",
+      "scope": "report",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_a12_adc4_20260417_202725/cross_scenario_observed",
+      "status": "invalidated",
+      "title": "Cross-scenario 报告依赖已失效 measured runs",
+      "reason": "该 cross-scenario 报告建立在已失效的 measured matrix runs 之上，因此不能再作为 measured-in-the-loop 结论证据。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    },
+    {
+      "id": "cross-ws2-a12-robust",
+      "scope": "report",
+      "match_type": "exact",
+      "relpath": "matrix_runs/ws2_a12_adc4_20260417_202725/cross_scenario_robustness",
+      "status": "invalidated",
+      "title": "Cross-scenario 报告依赖已失效 measured runs",
+      "reason": "该 cross-scenario 报告建立在已失效的 measured matrix runs 之上，因此不能再作为 measured-in-the-loop 结论证据。",
+      "action": "exclude_from_aggregate",
+      "evidence_doc": "docs/simulator/measured_preset_mapping_audit_20260417.md"
+    }
+  ]
+}

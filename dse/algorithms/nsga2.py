@@ -108,6 +108,7 @@ def run(cfg: RunConfig) -> DSERunResult:
     X_eval: List[List[int]] = []
     Y_eval: List[Tuple[float, ...]] = []
     records: List[DSERecord] = []
+    scenario_patch = cfg.scenario.get("config_patch") or None
 
     pool = list(range(len(all_points)))
     random.shuffle(pool)
@@ -116,7 +117,7 @@ def run(cfg: RunConfig) -> DSERunResult:
     for t in range(n_init):
         x = all_points[pool[t]]
         cfg_vals = decode(x)
-        temp_path = write_temp_config(cfg.base_config_path, cfg_vals)
+        temp_path = write_temp_config(cfg.base_config_path, cfg_vals, post_patch=scenario_patch)
         try:
             res = evaluate_config(
                 sim_config_path=temp_path,
@@ -220,7 +221,7 @@ def run(cfg: RunConfig) -> DSERunResult:
         n_eval = min(evals_per_gen, len(nd_candidates))
         for x in nd_candidates[:n_eval]:
             cfg_vals = decode(x)
-            temp_path = write_temp_config(cfg.base_config_path, cfg_vals)
+            temp_path = write_temp_config(cfg.base_config_path, cfg_vals, post_patch=scenario_patch)
             try:
                 res = evaluate_config(
                     sim_config_path=temp_path,

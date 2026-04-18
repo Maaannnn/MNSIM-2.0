@@ -360,7 +360,22 @@ def _apply_xbar_size(parser: cp.ConfigParser, size: Tuple[int, int]) -> None:
 # Config management
 # ---------------------------------------------------------------------------
 
-def write_temp_config(base_config: str, config_values: Dict[str, Any]) -> str:
+def _apply_config_patch(parser: cp.ConfigParser, config_patch: Optional[Dict[str, Dict[str, Any]]]) -> None:
+    if not config_patch:
+        return
+    for section, kvs in config_patch.items():
+        if not parser.has_section(section):
+            parser.add_section(section)
+        for key, value in kvs.items():
+            parser.set(section, key, str(value))
+
+
+def write_temp_config(
+    base_config: str,
+    config_values: Dict[str, Any],
+    *,
+    post_patch: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> str:
     """
     Write a temporary .ini file with overridden SPACE parameters.
     Caller is responsible for deleting the returned path.
@@ -376,6 +391,9 @@ def write_temp_config(base_config: str, config_values: Dict[str, Any]) -> str:
             continue
         meta = SPACE[dim]
         parser.set(meta["section"], meta["key"], _to_ini_value(v))
+    # Re-apply scenario patches after design-space overrides so measured device
+    # parameters are not clobbered by nominal preset expansion.
+    _apply_config_patch(parser, post_patch)
     fd, path = tempfile.mkstemp(prefix="mnsim_dse_", suffix=".ini")
     os.close(fd)
     with open(path, "w", encoding="utf-8") as f:

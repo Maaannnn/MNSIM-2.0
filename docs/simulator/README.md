@@ -6,6 +6,7 @@
 
 - [`MNSIM_group_meeting_report.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/MNSIM_group_meeting_report.md)：组会汇报底稿
 - [`mnsim_fidelity_gap_review.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/mnsim_fidelity_gap_review.md)：当前 `MNSIM` 的保真度短板审视
+- [`measured_preset_mapping_audit_20260417.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/measured_preset_mapping_audit_20260417.md)：`measured preset` 映射、异常统计与执行链覆盖问题审计
 - [`neurosim_lessons_for_mnsim.md`](/Users/bytedance/workspace/MNSIM-2.0/docs/simulator/neurosim_lessons_for_mnsim.md)：从 `NeuroSim` 吸收可迁移机制的整理
 
 补充参考：

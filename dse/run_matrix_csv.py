@@ -152,7 +152,11 @@ def _write_selected_manifest(path: Path, rows: List[Dict[str, str]]) -> None:
 def _run_one_point(job: Dict[str, Any]) -> Dict[str, Any]:
     apply_space_profile(str(job["space_profile"]))
     cfg_vals = dict(job["config_values"])
-    temp_path = write_temp_config(str(job["base_config"]), cfg_vals)
+    temp_path = write_temp_config(
+        str(job["base_config"]),
+        cfg_vals,
+        post_patch=job.get("scenario_patch"),
+    )
     try:
         res = evaluate_config(
             sim_config_path=temp_path,
@@ -380,6 +384,7 @@ def main() -> None:
     print(f"[matrix] workers       : {max_workers}")
 
     jobs: List[Dict[str, Any]] = []
+    scenario_patch = scenario.get("config_patch") or None
     for source_index, row in enumerate(rows, start=1):
         jobs.append(
             {
@@ -399,6 +404,7 @@ def main() -> None:
                 "max_acc_batches": args.max_acc_batches,
                 "space_profile": args.space_profile,
                 "noise_seed": args.noise_seed_base + source_index - 1,
+                "scenario_patch": scenario_patch,
             }
         )
 

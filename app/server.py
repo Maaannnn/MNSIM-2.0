@@ -50,6 +50,7 @@ from app.backend.shared import (
     table_columns,
 )
 from app.backend.sync import sync_data
+from app.backend.validity import annotate_run_payload
 
 app = Flask(__name__, static_folder=str(APP_DIR / "static"))
 
@@ -80,18 +81,43 @@ def init_db():
 @app.route("/api/stats")
 def api_stats():
     db = get_db()
+    run_rows = [
+        annotate_run_payload(dict(row))
+        for row in db.execute("SELECT id, trial_dir, status FROM opt_runs").fetchall()
+    ]
+    valid_run_ids = [int(row["id"]) for row in run_rows if not row.get("is_invalidated")]
+    invalidated_runs = sum(1 for row in run_rows if row.get("is_invalidated"))
+
+    def _count_for_runs(sql: str) -> int:
+        if not valid_run_ids:
+            return 0
+        placeholders = ",".join("?" for _ in valid_run_ids)
+        return db.execute(sql.format(placeholders=placeholders), valid_run_ids).fetchone()[0]
+
+    def _distinct_for_runs(column: str) -> List[Any]:
+        if not valid_run_ids:
+            return []
+        placeholders = ",".join("?" for _ in valid_run_ids)
+        rows = db.execute(
+            f"SELECT DISTINCT {column} FROM opt_runs WHERE id IN ({placeholders}) AND {column}!='' ORDER BY {column}",
+            valid_run_ids,
+        ).fetchall()
+        return [row[0] for row in rows]
+
     return jsonify({
-        "total_runs":      db.execute("SELECT COUNT(*) FROM opt_runs").fetchone()[0],
-        "total_records":   db.execute("SELECT COUNT(*) FROM run_evaluations").fetchone()[0],
-        "total_pareto":    db.execute("SELECT COUNT(*) FROM run_evaluations WHERE is_pareto=1").fetchone()[0],
-        "total_design_points": db.execute("SELECT COUNT(*) FROM design_points").fetchone()[0],
-        "total_measurements":  db.execute("SELECT COUNT(*) FROM measurements").fetchone()[0],
-        "algos":  [r[0] for r in db.execute(
-            "SELECT DISTINCT algo FROM opt_runs WHERE algo!='' ORDER BY algo")],
-        "spaces": [r[0] for r in db.execute(
-            "SELECT DISTINCT space_profile FROM opt_runs WHERE space_profile!='' ORDER BY space_profile")],
-        "groups": [r[0] for r in db.execute(
-            "SELECT DISTINCT run_group FROM opt_runs ORDER BY run_group")],
+        "total_runs": len(valid_run_ids),
+        "invalidated_runs": invalidated_runs,
+        "total_runs_raw": len(run_rows),
+        "total_records": _count_for_runs("SELECT COUNT(*) FROM run_evaluations WHERE run_id IN ({placeholders})"),
+        "total_pareto": _count_for_runs("SELECT COUNT(*) FROM run_evaluations WHERE is_pareto=1 AND run_id IN ({placeholders})"),
+        "total_design_points": _count_for_runs(
+            "SELECT COUNT(DISTINCT m.design_point_id) FROM run_evaluations re "
+            "JOIN measurements m ON re.measurement_id = m.id WHERE re.run_id IN ({placeholders})"
+        ),
+        "total_measurements": _count_for_runs("SELECT COUNT(DISTINCT measurement_id) FROM run_evaluations WHERE run_id IN ({placeholders})"),
+        "algos": _distinct_for_runs("algo"),
+        "spaces": _distinct_for_runs("space_profile"),
+        "groups": _distinct_for_runs("run_group"),
         "sim_configs": [dict(r) for r in db.execute(
             "SELECT id, name, content_hash, created_at FROM sim_configs ORDER BY id")],
     })
@@ -121,6 +147,7 @@ def api_runs():
     sql += " ORDER BY r.started_at DESC, r.id DESC"
 
     rows = db.execute(sql, params).fetchall()
+    requested_status = (request.args.get("status") or "").strip()
     payload = []
     for row in rows:
         item = dict(row)
@@ -132,6 +159,9 @@ def api_runs():
         item["contract_version"] = rc.get("contract_version")
         item["scenario_name"] = scenario.get("name") or ""
         item["scenario_kind"] = scenario.get("kind") or ""
+        annotate_run_payload(item)
+        if requested_status and item.get("status") != requested_status:
+            continue
         payload.append(item)
     return jsonify(payload)
 
@@ -155,6 +185,7 @@ def api_run_detail(run_id):
     if not run:
         return jsonify({"error": "not found"}), 404
     d = dict(run)
+    annotate_run_payload(d)
     d["run_config"] = json.loads(d.pop("run_config_json") or "{}")
     d["hv_reference_point"] = json.loads(d["hv_reference_point"] or "null")
     d["experiment_manifest"] = load_trial_manifest(Path(d["trial_dir"]))
@@ -205,6 +236,7 @@ def api_record_effective_config(record_id: int):
                sc.name AS sim_config_name,
                sc.content_hash,
                sc.content AS base_config_content,
+               r.run_config_json,
                dp.id AS design_point_id,
                dp.params_json
         FROM run_evaluations re
@@ -220,7 +252,9 @@ def api_record_effective_config(record_id: int):
 
     data = dict(row)
     params = json.loads(data.pop("params_json") or "{}")
-    effective = derive_effective_config(data.pop("base_config_content") or "", params)
+    run_config = json.loads(data.pop("run_config_json") or "{}")
+    scenario_patch = (run_config.get("scenario") or {}).get("config_patch") or None
+    effective = derive_effective_config(data.pop("base_config_content") or "", params, scenario_patch=scenario_patch)
 
     return jsonify({
         **data,
@@ -243,13 +277,26 @@ def api_run_analysis(run_id: int):
 def api_global_analysis():
     db = get_db()
     where, params = build_run_filter_clause(request.args)
-    sql = "SELECT r.id, r.run_group, r.algo, r.seed, r.space_profile, r.source_type, r.status FROM opt_runs r"
+    sql = "SELECT r.id, r.trial_dir, r.run_group, r.algo, r.seed, r.space_profile, r.source_type, r.status FROM opt_runs r"
     if where:
         sql += " WHERE " + " AND ".join(where)
     sql += " ORDER BY r.started_at DESC, r.id DESC"
-    run_rows = db.execute(sql, params).fetchall()
-    run_dicts = [dict(row) for row in run_rows]
-    run_ids = [int(row["id"]) for row in run_rows]
+    raw_run_rows = db.execute(sql, params).fetchall()
+    requested_status = (request.args.get("status") or "").strip()
+    annotated_runs = [annotate_run_payload(dict(row)) for row in raw_run_rows]
+    if requested_status:
+        annotated_runs = [row for row in annotated_runs if row.get("status") == requested_status]
+
+    # Default global analysis excludes invalidated historical runs. The only
+    # explicit opt-in is `status=invalidated`, which is useful for forensic
+    # review of broken experiments after they have been marked.
+    if requested_status == "invalidated":
+        excluded_invalidated = 0
+    else:
+        excluded_invalidated = sum(1 for row in annotated_runs if row.get("is_invalidated"))
+        annotated_runs = [row for row in annotated_runs if not row.get("is_invalidated")]
+    run_dicts = annotated_runs
+    run_ids = [int(row["id"]) for row in run_dicts]
     rows = analysis_base_rows_for_runs(db, run_ids)
     payload = build_analysis_payload({
         "mode": "global",
@@ -258,14 +305,16 @@ def api_global_analysis():
             "space": request.args.get("space") or "",
             "group": request.args.get("group") or "",
             "source": request.args.get("source") or "",
-            "status": request.args.get("status") or "",
+            "status": requested_status,
             "q": (request.args.get("q") or "").strip(),
         },
-        "matched_runs": len(run_rows),
+        "matched_runs": len(run_dicts),
+        "excluded_invalidated_runs": excluded_invalidated,
         "run_ids": run_ids,
         "runs": run_dicts,
     }, rows)
-    payload["summary"]["matched_runs"] = len(run_rows)
+    payload["summary"]["matched_runs"] = len(run_dicts)
+    payload["summary"]["excluded_invalidated_runs"] = excluded_invalidated
     return jsonify(payload)
 
 
@@ -325,7 +374,13 @@ def api_db_table_rows(table_name: str):
                     row_dict[col] = json.loads(row_dict[col])
                 except Exception:
                     pass
+        if table_name == "opt_runs":
+            annotate_run_payload(row_dict)
         parsed_rows.append(row_dict)
+    if table_name == "opt_runs":
+        for extra_col in ("artifact_relpath", "raw_status", "status", "is_invalidated", "invalidation"):
+            if extra_col not in columns:
+                columns.append(extra_col)
 
     return jsonify({
         "table": table_name,

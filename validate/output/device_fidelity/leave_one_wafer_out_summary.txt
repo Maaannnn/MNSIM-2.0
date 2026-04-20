@@ -1,0 +1,30 @@
+Device Model Fidelity Validation
+============================================================
+
+Wafer directory: /Users/bytedance/workspace/MNSIM-2.0/test_data/2T1R_cycle
+Wafers processed: 15
+Rows per wafer cap: 50000
+Synthetic eval samples per state: 5000
+
+Models compared:
+- mnsim_symmetric_fit: single fitted Device_Variation shared by HRS and LRS
+- pim_sim_asymmetric_fit: separate fitted HRS/LRS CV values
+
+Primary metric:
+- mean state CV absolute error: 14.5075 -> 1.5299 pct-pts (89.45% reduction)
+
+Secondary metric:
+- mean normalized Wasserstein distance: 11.6890% -> 3.7919% (67.56% reduction)
+
+State breakdown:
+- HRS CV absolute error: 14.5143 -> 2.5998 pct-pts (82.09% reduction)
+- HRS normalized Wasserstein: 11.3766% -> 6.7435% (40.73% reduction)
+- LRS CV absolute error: 14.5007 -> 0.4601 pct-pts (96.83% reduction)
+- LRS normalized Wasserstein: 12.0013% -> 0.8403% (93.00% reduction)
+
+Boundary conditions:
+- Nominal resistance is fixed to the held-out wafer mean to isolate variation-model fidelity.
+- Robust IQR filtering excludes SAF-heavy outlier tails from the primary metric.
+- This validates our measured-device path only; it is not evidence about external literature chips.
+
+Detailed rows: /Users/bytedance/workspace/MNSIM-2.0/validate/output/device_fidelity/leave_one_wafer_out.csv

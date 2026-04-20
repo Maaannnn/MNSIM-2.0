@@ -1,2 +1,0 @@
-algo,seed,eval_index,phase,latency_ns,energy_nj,area_um2,power_w,accuracy,elapsed_s,is_pareto,rram_preset,xbar_size,adc_choice,dac_num,xbar_polarity,sub_position,group_num,pe_num,tile_connection,inter_tile_bw,extra_json
-matrixcsv,11,1,matrix_A,4430024.989793121,9452907.30945102,2426702222.653233,429.6055257914888,0.9375,73.32489109039307,1,P0,128x128,4,32,2,1,1,2x2,2,80,"{""matrix_name"": ""A"", ""matrix_point_id"": ""A_001"", ""matrix_purpose"": ""主迁移矩阵：观察器件退化下的最优设计迁移"", ""source_index"": 1, ""noise_seed"": 11000, ""accuracy_violation"": 0.0}"

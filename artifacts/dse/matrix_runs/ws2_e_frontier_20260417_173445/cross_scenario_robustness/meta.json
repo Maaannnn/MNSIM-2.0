@@ -1,6 +1,0 @@
-{
-  "scenario_root": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_e_frontier_20260417_173445",
-  "scenario_count": 2,
-  "candidate_count": 4,
-  "use_robustness_summary": true
-}

@@ -46,6 +46,16 @@ from pim_sim.device.calibrate import (
 from pim_sim.accuracy.weight_inject import pim_sim_weight_inject
 from pim_sim.array.ir_drop import IRDropModel
 from pim_sim.array.adc_model import WaldenADCModel
+from pim_sim.ppa.chip_profiles import ChipPPAProfile, get_chip_profile
+from pim_sim.rram_profile import (
+    EvidenceField,
+    MNSIMBaselineSpec,
+    PimSimOverlaySpec,
+    UnifiedRRAMProfile,
+    build_literature_profile,
+    build_measured_profile,
+    load_unified_profile,
+)
 
 __all__ = [
     "SymmetricGaussianModel",
@@ -56,4 +66,13 @@ __all__ = [
     "pim_sim_weight_inject",
     "IRDropModel",
     "WaldenADCModel",
+    "ChipPPAProfile",
+    "get_chip_profile",
+    "EvidenceField",
+    "MNSIMBaselineSpec",
+    "PimSimOverlaySpec",
+    "UnifiedRRAMProfile",
+    "build_literature_profile",
+    "build_measured_profile",
+    "load_unified_profile",
 ]

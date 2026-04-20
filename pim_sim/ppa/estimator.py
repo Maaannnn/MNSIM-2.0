@@ -44,7 +44,8 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from pim_sim.array.adc_model import WaldenADCModel, mnsim_adc_to_walden, _MNSIM_ADC_TABLE
+from MNSIM.Hardware_Model.ADC import ADC as MNSIMADC
+from pim_sim.array.adc_model import WaldenADCModel, _MNSIM_ADC_TABLE
 
 
 @dataclass
@@ -93,27 +94,17 @@ def adc_ppa_delta(
     -------
     PPADelta with signed differences (pim_sim - MNSIM).
     """
-    cfg = cp.ConfigParser()
-    cfg.read(sim_config_path, encoding="UTF-8")
-    adc_choice = int(cfg.get("Interface level", "ADC_Choice"))
-
-    # MNSIM baseline
-    # Energy [nJ] = latency [ns] × power [W]
-    # (ns × W = 1e-9 s × W = 1e-9 J = 1 nJ, so no extra factor needed)
-    if adc_choice == -1:
-        # User-defined: read directly from config
-        mnsim_power = float(cfg.get("Interface level", "ADC_Power"))
-        mnsim_area = float(cfg.get("Interface level", "ADC_Area"))
-        mnsim_precision = int(cfg.get("Interface level", "ADC_Precision"))
-        mnsim_rate = float(cfg.get("Interface level", "ADC_Sample_Rate"))
-        mnsim_latency = (mnsim_precision + 2) / mnsim_rate
-        mnsim_energy = mnsim_latency * mnsim_power   # nJ = ns × W
-    else:
-        baseline = mnsim_adc_to_walden(adc_choice)
-        mnsim_power = baseline.power_w()
-        mnsim_area = baseline.area_um2()
-        mnsim_latency = baseline.latency_ns()
-        mnsim_energy = mnsim_latency * mnsim_power   # nJ = ns × W
+    # MNSIM baseline from the actual hardware model implementation.
+    # This is important for ADC_Choice=9 ("Qi Liu"), whose latency path
+    # is special-cased in MNSIM and does not follow the generic (bits+2)/fs formula.
+    baseline_adc = MNSIMADC(sim_config_path)
+    baseline_adc.calculate_ADC_area()
+    baseline_adc.calculate_ADC_power()
+    baseline_adc.calculate_ADC_latency()
+    mnsim_power = baseline_adc.ADC_power
+    mnsim_area = baseline_adc.ADC_area
+    mnsim_latency = baseline_adc.ADC_latency
+    mnsim_energy = mnsim_latency * mnsim_power   # nJ = ns × W
 
     # pim_sim parametric
     pim_adc = WaldenADCModel(enob=target_enob, sample_rate_gsps=sample_rate_gsps)

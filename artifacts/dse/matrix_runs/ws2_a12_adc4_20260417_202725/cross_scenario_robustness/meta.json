@@ -1,6 +1,0 @@
-{
-  "scenario_root": "/Users/bytedance/workspace/MNSIM-2.0/artifacts/dse/matrix_runs/ws2_a12_adc4_20260417_202725",
-  "scenario_count": 2,
-  "candidate_count": 4,
-  "use_robustness_summary": true
-}

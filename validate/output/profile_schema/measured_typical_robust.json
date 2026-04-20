@@ -1,0 +1,47 @@
+{
+  "label": "Measured preset typical_robust",
+  "mnsim_baseline": {
+    "config_path": null,
+    "device_resistance_ohm": {
+      "note": "Current measured preset registry stores variation asymmetry only; nominal HRS/LRS must come from the paired SimConfig or wafer summary.",
+      "provenance": "missing",
+      "value": null
+    },
+    "device_variation_pct": {
+      "note": "Keep an MNSIM-compatible symmetric 1% comparator unless an experiment explicitly redefines the baseline.",
+      "provenance": "baseline_reference",
+      "value": 1.0
+    },
+    "saf_pct": {
+      "note": "SAF remains excluded from the primary measured-device claim in the current repo.",
+      "provenance": "proxy_missing",
+      "value": null
+    }
+  },
+  "note": "Unified measured profile. This keeps the baseline comparator and pim_sim enhancement under one provenance-preserving object.",
+  "pimsim_overlay": {
+    "current_dependent_energy_scale": {
+      "note": "No measured chip-level current-dependent PPA scale is registered for measured-device presets.",
+      "provenance": "none",
+      "value": null
+    },
+    "device_model": "asymmetric_gaussian",
+    "extra_output_buffer_kb": {
+      "note": "Measured-device presets do not imply a macro-boundary buffer overlay.",
+      "provenance": "none",
+      "value": null
+    },
+    "note": "Unified measured-device profile. The same schema can be consumed by accuracy-path and future PPA-path translators.",
+    "state_cv_pct": {
+      "note": "Measured HRS/LRS CV pair used by pim_sim asymmetric device model.",
+      "provenance": "measured",
+      "value": [
+        31.5,
+        3.1
+      ]
+    }
+  },
+  "profile_id": "measured::typical_robust",
+  "source_kind": "measured",
+  "source_ref": "test_data calibrated preset: typical_robust"
+}

@@ -1,0 +1,47 @@
+{
+  "label": "ISSCC 2020 Paper 33.2 RRAM macro",
+  "mnsim_baseline": {
+    "config_path": null,
+    "device_resistance_ohm": {
+      "note": "Fig. 33.2.S1-derived approximate HRS/LRS pair.",
+      "provenance": "paper_backed",
+      "value": [
+        20000000.0,
+        60000.0
+      ]
+    },
+    "device_variation_pct": {
+      "note": "MNSIM-compatible baseline comparator, not chip-measured HRS/LRS asymmetry.",
+      "provenance": "baseline_proxy",
+      "value": 1.0
+    },
+    "saf_pct": {
+      "note": "No paper-backed SAF pair registered for this chip.",
+      "provenance": "missing",
+      "value": null
+    }
+  },
+  "note": "Unified literature-anchor profile. Feed this object into baseline and pim_sim translators instead of ad-hoc per-script assumptions.",
+  "pimsim_overlay": {
+    "current_dependent_energy_scale": {
+      "note": "Applied only to current-dependent ADC/xbar energy when available.",
+      "provenance": "paper_backed",
+      "value": 0.5263157894736842
+    },
+    "device_model": "none",
+    "extra_output_buffer_kb": {
+      "note": "Macro-boundary output buffer overlay from published block diagram when available.",
+      "provenance": "paper_backed",
+      "value": 4.0
+    },
+    "note": "Chip-specific ppa profile for Q. Liu ISSCC 2020 33.2. The baseline already uses MNSIM's dedicated Qi Liu ADC implementation via ADC_Choice=9 and a paper-backed Device_Resistance pair. The additional pim_sim correction is limited to two public-data-backed effects: a 4KB output-buffer macro-boundary area overlay from Fig. 33.2.2 and a 1.9x SW-2T2R current-suppression correction applied only to current-dependent ADC/xbar energy.",
+    "state_cv_pct": {
+      "note": "Paper does not provide a registered asymmetric HRS/LRS CV pair.",
+      "provenance": "missing",
+      "value": null
+    }
+  },
+  "profile_id": "rram_isscc2020_33p2",
+  "source_kind": "literature",
+  "source_ref": "ISSCC 2020 Paper 33.2 / MNSIM literature anchor"
+}

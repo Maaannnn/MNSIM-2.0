@@ -272,6 +272,58 @@ SPACE_PROFILES: Dict[str, Dict[str, Dict[str, Any]]] = {
             "values": [40, 80],
         },
     },
+    # Frozen canonical space for clean re-run experiments (2026-04-27).
+    # Mirror of dse.space_catalog.SPACE_PROFILES["clean_v1"]. Keep in sync.
+    "clean_v1": {
+        "rram_preset": {
+            "values": ["P0", "P1", "P2", "P3"],
+        },
+        "xbar_size": {
+            "section": "Crossbar level",
+            "key": "Xbar_Size",
+            "values": [(128, 128), (256, 256), (512, 512)],
+        },
+        "adc_choice": {
+            "section": "Interface level",
+            "key": "ADC_Choice",
+            "values": [4, 6, 7],
+        },
+        "dac_num": {
+            "section": "Process element level",
+            "key": "DAC_Num",
+            "values": [32, 128],
+        },
+        "xbar_polarity": {
+            "section": "Process element level",
+            "key": "Xbar_Polarity",
+            "values": [1, 2],
+        },
+        "sub_position": {
+            "section": "Process element level",
+            "key": "Sub_Position",
+            "values": [0],
+        },
+        "group_num": {
+            "section": "Process element level",
+            "key": "Group_Num",
+            "values": [1],
+        },
+        "pe_num": {
+            "section": "Tile level",
+            "key": "PE_Num",
+            "values": [(2, 2), (4, 4)],
+        },
+        "tile_connection": {
+            "section": "Architecture level",
+            "key": "Tile_Connection",
+            "values": [2],
+        },
+        "inter_tile_bw": {
+            "section": "Tile level",
+            "key": "Inter_Tile_Bandwidth",
+            "values": [80],
+        },
+    },
 }
 
 SPACE: Dict[str, Dict[str, Any]] = {}

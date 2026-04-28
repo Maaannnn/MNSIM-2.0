@@ -38,41 +38,31 @@ from pim_sim.device.model import (
     SymmetricGaussianModel,
     AsymmetricGaussianModel,
     EmpiricalDeviceModel,
+    PartialSumADCNoiseModel,
 )
 from pim_sim.device.calibrate import (
     calibrate_from_measured_presets_csv,
     calibrate_from_wafer_csv,
 )
+from pim_sim.device.factory import device_model_from_variation
 from pim_sim.accuracy.weight_inject import pim_sim_weight_inject
 from pim_sim.array.ir_drop import IRDropModel
 from pim_sim.array.adc_model import WaldenADCModel
 from pim_sim.ppa.chip_profiles import ChipPPAProfile, get_chip_profile
-from pim_sim.rram_profile import (
-    EvidenceField,
-    MNSIMBaselineSpec,
-    PimSimOverlaySpec,
-    UnifiedRRAMProfile,
-    build_literature_profile,
-    build_measured_profile,
-    load_unified_profile,
-)
+from pim_sim.ppa.chip_specific_overlays import FittedConstant
 
 __all__ = [
     "SymmetricGaussianModel",
     "AsymmetricGaussianModel",
     "EmpiricalDeviceModel",
+    "PartialSumADCNoiseModel",
     "calibrate_from_measured_presets_csv",
     "calibrate_from_wafer_csv",
+    "device_model_from_variation",
     "pim_sim_weight_inject",
     "IRDropModel",
     "WaldenADCModel",
     "ChipPPAProfile",
+    "FittedConstant",
     "get_chip_profile",
-    "EvidenceField",
-    "MNSIMBaselineSpec",
-    "PimSimOverlaySpec",
-    "UnifiedRRAMProfile",
-    "build_literature_profile",
-    "build_measured_profile",
-    "load_unified_profile",
 ]

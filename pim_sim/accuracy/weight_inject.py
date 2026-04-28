@@ -6,6 +6,36 @@ Drop-in replacement for MNSIM's ``Weight_update.weight_update`` that adds:
   1. Asymmetric per-state device noise  (DeviceModel, default: AsymmetricGaussianModel)
   2. First-order IR-drop correction     (IRDropModel, optional)
 
+MNSIM variation code paths — what we hook and what we don't
+-----------------------------------------------------------
+MNSIM upstream has **two** independently-written variation implementations,
+and they disagree on both distribution shape and scale semantics:
+
+  1. ``MNSIM/Accuracy_Model/Weight_update.py:41``
+       np.random.normal(loc=0, scale=R_j * variation / 100)
+     — Gaussian noise, σ/μ = variation%. **This is the only path reachable
+     from main.py** and from dse/core.evaluate_config().
+
+  2. ``MNSIM/Accuracy_Model/Crossbar_accuracy.py:74``
+       random.uniform(R*(1-0.01*variation), R*(1+0.01*variation))
+     — Uniform noise, variation% is the half-width. **Orphan module** —
+     grep confirms no other MNSIM source file imports Crossbar_accuracy.
+
+Git provenance confirms the mismatch is upstream, not from our fork:
+  - Crossbar_accuracy.py uniform path: 2019-07-07 commit 7777e7c (QiuKZ)
+  - Weight_update.py Gaussian path:    2021-06-11 + 2021-08-09 commits
+                                       04b3ff5 + 607c43f (Zhu-Zhenhua,
+                                       both titled "fix variation bugs")
+In other words, upstream added the Gaussian path in 2021 but never ported
+the orphan 2019 uniform implementation. Under MNSIM's byte-identical
+``Hardware_Model/`` contract (docs/simulator/mnsim_upstream_diff.md) we do
+not patch the orphan; we simply document that it is unreachable from the
+evaluation entry points pim_sim cares about.
+
+Consequence for pim_sim: hooking Weight_update is sufficient. If upstream
+ever wires Crossbar_accuracy.py into the main path, ``pim_sim_model`` will
+need a second injection point — flag that change here when it happens.
+
 Signature compatibility
 -----------------------
 MNSIM call site in dse/core.py (line ~529):

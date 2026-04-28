@@ -25,6 +25,8 @@ test_data/
 artifacts/dse/testdata_runs/
 artifacts/dse/matrix_runs/measured_run_*/
 artifacts/dse/search_runs/*/reports/
+# Third-party data (cloned separately, see docs/20_simulator/02_adc_library/)
+artifacts/external/
 # ---- General OS/editor junk ----
 .DS_Store
 Thumbs.db

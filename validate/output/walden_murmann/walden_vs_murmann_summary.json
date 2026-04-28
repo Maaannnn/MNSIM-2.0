@@ -1,0 +1,37 @@
+{
+  "n_entries": 438,
+  "silicon_fomw_fj": {
+    "n": 438,
+    "median": 137.8617696000947,
+    "p25": 26.18951755146126,
+    "p75": 976.7208371362788,
+    "geomean": 169.5262302190938
+  },
+  "silicon_foma_um2": {
+    "n": 412,
+    "median": 122.8055013017331,
+    "p25": 8.284322917587511,
+    "p75": 2643.2370405303645,
+    "geomean": 116.27492432078263
+  },
+  "pim_sim_vs_silicon_power": {
+    "n": 438,
+    "r2_log10": 0.27734804266241253,
+    "mape_pct": 155.6054836285429,
+    "median_pred_over_meas": 0.14515096254876822
+  },
+  "pim_sim_vs_silicon_area": {
+    "n": 412,
+    "r2_log10": -4.6746898579301055,
+    "mape_pct": 72462.1772915718,
+    "median_pred_over_meas": 0.06514417534307246
+  },
+  "pim_sim_defaults": {
+    "fom_walden_fj": 20.0,
+    "fom_area_um2": 8.0
+  },
+  "pim_sim_default_offsets": {
+    "fomw_default_over_silicon_median": 0.14507285129166267,
+    "foma_default_over_silicon_median": 0.06514366144187629
+  }
+}

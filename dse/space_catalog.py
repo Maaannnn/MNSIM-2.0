@@ -9,6 +9,8 @@ runtime stack from dse.core.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any, Dict
 
 
@@ -252,4 +254,75 @@ SPACE_PROFILES: Dict[str, Dict[str, Dict[str, Any]]] = {
             "values": [40, 80],
         },
     },
+    # Frozen canonical space for clean re-run experiments (2026-04-27).
+    # Any change requires bumping the version suffix; old data is then
+    # auto-detected as different SPACE via space_hash().
+    "clean_v1": {
+        "rram_preset": {
+            "values": ["P0", "P1", "P2", "P3"],
+        },
+        "xbar_size": {
+            "section": "Crossbar level",
+            "key": "Xbar_Size",
+            "values": [(128, 128), (256, 256), (512, 512)],
+        },
+        "adc_choice": {
+            "section": "Interface level",
+            "key": "ADC_Choice",
+            "values": [4, 6, 7],
+        },
+        "dac_num": {
+            "section": "Process element level",
+            "key": "DAC_Num",
+            "values": [32, 128],
+        },
+        "xbar_polarity": {
+            "section": "Process element level",
+            "key": "Xbar_Polarity",
+            "values": [1, 2],
+        },
+        "sub_position": {
+            "section": "Process element level",
+            "key": "Sub_Position",
+            "values": [0],
+        },
+        "group_num": {
+            "section": "Process element level",
+            "key": "Group_Num",
+            "values": [1],
+        },
+        "pe_num": {
+            "section": "Tile level",
+            "key": "PE_Num",
+            "values": [(2, 2), (4, 4)],
+        },
+        "tile_connection": {
+            "section": "Architecture level",
+            "key": "Tile_Connection",
+            "values": [2],
+        },
+        "inter_tile_bw": {
+            "section": "Tile level",
+            "key": "Inter_Tile_Bandwidth",
+            "values": [80],
+        },
+    },
 }
+
+
+def space_hash(profile_name: str) -> str:
+    """SHA-256 (truncated) of a SPACE_PROFILES entry.
+
+    Embed in run manifests so historical data with a different SPACE
+    definition is auto-detectable instead of silently mixed.
+    """
+    space = SPACE_PROFILES[profile_name]
+    canonical = json.dumps(space, sort_keys=True, default=str)
+    return hashlib.sha256(canonical.encode()).hexdigest()[:16]
+
+
+def space_size(profile_name: str) -> int:
+    n = 1
+    for d in SPACE_PROFILES[profile_name].values():
+        n *= len(d["values"])
+    return n

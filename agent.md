@@ -21,6 +21,94 @@
   - 穷举与搜索：`dse/run_matrix_csv.py`、`dse/run_dse.py`；脚本封装见 `artifacts/dse/scripts/*.sh`。
   - measured 流水线：`artifacts/dse/scripts/run_testdata_analysis.sh`、`dse/extras/run_measured_matrix.py`。
   - 可视化/数据库：`app/server.py`（本地 SQLite `app/dse_records.db`）。
+- Chip 描述层：`mnsim_adapter/`（四层 ChipProfile + provenance 标注 + 两个确定性翻译器）。详见 `docs/simulator/chip_profile_schema.md`。
+
+## mnsim_adapter：结构化的 Chip 描述层（新）
+
+`mnsim_adapter` 把 MNSIM 的 `SimConfig.ini` 从扁平 flat file 抽象成四层 frozen dataclass，每个字段都携带 `Provenance(kind, source, note)`——解决 INI 无法区分 **physical / design / empirical / fitted / proxy / missing** 的问题。
+
+- **入口**：`from mnsim_adapter import load_chip, load_measured_device, available_chips, available_measured_presets`
+- **两个翻译器**：
+  - `chip.to_mnsim_ini(path)` → 生成带 provenance 注释的 MNSIM-compatible INI；经 `ProcessElement` 验证与 `configs/SimConfig_issc2020_33p2.ini` 逐位一致（3.3914 mm² / 53.79 ns / 74.65 TOPS/W）。
+  - `chip.to_pim_sim_overlay()` → 返回 `dse.core.evaluate_config` 的 kwargs（`pim_sim_model`, `ir_drop_model`, `adc_model`, `chip_profile_id`）。
+- **消融辅助**：`chip.with_adc(...)`, `chip.with_dac(...)`, `chip.with_variation(...)`, `chip.with_device/with_circuit/with_architecture(...)` 都返回新 dataclass，不改原对象。
+- **内置芯片**：`rram_isscc2020_33p2`（ISSCC 2020 Paper 33.2 Liu 等 RRAM macro）+ 20 个 wafer measured preset（由 `pim_sim/device/calibrated_presets.py` 包装）。
+- **已接入**：`validate/literature_anchor_baseline.py`、`validate/literature_anchor_ablation.py` 通过 `resolve_config_path(chip_id)` 生成 INI，不再依赖 `configs/SimConfig_*.ini`。
+
+新增实验时的推荐工作流：
+1. 在 `mnsim_adapter/registry.py` 里注册新 ChipProfile（literature 或 synthetic），每字段写明 `Provenance`。
+2. 用 `chip.validate()` 做跨层一致性检查。
+3. 用 `chip.to_mnsim_ini(path)` 或 `chip.to_pim_sim_overlay()` 喂下游。
+4. 需要消融时用 `with_*` 构造变体；所有 variant 共享同一个 provenance 链，便于论文 supplement 自动导出。
+
+### 2026-04-21 修复：MNSIM variation 代码路径 + Layer-2 overlay 通用化（A/B/C）
+
+读 MNSIM upstream git log 时发现 `MNSIM/Accuracy_Model/Crossbar_accuracy.py`（2019 uniform-CV 路径）与 `Weight_update.py`（2021 Gaussian 路径）在 upstream 即已互不一致。grep 证明 `Crossbar_accuracy.py` 零引用，是 dead code；`Weight_update.py:41` 才是精度路径上真正活的 Gaussian 注入点。pim_sim 早已 hook 在 `Weight_update.py` 上，所以行为正确。
+
+本轮完成三件事（数值上 bit-identical，仅加文档/工具）：
+
+- **A**：在 `pim_sim/accuracy/weight_inject.py` 顶部注释里写清楚"我们 hook 了哪条、没 hook 哪条、为什么"——包含 upstream commit 哈希证明不是我们 fork 造成的不一致。
+- **B**：把 `ChipProfile.device.variation → pim_sim.DeviceModel` 的分派抽成独立纯函数 `pim_sim.device.factory.device_model_from_variation()`，让 `mnsim_adapter/overlay.py` 和外部脚本（fab-data ablation sweep）共享一个翻译入口，并加 6 条单测（`tests/test_variation_factory.py`）。
+- **C**：新增 `mnsim_adapter/provenance_check.py`——遍历 Tier-1 / Tier-2 字段、命中 `proxy`/`missing` 就发 `ProvenanceWarning`。`build_overlay()` 和 `ChipProfile.weak_provenance_fields()` 都会调用。Liu 33.2 会吐出 3 条（cell_type、read_latency_ns、variation=MNSIM 默认 1%），Yan 11.7 吐 1 条（SRAM 等效电阻），都是已知的 honest proxies。
+
+Regression：`validate/literature_anchor_{baseline,ablation}.py` 在两个文献锚点上产出的 CSV 与 `/tmp/abc_snapshot/` 完全一致（bit-identical），确认改动纯工具化、无精度路径漂移。
+
+### 2026-04-21 增强：NeuroSim-inspired partial-sum ADC 精度通路
+
+读 NeuroSim 2DInferenceV1.4 源码（`/tmp/neurosim_src/Inference_pytorch/modules/quantization_cpu_np_infer.py:121`、`utee/wage_quantizer.py`）发现 NeuroSim 的精度通路上有一个 MNSIM / pim_sim 此前没有覆盖的非理想性：**每个 weight-slice × input-bit 的 partial-sum 在 shift-add 之前都要过一次 B 比特 ADC 量化**（`LinearQuantizeOut(outputPartial, ADCprecision)`）。MNSIM 2.0 `Accuracy_Model/Weight_update.py` 只做 weight-level Gaussian，低比特 ADC 下精度路径看起来不真实地干净；pim_sim 既有的 `WaldenADCModel` 只接 PPA，不接 accuracy。
+
+本轮把这条通路补上，设计上仍保留 regression-safe 的 opt-in：
+
+- **模型**：`pim_sim/device/model.py` 新增 `PartialSumADCNoiseModel(inner, adc_bits, subarray_rows, g_lrs_siemens, input_activity)`。数学上把 partial-sum 的均匀量化方差 `σ_Y² = (Y_range/L)²/12`（`L=2^B`、`Y_range≈N·a·V_read·G_LRS`）展回每个 cell 的等效 conductance 高斯噪声 `σ_G_adc² ≈ G_LRS² / (12 · L² · N · a)`，叠在 `inner.sample_resistance` 的结果上。`B→∞` 时收敛到 inner 模型（单元测试验证）。
+- **Schema**：`mnsim_adapter.circuit.ADCProfile` 新增两个可选字段 `accuracy_bits: Traced[int] | None` 与 `accuracy_input_activity: Traced[float] | None`；默认 `None` → 什么都不包，老文献锚点 CSV 继续 bit-identical。
+- **Overlay wiring**：`mnsim_adapter/overlay.py::_build_device_model` 只有在 `accuracy_bits` 显式设置、且 chip 是 analog NVM macro（`device.is_nvm()` + `pim_type==0` + `resistance` 齐全）时才把 base DeviceModel 包进 `PartialSumADCNoiseModel`。SRAM / 数字 PIM / 缺 resistance 一律跳过包装——因为这三种情况下"ADC 读多电平 bitline"的物理前提不成立。
+- **测试**：新增 `tests/test_partial_sum_adc.py`（14 条）覆盖参数校验、σ 公式、`B→∞` 极限、opt-out 默认、opt-in 传参、SRAM/NVM 路由。既有 28 条测试全数保持通过。
+- **Regression**：4 条 literature-anchor CSV（Liu baseline/ablation + Yan baseline/ablation）与 `/tmp/abc_snapshot/` 继续 bit-identical；因为 Liu/Yan 都没设 `accuracy_bits`，overlay 天然走 opt-out 分支。
+
+使用方式（消融实验待用户决定）：构造带 `accuracy_bits=5` 的 Liu 变体，调 `chip.to_pim_sim_overlay()` 就能拿到一个包了 `PartialSumADCNoiseModel` 的 `pim_sim_model`，直接喂给 `dse.core.evaluate_config` 即可在精度路径上复现 NeuroSim 式的 ADC 量化退化。这条通路定位于"MNSIM vs pim_sim 精度差异放大器"，不影响 PPA ablation（PPA 仍由 `WaldenADCModel` / chip profile 承担）。
+
+### 流片芯片接入（fab chip registration）
+
+见 `docs/simulator/registering_your_fab_chip.md`——把自家流片数据跑进 validation pipeline 的 how-to。输入按证据强度分 4 个 tier：
+
+- Tier-1（必填）：tech_node、cell_type、device_area、xbar 维度、group_num、dac/adc_num、read_voltage、read_latency、pim_type。
+- Tier-2（强烈推荐，决定 RRAM 建模质量）：HRS/LRS、**per-state CV**（wafer 级）、SAF rate、ADC preset 或 Walden ENOB/FOM。
+- Tier-3（只在 vs-silicon 误差对比时需要）：你自己报的 silicon area / GOPS / TOPS/W。
+- Tier-4（默认保留 MNSIM 内建）：CACTI buffer、digital modules、NoC、tile grid。
+
+在 `mnsim_adapter/registry.py` 仿 `_liu_chip()` / `_yan_chip()` 写一份 `_myfab_chip()`，然后：
+
+```bash
+python validate/literature_anchor_baseline.py --chip myfab_28nm_2t2r_v1
+python validate/literature_anchor_ablation.py --chip myfab_28nm_2t2r_v1
+```
+
+ablation 会自动吐出 `mnsim_local_repro` / `pim_sim_chip_profile` / `pim_sim_adc_walden` 三条变体；如果填了 Tier-3 silicon 数据，还会报 `abs_rel_error_vs_silicon_pct`。provenance checker 会在 Tier-1/Tier-2 字段还留着 `proxy` 时发警告——如果你自家数据还能填进去，这条警告就是在提醒你别把 MNSIM 默认当成流片特性。
+
+## Baseline 口径规则（必读）
+
+任何 "MNSIM vs pim_sim" / "MNSIM vs silicon" 对比，先按下表决定 baseline 取哪一列，再写代码。细节推导见 `docs/simulator/mnsim_validation_replication_plan.md` §5。
+
+| 场景 | Baseline 取值 | Rationale |
+|---|---|---|
+| 文献锚点（例：ISSCC 20-33.2, ISSCC 22-11.7） | **MNSIM 2.0 Table IV 引用值**（cited） | Table IV 原始 SimConfig 未披露，local repro 残差包含上游 `Hardware_Model/Crossbar.py` drift（见 `docs/simulator/mnsim_upstream_diff.md`），不应混入 pim_sim 效应 |
+| 代码完整性自检 | **本仓库 local repro 值** | 只用于证明 `MNSIM/` 还能跑出合理量级；不计入 pass/fail |
+| measured-in-the-loop（如 `test_data/` wafer preset） | **本仓库 local repro 值**（别无选择） | 论文无 "MNSIM 在这个 preset 上的预设值"，只能用 ③ 自比 |
+
+强制命名惯例（写进 variant_id / 表头 / CSV 列名）：
+
+- `mnsim_table_iv_cited` — 引用 MNSIM 2.0 Table IV 的公开数值（场景 1 baseline）
+- `mnsim_local_repro` — 本仓库重新渲染 INI 后 MNSIM 实际输出（场景 2/3 baseline）
+- 禁用裸名 `mnsim_baseline`——歧义
+
+positive evidence 标准：
+
+```
+|rel_error(pim_sim_*, silicon)| < |rel_error(mnsim_table_iv_cited, silicon)|  # RRAM 文献锚点
+|pim_sim_* − mnsim_table_iv_cited| / mnsim_table_iv_cited < 1%                # SRAM null control
+```
+
+若任一代码修改让本地 local repro 与历史值 bit-不一致，先查 diff 再决定是 upstream drift、SimConfig 口径，还是真实 regression；Hardware_Model 的改动一律走 fork，不直接覆盖。
 
 ## 快速开始（30–90 分钟取样，验证链路）
 1) 生成 measured presets（从 test_data 提取）
@@ -81,6 +169,7 @@ E6. 关键因子消融（RQ4-C：补偿策略）
 - 目的：系统评估 ADC 档位、DAC 数量、sub_position（0/1）对 measured 场景下可行率与 PPA 的影响。
 - 方法：固定 xbar=512×512、group_num/pe_num 按论文设置，栅格扫 `ADC={4,6,7}` × `DAC={32,128}` × `sub_position={0,1}`。
 - 命令：可用 `matrix_all.csv` 选子集或临时生成一个小型 CSV 后 `run_matrix_csv.py` 运行。
+- 推荐路径（adapter 化）：用 `chip = load_chip("rram_isscc2020_33p2")` 做基线，然后 `chip.with_adc(ADCProfile(preset_id=k, …))` 循环生成变体并 `to_mnsim_ini()` 渲染；每个变体的 provenance 链自动保留，便于 supplement 导出。
 
 E7. 跨网络泛化（RQ5）
 - 目的：更换 `--nn` 与 `--weights`（LeNet/ResNet18/VGG16），复现 E1/E2 的对比与 E4 的 measured 评估。

@@ -158,6 +158,138 @@ class AsymmetricGaussianModel(DeviceModel):
 # ---------------------------------------------------------------------------
 
 @dataclass
+class PartialSumADCNoiseModel(DeviceModel):
+    """NeuroSim-inspired partial-sum ADC quantization, as per-cell weight noise.
+
+    Context
+    -------
+    NeuroSim's inference path (``quantization_cpu_np_infer.py:121``,
+    ``LinearQuantizeOut(outputPartial, ADCprecision)``) quantizes the
+    partial-sum output of every weight-slice × input-bit MAC through a
+    finite-precision ADC *before* shift-adding slices back together.
+    MNSIM 2.0 has no equivalent on the accuracy path — its only non-ideality
+    is weight-level Gaussian variation — so runs at small ADC precision
+    look unrealistically clean.
+
+    pim_sim's existing ``WaldenADCModel`` captures ADC precision for PPA
+    only. This model routes the same knob onto the **accuracy** path by
+    expressing the expected partial-sum quantization error as an
+    equivalent additive Gaussian on per-cell conductance.
+
+    Derivation
+    ----------
+    For a subarray with ``N`` active rows and input activity factor ``a``
+    (0..1), the partial-sum range is approximately
+    ``Y_range ≈ N · a · V_read · G_LRS``. A B-bit ADC with ``L = 2^B``
+    uniform levels introduces quantization error with variance
+    ``σ_Y² = (Y_range / L)² / 12`` (uniform-distribution variance).
+
+    Distributing this error back onto ``N·a`` active cells as uncorrelated
+    weight-space Gaussian noise gives
+    ``σ_G_adc² = σ_Y² / (N·a·V_read)² ≈ G_LRS² / (12 · L² · N · a)``.
+
+    We apply this as an additive per-cell conductance noise term on top
+    of the inner DeviceModel's resistance samples. The approximation is
+    first-order consistent with NeuroSim's formulation and converges to
+    the inner model as ``B → ∞``.
+
+    Limitations
+    -----------
+    - Assumes uniform per-cell error distribution; NeuroSim's actual
+      per-slice quantization leaks unevenly when weight-slices are
+      imbalanced. This shows up as a conservative error estimate for
+      low-precision cells (MLC > 1 bit).
+    - Uses G_LRS as the range normalizer; not valid for digital-PIM
+      architectures where the ADC reads a ``1-bit SA`` output. Callers
+      should skip this wrapper on digital PIM (and
+      ``build_overlay`` does so automatically).
+    - Assumes symmetric bipolar input mapping around zero. For unsigned
+      input layers the effective ``a`` should be halved.
+
+    Parameters
+    ----------
+    inner:
+        Underlying variation model (``SymmetricGaussianModel``,
+        ``AsymmetricGaussianModel``, or ``EmpiricalDeviceModel``).
+        Sampling is delegated to ``inner.sample_resistance`` first, then
+        the ADC-equivalent noise is composed in conductance space.
+    adc_bits:
+        ADC precision in bits (``B``). Typical values: 4-8 for analog
+        RRAM macros; <3 makes the linearisation unreliable.
+    subarray_rows:
+        Number of simultaneously-active rows contributing to one partial
+        sum. Equal to MNSIM ``Xbar_Size`` × ``DAC_Num``-scaled activity.
+        Use the physical crossbar row count as a conservative upper bound.
+    g_lrs_siemens:
+        On-state conductance ``1 / R_LRS`` in siemens. Used as the
+        partial-sum range normalizer.
+    input_activity:
+        Fraction of rows active per cycle (0 < a ≤ 1). Default 0.5
+        (average 50% activation). Lower values → less ADC-equivalent
+        noise because the partial-sum range collapses.
+    """
+
+    inner: DeviceModel = field(default_factory=lambda: SymmetricGaussianModel(variation_pct=0.0))
+    adc_bits: float = 5.0
+    subarray_rows: int = 128
+    g_lrs_siemens: float = 1.0 / 6.0e4
+    input_activity: float = 0.5
+    name: str = field(default="partial_sum_adc_noise", init=False)
+
+    def __post_init__(self) -> None:
+        if self.adc_bits < 1:
+            raise ValueError(f"adc_bits must be >= 1, got {self.adc_bits}")
+        if self.subarray_rows < 1:
+            raise ValueError(f"subarray_rows must be >= 1, got {self.subarray_rows}")
+        if not (0.0 < self.input_activity <= 1.0):
+            raise ValueError(
+                f"input_activity must be in (0, 1], got {self.input_activity}"
+            )
+        if self.g_lrs_siemens <= 0:
+            raise ValueError(f"g_lrs_siemens must be > 0, got {self.g_lrs_siemens}")
+
+    def sigma_g_adc_equivalent(self) -> float:
+        """Return the per-cell equivalent ADC-noise σ in conductance space (S)."""
+        levels = 2.0 ** self.adc_bits
+        denom = math.sqrt(12.0 * self.subarray_rows * self.input_activity) * levels
+        return self.g_lrs_siemens / denom
+
+    def sample_resistance(
+        self,
+        nominal_resistance: float,
+        state_index: int,
+        shape: tuple,
+        rng: np.random.Generator,
+    ) -> np.ndarray:
+        r_base = self.inner.sample_resistance(
+            nominal_resistance=nominal_resistance,
+            state_index=state_index,
+            shape=shape,
+            rng=rng,
+        )
+        # Floor to keep 1/r well-defined; matches pim_sim_weight_inject's guard
+        r_base = np.maximum(r_base, nominal_resistance * 0.01)
+        g_base = 1.0 / r_base
+        sigma_g = self.sigma_g_adc_equivalent()
+        g_noisy = g_base + rng.normal(0.0, sigma_g, shape)
+        # Clamp conductance to (0, inf) so the reciprocal stays meaningful.
+        g_floor = 1.0 / (nominal_resistance * 100.0)
+        g_noisy = np.maximum(g_noisy, g_floor)
+        return 1.0 / g_noisy
+
+    def summary(self) -> dict:
+        return {
+            "model": self.name,
+            "inner": self.inner.summary(),
+            "adc_bits": self.adc_bits,
+            "subarray_rows": self.subarray_rows,
+            "g_lrs_siemens": self.g_lrs_siemens,
+            "input_activity": self.input_activity,
+            "sigma_g_adc_siemens": self.sigma_g_adc_equivalent(),
+        }
+
+
+@dataclass
 class EmpiricalDeviceModel(DeviceModel):
     """Uses empirical CDFs sampled from raw wafer resistance measurements.
 
